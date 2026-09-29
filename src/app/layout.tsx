@@ -4,9 +4,15 @@ import { connection } from "next/server";
 import { SvgDefs } from "@/components/ui/SvgDefs";
 import "./globals.css";
 
+/*
+ * `subsets` only controls what is preloaded: every unicode-range face (latin-ext for "Łódź",
+ * "Ørsted"…) is still declared and fetched on demand, so preloading latin-ext would just warn
+ * "preloaded but not used" on pages without such characters.
+ */
+
 /* Display + body face. Variable weight and the width axis power `wide`/`wider`/`narrow`. */
 const archivo = Archivo({
-  subsets: ["latin", "latin-ext"],
+  subsets: ["latin"],
   weight: "variable",
   axes: ["wdth"],
   variable: "--font-archivo",
@@ -15,7 +21,7 @@ const archivo = Archivo({
 
 /* Receipts, codes, timestamps, numbers. */
 const jetbrains = JetBrains_Mono({
-  subsets: ["latin", "latin-ext"],
+  subsets: ["latin"],
   variable: "--font-jetbrains",
   display: "swap",
 });

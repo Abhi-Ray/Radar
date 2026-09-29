@@ -50,10 +50,10 @@ const ICONS = {
   ),
   kit: (
     <>
-      <path d="M3 9h18v11H3z" />
-      <path d="M8.5 9V5.5h7V9" />
-      <path d="M3 14h18" />
-      <path d="M10 12.5v3h4v-3" />
+      {/* Application kit: a CV on top of a second document. */}
+      <path d="M8.5 6V2.5H20v14.5h-4" />
+      <path d="M4 6h12v15.5H4z" />
+      <path d="M7.5 11h5M7.5 14.5h5M7.5 18h3" />
     </>
   ),
   review: (

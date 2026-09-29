@@ -6,6 +6,7 @@ import type { DateInput } from "./format";
 import { Icon } from "./icons";
 import { MethodTag } from "./MethodTag";
 import type { ConfidenceLevel, MethodKind } from "./status";
+import { safeExternalHref } from "./url";
 
 export interface ReceiptRow {
   label: ReactNode;
@@ -67,7 +68,9 @@ export function Receipt({
   compact,
   className,
 }: ReceiptProps) {
-  const hasMeta = source || sourceHref || method || confidence || checkedAt || logicVersion;
+  // Data-driven URL: only http(s) becomes a link; anything else falls back to plain text.
+  const href = safeExternalHref(sourceHref);
+  const hasMeta = source || href || method || confidence || checkedAt || logicVersion;
   return (
     <figure className={cn("receipt-frame relative m-0 min-w-0 max-w-full", className)}>
       <div className={cn("zigzag bg-card font-mono text-ink", compact ? "px-3 py-5 text-xs" : "px-4 py-6 text-sm md:px-5")}>
@@ -111,12 +114,12 @@ export function Receipt({
           <>
             <hr className="perforation my-4" />
             <dl className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1.5 text-xs">
-              {source || sourceHref ? (
+              {source || href ? (
                 <>
                   <dt className="micro text-muted">Source</dt>
                   <dd className="m-0 min-w-0 [overflow-wrap:anywhere]">
-                    {sourceHref ? (
-                      <a href={sourceHref} target="_blank" rel="noopener noreferrer" className="font-bold text-cobalt-deep underline decoration-2 underline-offset-2">
+                    {href ? (
+                      <a href={href} target="_blank" rel="noopener noreferrer" className="font-bold text-cobalt-deep underline decoration-2 underline-offset-2">
                         {source ?? "Original"}
                         <Icon name="external" size={12} className="ml-0.5 inline align-[-1px]" />
                         <span className="sr-only"> (opens in a new tab)</span>

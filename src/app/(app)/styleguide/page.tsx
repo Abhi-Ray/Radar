@@ -620,14 +620,14 @@ export default async function StyleguidePage({ searchParams }: { searchParams: P
           <div className="flex flex-col gap-6">
             <div>
               <Label>Method (trust order)</Label>
-              <ul className="m-0 flex list-none flex-col gap-2 p-0">
+              <ul className="m-0 flex list-none flex-col gap-3 p-0 sm:gap-2">
                 {METHOD_ORDER.map((m) => (
-                  <li key={m} className="flex flex-wrap items-center gap-3">
+                  <li key={m} className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:gap-3">
                     <MethodTag method={m} variant="long" />
                     <span className="text-sm text-ink-soft">{METHOD_META[m].description}</span>
                   </li>
                 ))}
-                <li className="flex flex-wrap items-center gap-3">
+                <li className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:gap-3">
                   <MethodTag method={null} />
                   <span className="text-sm text-ink-soft">Shown when the method is missing — never hidden.</span>
                 </li>
@@ -639,10 +639,13 @@ export default async function StyleguidePage({ searchParams }: { searchParams: P
                 <div className="flex flex-col gap-2">
                   <ConfidenceMeter level="high" />
                   <ConfidenceMeter level="medium" />
-                  <span className="flex items-center gap-2">
-                    <ConfidenceMeter level="low" /> <LowConfTag />
-                  </span>
+                  <ConfidenceMeter level="low" />
                   <ConfidenceMeter level={null} />
+                  <p className="mt-1 flex flex-wrap items-center gap-2 text-sm">
+                    <span className="text-muted">Flag on a value:</span>
+                    <span className="font-mono font-bold">Hybrid</span>
+                    <LowConfTag />
+                  </p>
                 </div>
               </div>
               <div>

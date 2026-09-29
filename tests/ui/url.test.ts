@@ -1,6 +1,15 @@
 /** URL-state helpers behind link-driven filters, tabs, sorting and pagination. */
 import { describe, expect, it } from 'vitest';
-import { hrefToggle, hrefWith, pageFromParams, pageRange, pageWindow, paramList, paramValue } from '@/components/ui/url';
+import {
+  hrefToggle,
+  hrefWith,
+  pageFromParams,
+  pageRange,
+  pageWindow,
+  paramList,
+  paramValue,
+  safeExternalHref,
+} from '@/components/ui/url';
 
 describe('hrefWith', () => {
   it('merges updates, sorts keys and resets the page on any change', () => {
@@ -110,5 +119,36 @@ describe('pageRange', () => {
     expect(pageRange(1, 20, 0)).toEqual({ from: 0, to: 0 });
     expect(pageRange(100, 20, 50)).toEqual({ from: 50, to: 50 });
     expect(pageRange(0, 20, 50)).toEqual({ from: 1, to: 20 });
+  });
+});
+
+describe('safeExternalHref', () => {
+  it('keeps absolute http(s) URLs, normalised', () => {
+    expect(safeExternalHref('https://careers.example.com/jobs/42?src=radar')).toBe('https://careers.example.com/jobs/42?src=radar');
+    expect(safeExternalHref('  http://Example.COM  ')).toBe('http://example.com/');
+  });
+  it('rejects script and other non-web schemes, including obfuscated ones', () => {
+    for (const bad of [
+      'javascript:alert(1)',
+      'JaVaScRiPt:alert(1)',
+      ' javascript:alert(1)',
+      'java\tscript:alert(1)', // tab inside the scheme (browsers strip it)
+      'data:text/html,<script>alert(1)</script>',
+      'vbscript:msgbox(1)',
+      'file:///etc/passwd',
+      'mailto:hr@example.com',
+      'ftp://example.com/a',
+    ]) {
+      expect(safeExternalHref(bad), bad).toBeNull();
+    }
+  });
+  it('rejects relative, protocol-relative, credentialed and empty input', () => {
+    expect(safeExternalHref('/jobs/1')).toBeNull();
+    expect(safeExternalHref('//evil.example.com')).toBeNull();
+    expect(safeExternalHref('https://user:pass@example.com/')).toBeNull();
+    expect(safeExternalHref('not a url')).toBeNull();
+    expect(safeExternalHref('')).toBeNull();
+    expect(safeExternalHref(null)).toBeNull();
+    expect(safeExternalHref(undefined)).toBeNull();
   });
 });

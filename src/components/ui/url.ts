@@ -119,3 +119,24 @@ export function pageRange(page: number, pageSize: number, total: number): { from
   const from = (Math.max(1, page) - 1) * pageSize + 1;
   return { from: Math.min(from, total), to: Math.min(total, from + pageSize - 1) };
 }
+
+/**
+ * Off-site link guard for data-driven URLs (job postings, sponsor registers, scraped sources).
+ * Returns the normalised absolute URL only for http(s) with a host and no embedded credentials;
+ * anything else (javascript:, data:, vbscript:, file:, relative paths, garbage) returns null so the
+ * caller renders plain text instead of a link.
+ */
+export function safeExternalHref(href: string | null | undefined): string | null {
+  if (typeof href !== "string") return null;
+  const raw = href.trim();
+  if (!raw) return null;
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+  if (!url.hostname || url.username || url.password) return null;
+  return url.href;
+}

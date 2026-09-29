@@ -171,6 +171,17 @@ describe('numbers', () => {
     expect(formatCompact(-9500)).toBe('-9.5k');
     expect(formatCompact(undefined)).toBe(DASH);
   });
+  it('promotes to the next unit when rounding reaches 1000 (never "1000k")', () => {
+    expect(formatCompact(999.6)).toBe('1k');
+    expect(formatCompact(9_960)).toBe('10k');
+    expect(formatCompact(999_499)).toBe('999k');
+    expect(formatCompact(999_500)).toBe('1M');
+    expect(formatCompact(-999_500)).toBe('-1M');
+    expect(formatCompact(9_999_999)).toBe('10M');
+    expect(formatCompact(999_999_999)).toBe('1B');
+    expect(formatCompact(2_400_000_000)).toBe('2.4B');
+    expect(formatMoney(999_500, 'EUR', { compact: true })).toBe('€1M');
+  });
   it('formats ratios as percentages', () => {
     expect(formatPercent(0.923)).toBe('92%');
     expect(formatPercent(0.923, 1)).toBe('92.3%');

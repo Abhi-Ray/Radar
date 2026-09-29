@@ -47,7 +47,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       {/* Console: wordmark + live scope. */}
       <section
         aria-labelledby="station-title"
-        className="on-ink relative flex flex-col gap-6 overflow-hidden border-b-3 border-ink bg-ink px-5 pt-7 pb-8 text-paper scanlines sm:px-8 lg:border-r-3 lg:border-b-0 lg:px-12 lg:pt-12 lg:pb-10"
+        className="on-ink relative flex flex-col gap-6 overflow-hidden border-b-3 border-ink bg-ink px-5 pt-5 pb-6 text-paper scanlines sm:px-8 sm:pt-7 sm:pb-8 lg:border-r-3 lg:border-b-0 lg:px-12 lg:pt-12 lg:pb-10"
       >
         <div className="relative z-10 flex items-start justify-between gap-4">
           <p className="micro flex items-center gap-2 text-acid">
@@ -67,7 +67,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           </p>
         </div>
 
-        <div className="relative z-0 mx-auto w-full max-w-[15rem] sm:max-w-xs lg:mt-auto lg:max-w-[min(34rem,58vh)]" aria-hidden="true">
+        <div className="relative z-0 mx-auto w-full max-w-[10rem] min-[400px]:max-w-[13rem] sm:max-w-xs lg:mt-auto lg:max-w-[min(34rem,58vh)]" aria-hidden="true">
           <div className="border-3 border-paper/30 p-2 shadow-[6px_6px_0_0_var(--color-radar-deep)]">
             <RadarSweep blips={DECOR_BLIPS} label="Radar scope" />
           </div>

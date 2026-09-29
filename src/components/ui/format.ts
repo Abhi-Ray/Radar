@@ -205,13 +205,15 @@ function trimDecimal(n: number, decimals: number): string {
   return n.toFixed(decimals).replace(/\.0+$/, "").replace(/(\.\d*?)0+$/, "$1");
 }
 
-/** "950", "9.5k", "48k", "1.25M" */
+/** "950", "9.5k", "48k", "1.25M", "2.4B" */
 export function formatCompact(n: number | null | undefined): string {
   if (n === null || n === undefined || !Number.isFinite(n)) return DASH;
   const sign = n < 0 ? "-" : "";
   const a = Math.abs(n);
-  if (a >= 1e6) return `${sign}${trimDecimal(a / 1e6, a >= 1e7 ? 1 : 2)}M`;
-  if (a >= 1e3) return `${sign}${a >= 1e4 ? Math.round(a / 1e3) : trimDecimal(a / 1e3, 1)}k`;
+  // Tiers are chosen on the ROUNDED value so 999,500 prints "1M" (not "1000k") and 999.6 prints "1k".
+  if (a >= 1e9 || Math.round(a / 1e6) >= 1000) return `${sign}${trimDecimal(a / 1e9, a >= 1e10 ? 1 : 2)}B`;
+  if (a >= 1e6 || Math.round(a / 1e3) >= 1000) return `${sign}${trimDecimal(a / 1e6, a >= 1e7 ? 1 : 2)}M`;
+  if (a >= 1e3 || Math.round(a) >= 1000) return `${sign}${a >= 1e4 ? Math.round(a / 1e3) : trimDecimal(a / 1e3, 1)}k`;
   return `${sign}${Math.round(a)}`;
 }
 

@@ -15,7 +15,7 @@ export function TopBar() {
       data-shell
       className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b-3 border-ink bg-paper px-3 pt-[env(safe-area-inset-top)] md:hidden"
     >
-      <Link href="/" className="no-underline" aria-label="RADAR — Desk">
+      <Link href="/" className="inline-flex min-h-11 items-center no-underline" aria-label="RADAR — Desk">
         <Wordmark size="sm" />
       </Link>
       {section ? (

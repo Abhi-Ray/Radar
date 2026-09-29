@@ -76,7 +76,7 @@
   --text-micro--line-height: 1rem;
   --text-mega: clamp(2.125rem, 1rem + 5.4vw, 5.75rem);
   --text-mega--line-height: 0.88;
-  --text-giga: clamp(3.5rem, 1rem + 15vw, 11rem);
+  --text-giga: clamp(3rem, 0.5rem + 13vw, 11rem);
   --text-giga--line-height: 0.8;
 
   --tracking-label: 0.14em;

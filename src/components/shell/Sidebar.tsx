@@ -13,11 +13,11 @@ export function Sidebar({ email }: { email: string }) {
       data-shell
       className="on-ink sticky top-0 hidden h-dvh flex-col overflow-y-auto border-r-3 border-ink bg-ink text-paper md:flex"
     >
-      <div className="border-b-3 border-paper/20 px-4 pt-5 pb-4">
-        <Link href="/" className="inline-block no-underline" aria-label="RADAR — Desk">
+      <div className="border-b-3 border-paper/20 px-4 pt-3 pb-4">
+        <Link href="/" className="inline-flex min-h-11 items-center no-underline" aria-label="RADAR — Desk">
           <Wordmark size="md" onInk />
         </Link>
-        <p className="micro mt-3 flex items-center gap-2 text-acid">
+        <p className="micro mt-1.5 flex items-center gap-2 text-acid">
           <span aria-hidden="true" className="size-2 animate-blink bg-radar" />
           Field station · online
         </p>
@@ -58,7 +58,7 @@ export function Sidebar({ email }: { email: string }) {
         <UserMenu email={email} variant="rail" />
         <Link
           href="/styleguide"
-          className="micro mt-3 block px-1 text-paper/60 underline decoration-dotted underline-offset-4 hover:text-acid"
+          className="micro mt-2 flex min-h-8 items-center px-1 text-paper/60 underline decoration-dotted underline-offset-4 hover:text-acid pointer-coarse:min-h-11"
         >
           UI kit · styleguide
         </Link>

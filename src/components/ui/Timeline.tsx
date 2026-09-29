@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "./cn";
-import { formatDate, formatTime, toDate, type DateInput } from "./format";
+import { formatDate, formatTime, toDate, tzLabel, type DateInput } from "./format";
 import { Icon, type IconName } from "./icons";
 import { TONE_SOLID, type Tone } from "./status";
 
@@ -64,12 +64,12 @@ export function Timeline({
                   </span>
                 </div>
                 <div className="min-w-0 px-3 py-3 md:px-4">
-                  <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+                  <div className="flex flex-col gap-0.5 sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-between sm:gap-x-3">
                     <p className="font-extrabold leading-snug">{entry.title}</p>
                     <p className="font-mono text-[0.6875rem] text-muted tabular">
                       {d ? (
                         <time dateTime={d.toISOString()}>
-                          {formatDate(d)} · {formatTime(d)}
+                          {formatDate(d)} · {formatTime(d)} {tzLabel()}
                         </time>
                       ) : (
                         "undated"

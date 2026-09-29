@@ -195,8 +195,8 @@ export function RadarSweep({
           return (
             <a key={b.id} href={b.href} aria-label={b.label} className="group outline-none">
               <title>{b.label}</title>
-              {/* Enlarged invisible hit area for touch. */}
-              <rect x={p.x - 11} y={p.y - 11} width={22} height={22} fill="transparent" />
+              {/* Enlarged invisible hit area for touch: 26 of 200 units ≈ 44px once the scope renders ≥340px wide. */}
+              <rect x={p.x - 13} y={p.y - 13} width={26} height={26} fill="transparent" />
               {shape}
             </a>
           );

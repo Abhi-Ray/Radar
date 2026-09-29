@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
 import { cn } from "./cn";
 import { Icon, type IconName } from "./icons";
+import { safeExternalHref } from "./url";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "ink" | "signal";
 export type ButtonSize = "sm" | "md" | "lg";
@@ -126,8 +127,17 @@ export function Button(props: ButtonProps) {
       </Inner>
     );
     if (external) {
+      // Off-site URLs are often data-driven: only http(s) is linked; anything else renders inert.
+      const safe = safeExternalHref(href);
+      if (!safe) {
+        return (
+          <a {...rest} aria-disabled="true" className={cn(classes, "pointer-events-none opacity-60")}>
+            {inner}
+          </a>
+        );
+      }
       return (
-        <a {...rest} href={href} target="_blank" rel="noopener noreferrer" className={classes} aria-busy={pending || undefined}>
+        <a {...rest} href={safe} target="_blank" rel="noopener noreferrer" className={classes} aria-busy={pending || undefined}>
           {inner}
         </a>
       );

@@ -48,7 +48,7 @@ export function EmptyState({
       {code ? (
         <span
           aria-hidden="true"
-          className="headline wider pointer-events-none absolute -right-2 -bottom-3 select-none text-[clamp(3rem,10vw,6.5rem)] uppercase leading-none text-ink/[0.07]"
+          className="headline wider pointer-events-none absolute -right-2 -bottom-3 select-none whitespace-nowrap text-[clamp(3rem,10vw,6.5rem)] uppercase leading-none text-ink/[0.07]"
         >
           {code}
         </span>

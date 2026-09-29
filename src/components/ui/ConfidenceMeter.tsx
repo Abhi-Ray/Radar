@@ -46,7 +46,7 @@ export function ConfidenceMeter({ level, showLabel = true, size = "md", onInk, c
       </span>
       {showLabel ? (
         lvl === "low" ? (
-          <LowConfTag />
+          <LowConfTag decorative />
         ) : (
           <span aria-hidden="true" className={cn("font-mono text-[0.6875rem] font-bold uppercase tracking-[0.12em]", onInk ? "text-paper" : "text-ink")}>
             {lvl ? CONFIDENCE_META[lvl].label : "Not rated"}
@@ -57,17 +57,21 @@ export function ConfidenceMeter({ level, showLabel = true, size = "md", onInk, c
   );
 }
 
-/** The dashed "LOW CONF" flag used wherever a low-confidence value is displayed. */
-export function LowConfTag({ className }: { className?: string }) {
+/**
+ * The dashed "LOW CONF" flag used wherever a low-confidence value is displayed. Read out as
+ * "low confidence" unless `decorative` (when a parent already announces the level).
+ */
+export function LowConfTag({ className, decorative }: { className?: string; decorative?: boolean }) {
   return (
     <span
-      aria-hidden="true"
+      aria-hidden={decorative ? true : undefined}
       className={cn(
         "inline-flex items-center border-2 border-dashed border-ink bg-card px-1 py-px font-mono text-[0.625rem] font-bold uppercase leading-none tracking-[0.12em] text-ink",
         className,
       )}
     >
-      Low conf
+      <span aria-hidden="true">Low conf</span>
+      {decorative ? null : <span className="sr-only"> (low confidence)</span>}
     </span>
   );
 }

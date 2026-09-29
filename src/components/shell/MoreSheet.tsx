@@ -51,7 +51,7 @@ export function MobileTabBar({ badges, sheetBadges, account }: MobileTabBarProps
           ))}
         </ul>
         <div className="mt-5 border-t-3 border-dashed border-ink pt-4">{account}</div>
-        <Link href="/styleguide" onClick={close} className="micro mt-4 inline-block text-muted underline decoration-dotted underline-offset-4">
+        <Link href="/styleguide" onClick={close} className="micro mt-2 inline-flex min-h-11 items-center text-muted underline decoration-dotted underline-offset-4">
           UI kit · styleguide
         </Link>
       </Drawer>

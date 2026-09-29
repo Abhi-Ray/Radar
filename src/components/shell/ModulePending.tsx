@@ -49,7 +49,7 @@ export function ModulePending({ section, module, description, record, title }: M
                 Back to {label}
               </Button>
             ) : null}
-            <Button href="/styleguide" variant="ghost">
+            <Button href="/styleguide" variant="secondary" iconRight="arrow-right">
               Browse the UI kit
             </Button>
           </>

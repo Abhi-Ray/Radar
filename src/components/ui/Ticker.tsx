@@ -40,7 +40,7 @@ function Row({ items }: { items: TickerItem[] }) {
         <li key={item.id} className="flex shrink-0 items-center gap-2 px-4">
           <span aria-hidden="true" className={cn("size-2.5 shrink-0", item.fresh ? "bg-signal" : "bg-radar")} />
           {item.href ? (
-            <Link href={item.href} className="font-bold text-paper underline decoration-2 underline-offset-4 hover:bg-acid hover:text-ink hover:no-underline">
+            <Link href={item.href} className="inline-flex min-h-11 items-center font-bold text-paper underline decoration-2 underline-offset-4 hover:bg-acid hover:text-ink hover:no-underline">
               {item.label}
             </Link>
           ) : (
@@ -64,7 +64,7 @@ export function Ticker({ items, kicker = "New", label = "New blips", speed, empt
   const spd = speed ?? speedFor(items.length);
 
   return (
-    <section aria-label={label} className={cn("ticker on-ink relative flex min-h-12 items-stretch border-3 border-ink bg-ink text-paper", className)}>
+    <section aria-label={label} className={cn("ticker on-ink relative flex min-h-[3.125rem] items-stretch border-3 border-ink bg-ink text-paper", className)}>
       <div className="flex shrink-0 items-center gap-1.5 border-r-3 border-ink bg-acid px-3 text-ink">
         <Icon name="radar" size={16} />
         <span className="micro whitespace-nowrap">{kicker}</span>
@@ -88,7 +88,7 @@ export function Ticker({ items, kicker = "New", label = "New blips", speed, empt
           <label
             htmlFor={toggleId}
             className={cn(
-              "flex w-12 shrink-0 cursor-pointer items-center justify-center border-l-3 border-ink bg-ink text-paper hover:bg-acid hover:text-ink",
+              "flex min-h-11 w-12 shrink-0 cursor-pointer items-center justify-center border-l-3 border-ink bg-ink text-paper hover:bg-acid hover:text-ink",
               "peer-focus-visible:outline-3 peer-focus-visible:-outline-offset-4 peer-focus-visible:outline-acid motion-reduce:hidden",
             )}
           >

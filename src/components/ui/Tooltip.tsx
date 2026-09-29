@@ -60,8 +60,10 @@ export function Tooltip({ content, children, side = "top", className }: TooltipP
         role="tooltip"
         id={id}
         className={cn(
-          "pointer-events-none absolute left-1/2 z-40 w-max max-w-[16rem] -translate-x-1/2 border-2 border-ink bg-ink px-2 py-1.5 text-left font-mono text-xs leading-snug text-paper shadow-sm",
-          side === "top" ? "bottom-[calc(100%+8px)]" : "top-[calc(100%+8px)]",
+          // Hoverable (WCAG 1.4.13): the tip is part of the hover region, and a transparent
+          // ::before bridges the 8px gap so moving the pointer onto it does not close it.
+          "absolute left-1/2 z-40 w-max max-w-[16rem] -translate-x-1/2 border-2 border-ink bg-ink px-2 py-1.5 text-left font-mono text-xs leading-snug text-paper shadow-sm before:absolute before:inset-x-0 before:h-3",
+          side === "top" ? "bottom-[calc(100%+8px)] before:top-full" : "top-[calc(100%+8px)] before:bottom-full",
           open ? "block animate-pop" : "hidden",
         )}
       >
@@ -71,14 +73,18 @@ export function Tooltip({ content, children, side = "top", className }: TooltipP
   );
 }
 
-/** Small ⓘ button with a tooltip — for method/threshold explanations next to labels. Tap opens it on touch. */
+/**
+ * Small ⓘ button with a tooltip — for method/threshold explanations next to labels. Tap opens it on touch.
+ * The visual square stays 24px (32px on coarse pointers) but a transparent ::before extends the hit
+ * area by 10px on every side, so the touch target is at least 44×44.
+ */
 export function InfoTip({ content, label = "What does this mean?", side = "top" }: { content: ReactNode; label?: string; side?: "top" | "bottom" }) {
   return (
     <Tooltip content={content} side={side}>
       <button
         type="button"
         aria-label={label}
-        className="inline-flex size-6 items-center justify-center border-2 border-ink bg-card align-middle hover:bg-acid pointer-coarse:size-8"
+        className="relative inline-flex size-6 items-center justify-center border-2 border-ink bg-card align-middle hover:bg-acid pointer-coarse:size-8 before:absolute before:-inset-2.5"
       >
         <Icon name="info" size={14} />
       </button>
