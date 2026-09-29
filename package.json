@@ -6,7 +6,17 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit -p .",
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx --env-file-if-exists=.env.local src/db/migrate.ts",
+    "db:dev": "tsx scripts/dev-db.ts",
+    "db:seed": "tsx --env-file-if-exists=.env.local scripts/seed.ts",
+    "worker": "tsx --env-file-if-exists=.env.local src/worker/index.ts",
+    "pipeline": "tsx --env-file-if-exists=.env.local src/worker/cli.ts",
+    "eval": "tsx --env-file-if-exists=.env.local src/lib/accuracy/cli.ts",
+    "build:worker": "node scripts/build-worker.mjs"
   },
   "dependencies": {
     "@date-fns/tz": "^1.5.0",
