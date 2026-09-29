@@ -1,7 +1,8 @@
 import { cn } from "./cn";
 
 export interface WordmarkProps {
-  size?: "sm" | "md" | "lg" | "xl";
+  /** "fit" scales with the nearest `@container` (falls back to the viewport width). */
+  size?: "sm" | "md" | "lg" | "xl" | "fit";
   /** Light text for ink surfaces. */
   onInk?: boolean;
   /** Show the "Field Station" tag. */
@@ -14,6 +15,8 @@ const TEXT = {
   md: "text-3xl",
   lg: "text-5xl md:text-6xl",
   xl: "text-giga",
+  // The logotype is ~4.9em wide; 19cqi keeps it inside its container at any width.
+  fit: "text-[clamp(2.75rem,19cqi,11rem)]",
 } as const;
 
 /** RADAR logotype: expanded Archivo Black with the "D" sitting in an acid block like a target lock. */

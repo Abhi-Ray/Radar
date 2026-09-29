@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import type { InputHTMLAttributes, ReactNode, Ref, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 import { cn } from "./cn";
 import { Icon, type IconName } from "./icons";
 
@@ -9,6 +9,8 @@ export const CONTROL =
   "aria-invalid:border-stamp-deep aria-invalid:bg-stamp-tint focus-visible:outline-offset-2 focus-visible:bg-white read-only:bg-paper";
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  /** Forwarded to the <input> (React 19 ref-as-prop). */
+  ref?: Ref<HTMLInputElement>;
   /** Leading icon inside the field. */
   icon?: IconName;
   /** Trailing unit/suffix ("EUR", "/yr"). */

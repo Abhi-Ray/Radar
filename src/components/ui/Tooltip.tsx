@@ -1,32 +1,47 @@
 "use client";
 
-import { cloneElement, isValidElement, useId, useState, type ReactElement, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { cn } from "./cn";
 import { Icon } from "./icons";
 
 export interface TooltipProps {
   content: ReactNode;
-  /** A single focusable element (button, link). */
-  children: ReactElement<{ "aria-describedby"?: string }>;
+  /** A single focusable element (button, link) — it must be the first element inside. */
+  children: ReactNode;
   side?: "top" | "bottom";
   className?: string;
 }
 
 /**
- * Hover/focus tooltip. The text is always in the DOM and wired via aria-describedby, so screen
- * readers get it without hovering. Esc hides it (WCAG 1.4.13).
+ * Hover/focus tooltip. The text is always in the DOM and wired to the trigger via
+ * aria-describedby, so screen readers get it without hovering. Esc hides it (WCAG 1.4.13).
+ *
+ * The describedby link is added to the trigger's DOM node after mount rather than with
+ * cloneElement: triggers written in Server Components can reach this component as lazy
+ * elements during SSR (not cloneable) but as plain elements on the client, and cloning only
+ * one side causes a hydration mismatch. Any aria-describedby the trigger already has is kept.
  */
 export function Tooltip({ content, children, side = "top", className }: TooltipProps) {
   const id = useId();
   const [open, setOpen] = useState(false);
-  const trigger = isValidElement(children)
-    ? cloneElement(children, {
-        "aria-describedby": [children.props["aria-describedby"], id].filter(Boolean).join(" "),
-      })
-    : children;
+  const wrapRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const trigger = wrapRef.current?.firstElementChild;
+    if (!trigger || trigger.id === id) return;
+    const tokens = (el: Element) => (el.getAttribute("aria-describedby") ?? "").split(/\s+/).filter(Boolean);
+    const current = tokens(trigger);
+    if (!current.includes(id)) trigger.setAttribute("aria-describedby", [...current, id].join(" "));
+    return () => {
+      const rest = tokens(trigger).filter((t) => t !== id);
+      if (rest.length) trigger.setAttribute("aria-describedby", rest.join(" "));
+      else trigger.removeAttribute("aria-describedby");
+    };
+  }, [id]);
 
   return (
     <span
+      ref={wrapRef}
       className={cn("relative inline-flex", className)}
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
@@ -40,7 +55,7 @@ export function Tooltip({ content, children, side = "top", className }: TooltipP
         }
       }}
     >
-      {trigger}
+      {children}
       <span
         role="tooltip"
         id={id}

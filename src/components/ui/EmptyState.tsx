@@ -70,7 +70,12 @@ export function EmptyState({
           </H>
           {children ? <div className="mt-2 max-w-prose text-sm leading-relaxed text-ink-soft md:text-base">{children}</div> : null}
           {actions ? <div className="mt-4 flex flex-wrap gap-3">{actions}</div> : null}
-          {note ? <p className="mt-4 font-mono text-xs text-muted">{note}</p> : null}
+          {note ? (
+            <p className="mt-4 font-mono text-xs text-muted">
+              {/* Solid backing so the note stays AA over the hatch and the stencilled code. */}
+              <span className="bg-card box-decoration-clone px-1 py-0.5">{note}</span>
+            </p>
+          ) : null}
         </div>
       </div>
     </div>

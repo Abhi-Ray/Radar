@@ -20,7 +20,8 @@ export interface SectionHeaderProps {
 }
 
 const TITLE: Record<NonNullable<SectionHeaderProps["as"]>, string> = {
-  h1: "text-mega wide",
+  // Normal width on phones so 9–10 letter section names fit on one line; expanded from sm up.
+  h1: "text-mega sm:wide",
   h2: "text-3xl md:text-4xl wide",
   h3: "text-xl md:text-2xl",
 };
@@ -29,13 +30,20 @@ const TITLE: Record<NonNullable<SectionHeaderProps["as"]>, string> = {
 export function SectionHeader({ title, kicker, description, actions, as: H = "h2", index, rule, id, className }: SectionHeaderProps) {
   const showRule = rule ?? H === "h1";
   return (
-    <header className={cn("flex flex-col gap-4 md:flex-row md:items-end md:justify-between", showRule && "border-b-3 border-ink pb-4", className)}>
+    <header
+      className={cn(
+        // Actions sit right of the title on desktop and drop below it when the title needs the room.
+        "flex flex-col gap-4 md:flex-row md:flex-wrap md:items-end md:justify-between md:gap-x-8",
+        showRule && "border-b-3 border-ink pb-4",
+        className,
+      )}
+    >
       <div className="flex min-w-0 items-start gap-3 md:gap-4">
         {index ? (
           <span
             aria-hidden="true"
             className={cn(
-              "headline shrink-0 bg-ink px-2 py-1 font-mono text-paper tabular",
+              "headline shrink-0 bg-ink px-2 py-1 font-mono text-paper tabular max-[359px]:hidden",
               H === "h1" ? "text-2xl md:text-3xl" : "text-base md:text-lg",
             )}
           >

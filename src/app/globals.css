@@ -74,7 +74,7 @@
 
   --text-micro: 0.6875rem;
   --text-micro--line-height: 1rem;
-  --text-mega: clamp(2.5rem, 1.4rem + 4.6vw, 5.75rem);
+  --text-mega: clamp(2.125rem, 1rem + 5.4vw, 5.75rem);
   --text-mega--line-height: 0.88;
   --text-giga: clamp(3.5rem, 1rem + 15vw, 11rem);
   --text-giga--line-height: 0.8;
