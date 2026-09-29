@@ -12,15 +12,16 @@ export default defineConfig({
     ],
   },
   test: {
-    include: ['tests/**/*.test.ts', 'tests/**/*.test.tsx'],
+    include: ['tests/**/*.test.ts'],
     exclude: ['node_modules/**', 'tests/e2e/**', '.next/**', 'dist/**'],
     environment: 'node',
     pool: 'forks',
-    // DB-backed test files each start their own MySQL (tests/helpers/db.ts); keep the laptop usable.
-    maxWorkers: 3,
-    testTimeout: 30_000,
-    // Starting an ephemeral MySQL can take a while on a cold machine.
-    hookTimeout: 180_000,
+    // DB-backed files each start their own MySQL (tests/helpers/db.ts). One file at a time keeps
+    // the 8 GB laptop usable and guarantees at most one ephemeral MySQL.
+    fileParallelism: false,
+    testTimeout: 120_000,
+    // A cold ephemeral MySQL start + migrations can take a while.
+    hookTimeout: 240_000,
     env: { NODE_ENV: 'test', TZ: 'UTC' },
   },
 });

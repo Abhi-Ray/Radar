@@ -56,13 +56,22 @@ export interface StoredFact<T = unknown> extends Fact<T> {
 
 export interface ResolvedFact<T = unknown> {
   winner: StoredFact<T> | null;
-  /** True when another active candidate with a different value exists at a different trust level. */
+  /**
+   * True when another active, non-estimate candidate disagrees with the winner (compared on the
+   * meaningful part of the value, see provenance/resolve.ts). A manual winner is a decision, so
+   * it never reports a conflict (the disagreeing candidates are still listed in `conflictWith`).
+   */
   conflict: boolean;
   /** All other active candidates, best first. */
   others: StoredFact<T>[];
+  /** The subset of `others` whose value disagrees with the winner (estimates excluded). */
+  conflictWith: StoredFact<T>[];
   /** True when the winner is a manual override. */
   overridden: boolean;
 }
+
+/** Keys that legitimately hold several simultaneous facts (never "conflicting"). */
+export const MULTI_VALUED_FACT_KEYS: readonly FactKey[] = ['visa_signal', 'red_flags'];
 
 /** 0 = most trusted. Unknown methods sort last. */
 export function trustRank(method: Method | string): number {

@@ -21,7 +21,7 @@
  *
  * Tests never use this server (they start their own ephemeral one via tests/helpers/db.ts).
  */
-import { spawn, spawnSync } from 'node:child_process';
+import { spawn, spawnSync, type ChildProcess } from 'node:child_process';
 import { existsSync, mkdirSync, openSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import net from 'node:net';
 import os from 'node:os';
@@ -81,11 +81,24 @@ function isAlive(pid: number): boolean {
   }
 }
 
+/**
+ * True when `pid` is a mysqld serving OUR data directory. Guards against pid reuse: a stale pid
+ * file must never make `--stop` signal an unrelated process. When `ps` itself is unavailable the
+ * check degrades to "the pid is alive".
+ */
+function isOurMysqld(pid: number): boolean {
+  const res = spawnSync('ps', ['-ww', '-p', String(pid), '-o', 'command='], { encoding: 'utf8' });
+  if (res.error) return isAlive(pid);
+  if (res.status !== 0) return false;
+  const cmd = res.stdout.trim();
+  return /(?:^|\/)mysqld(?:\s|$)/.test(cmd) && cmd.includes(`--datadir=${DATADIR}`);
+}
+
 /** pid of OUR running server, or null (cleans a stale pid file). */
 function runningPid(): number | null {
   const pid = readPid();
   if (pid === null) return null;
-  if (isAlive(pid)) return pid;
+  if (isAlive(pid) && isOurMysqld(pid)) return pid;
   rmSync(PID_FILE, { force: true });
   return null;
 }
@@ -143,20 +156,35 @@ function serverArgs(base: string): string[] {
   return args;
 }
 
-async function waitReady(timeoutMs: number, child?: { exitCode: number | null }): Promise<void> {
+function hasExited(child: ChildProcess): boolean {
+  return child.exitCode !== null || child.signalCode !== null;
+}
+
+async function waitReady(timeoutMs: number, child?: ChildProcess): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   for (;;) {
-    if (child && child.exitCode !== null) fail(`mysqld exited during startup (code ${child.exitCode}); see ${ERROR_LOG}`);
+    if (child && hasExited(child)) {
+      throw new Error(`mysqld exited during startup (${child.exitCode ?? child.signalCode}); see ${ERROR_LOG}`);
+    }
     try {
       const conn = await mysql.createConnection({ uri: ADMIN_URL, connectTimeout: 2000 });
       await conn.query('SELECT 1');
       await conn.end();
       return;
     } catch {
-      if (Date.now() > deadline) fail(`mysqld did not accept connections within ${timeoutMs / 1000}s; see ${ERROR_LOG}`);
+      if (Date.now() > deadline) throw new Error(`mysqld did not accept connections within ${timeoutMs / 1000}s; see ${ERROR_LOG}`);
       await sleep(500);
     }
   }
+}
+
+/** Shuts down a server THIS invocation started (startup failed): SIGTERM, then SIGKILL after 60s. */
+async function stopChild(child: ChildProcess): Promise<void> {
+  if (!hasExited(child) && child.pid !== undefined) {
+    child.kill('SIGTERM');
+    if (!(await waitExit(child.pid, 60_000))) child.kill('SIGKILL');
+  }
+  rmSync(PID_FILE, { force: true });
 }
 
 async function ensureDatabaseAndMigrate(): Promise<void> {
@@ -228,8 +256,14 @@ async function start(detach: boolean): Promise<void> {
   });
   child.on('error', (e) => fail(`could not start mysqld: ${e.message}`));
   say(`starting mysqld ${MYSQL_VERSION} on ${HOST}:${PORT} (pid ${child.pid}) …`);
-  await waitReady(90_000, child);
-  await ensureDatabaseAndMigrate();
+  try {
+    await waitReady(90_000, child);
+    await ensureDatabaseAndMigrate();
+  } catch (error) {
+    // Never leave a half-started server behind (it would survive this process in both modes).
+    await stopChild(child);
+    fail(`startup failed, mysqld stopped: ${error instanceof Error ? error.message : String(error)}`);
+  }
   say(`ready — DATABASE_URL=${APP_URL}`);
 
   if (detach) {

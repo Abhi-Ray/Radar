@@ -45,12 +45,23 @@ export function startOfTodayInTz(tz: string = appTz(), now: Date = new Date()): 
   return new Date(midnight.getTime());
 }
 
-/** UTC instant of local midnight of a 'YYYY-MM-DD' day in `tz`. */
-export function startOfLocalDay(day: string, tz: string = appTz()): Date {
+/** Splits a strict 'YYYY-MM-DD' into [y, m0, d]; throws RangeError for malformed or impossible dates (2026-02-31). */
+function parseDayParts(day: string): [number, number, number] {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day);
   if (!m) throw new RangeError(`Invalid day "${day}", expected YYYY-MM-DD`);
-  const d = new TZDate(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 0, 0, 0, 0, tz);
-  return new Date(d.getTime());
+  const [y, mo, d] = [Number(m[1]), Number(m[2]) - 1, Number(m[3])];
+  const check = new Date(Date.UTC(y, mo, d));
+  if (check.getUTCFullYear() !== y || check.getUTCMonth() !== mo || check.getUTCDate() !== d) {
+    throw new RangeError(`Invalid day "${day}": no such calendar date`);
+  }
+  return [y, mo, d];
+}
+
+/** UTC instant of local midnight of a 'YYYY-MM-DD' day in `tz`. */
+export function startOfLocalDay(day: string, tz: string = appTz()): Date {
+  const [y, mo, d] = parseDayParts(day);
+  const local = new TZDate(y, mo, d, 0, 0, 0, 0, tz);
+  return new Date(local.getTime());
 }
 
 /** Exact 24h steps (instant arithmetic). Use addCalendarDaysInTz for "same local time N days later". */
@@ -118,18 +129,20 @@ export function tzAbbrev(d: Date, tz: string = appTz()): string {
   }
 }
 
-/** Parse a date-like input into a valid Date or null (never Invalid Date). */
+/** Parse a Date / date string / epoch-ms number into a valid Date or null (never Invalid Date). */
 export function toDateOrNull(input: unknown): Date | null {
-  if (input === null || input === undefined || input === '') return null;
-  const d = input instanceof Date ? new Date(input.getTime()) : new Date(input as string | number);
+  let d: Date;
+  if (input instanceof Date) d = new Date(input.getTime());
+  else if (typeof input === 'number') d = new Date(input);
+  else if (typeof input === 'string' && input.trim() !== '') d = new Date(input.trim());
+  else return null;
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-/** Parse 'YYYY-MM-DD' as UTC midnight (for DATE columns stored as strings). */
+/** Parse 'YYYY-MM-DD' as UTC midnight (for DATE columns stored as strings). Throws RangeError when invalid. */
 export function parseUtcDay(day: string): Date {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day);
-  if (!m) throw new RangeError(`Invalid day "${day}", expected YYYY-MM-DD`);
-  return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+  const [y, mo, d] = parseDayParts(day);
+  return new Date(Date.UTC(y, mo, d));
 }
 
 /** Milliseconds until the next UTC midnight (AI budget reset). */

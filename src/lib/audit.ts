@@ -18,6 +18,8 @@ export interface AuditInput {
   ip?: string | null;
 }
 
+const MAX_REASON = 4000;
+
 function jsonOrNull(v: unknown): unknown {
   if (v === undefined) return null;
   // Secrets never land in the audit log either.
@@ -32,7 +34,8 @@ export async function audit(db: DbOrTx, input: AuditInput): Promise<void> {
     entityId: input.entityId === null || input.entityId === undefined ? null : String(input.entityId).slice(0, 128),
     beforeJson: jsonOrNull(input.before),
     afterJson: jsonOrNull(input.after),
-    reason: input.reason ?? null,
-    ip: input.ip ?? null,
+    // TEXT holds 64 KiB; a reason is a human sentence, so cap it well below that.
+    reason: input.reason == null ? null : input.reason.slice(0, MAX_REASON),
+    ip: input.ip == null ? null : input.ip.slice(0, 64),
   });
 }

@@ -98,7 +98,7 @@ export function getEnv(): Env {
 export function getEnvVar<K extends EnvKey>(key: K): Env[K] {
   if (cached) return cached[key];
   if (keyCache.has(key)) return keyCache.get(key) as Env[K];
-  const schema = envSchema.shape[key] as z.ZodType<Env[K]>;
+  const schema = envSchema.shape[key] as unknown as z.ZodType<Env[K]>;
   const raw = rawEnv()[key];
   const parsed = schema.safeParse(raw);
   if (!parsed.success) {

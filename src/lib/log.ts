@@ -1,5 +1,5 @@
 /**
- * JSON-lines logger. One line per event: {"ts","level","msg",...fields}.
+ * JSON-lines logger. One line per event: {...fields,"ts","level","msg"} (reserved keys win).
  * - info/debug → stdout, warn/error → stderr.
  * - Field keys matching SECRET_KEY_RE are replaced with "[REDACTED]" (recursively); a short
  *   allowlist of identifier fields (factKey, platformKey, dedupeKey, …) stays readable.
@@ -89,12 +89,13 @@ function enabled(level: LogLevel): boolean {
 
 function write(level: LogLevel, msg: string, fields?: LogFields, base?: LogFields): void {
   if (!enabled(level)) return;
+  // Reserved keys last: a field named ts/level/msg can never overwrite them.
   const record: Record<string, unknown> = {
+    ...(base ? (redact(base) as Record<string, unknown>) : {}),
+    ...(fields ? (redact(fields) as Record<string, unknown>) : {}),
     ts: new Date().toISOString(),
     level,
     msg: redactString(msg),
-    ...(base ? (redact(base) as Record<string, unknown>) : {}),
-    ...(fields ? (redact(fields) as Record<string, unknown>) : {}),
   };
   let line: string;
   try {

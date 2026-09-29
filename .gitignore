@@ -48,6 +48,8 @@ next-env.d.ts
 /.secrets
 /tmp
 *.sql
+# Drizzle migrations are source code (backups/dumps above stay ignored).
+!/drizzle/*.sql
 *.sql.gz
 *.enc
 !ops/secrets.env.enc

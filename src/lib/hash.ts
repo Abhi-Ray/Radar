@@ -30,11 +30,16 @@ export function hashJson(value: unknown): string {
   return sha256Hex(canonicalJson(value));
 }
 
-/** Normalise free text for hashing/comparison: lowercase, collapse whitespace, strip punctuation runs. */
+/**
+ * Normalise free text for hashing/comparison: Unicode NFKC (full-width/compatibility forms folded),
+ * then lowercase, zero-width characters removed, whitespace collapsed and trimmed.
+ * NFKC runs first because it can produce upper-case letters (e.g. "Ⅻ" → "XII").
+ */
 export function normalizeTextForHash(text: string): string {
   return text
-    .toLowerCase()
     .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[\u200b-\u200d\u2060\ufeff\u00ad]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
 }

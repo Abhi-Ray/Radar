@@ -7,15 +7,17 @@ import { eq, sql } from 'drizzle-orm';
 import { settings } from '../db/schema';
 import { audit } from './audit';
 import {
+  DEFAULTED_SETTING_KEYS,
   defaultSetting,
   SETTINGS_SCHEMAS,
+  type DefaultedSettingKey,
   type SettingKey,
   type SettingValue,
 } from './contracts/settings';
 import type { DbOrTx } from './db';
 import { log } from './log';
 
-export type { SettingKey, SettingValue } from './contracts/settings';
+export type { DefaultedSettingKey, SettingKey, SettingValue } from './contracts/settings';
 
 export async function getSettingRaw(db: DbOrTx, key: string): Promise<{ value: unknown; version: number; updatedAt: Date } | null> {
   const rows = await db.select().from(settings).where(eq(settings.key, key)).limit(1);
@@ -24,7 +26,7 @@ export async function getSettingRaw(db: DbOrTx, key: string): Promise<{ value: u
 }
 
 /** fx_rates returns null when never fetched; every other key always returns a valid value. */
-export async function getSetting<K extends Exclude<SettingKey, 'fx_rates'>>(db: DbOrTx, key: K): Promise<SettingValue<K>>;
+export async function getSetting<K extends DefaultedSettingKey>(db: DbOrTx, key: K): Promise<SettingValue<K>>;
 export async function getSetting(db: DbOrTx, key: 'fx_rates'): Promise<SettingValue<'fx_rates'> | null>;
 export async function getSetting(db: DbOrTx, key: SettingKey): Promise<unknown> {
   const raw = await getSettingRaw(db, key);
@@ -75,14 +77,18 @@ export async function setSetting<K extends SettingKey>(
   return parsed;
 }
 
-/** Inserts defaults for missing keys only (seed). Never overwrites user edits. */
-export async function ensureDefaultSettings(db: DbOrTx): Promise<string[]> {
-  const created: string[] = [];
-  for (const key of ['profile', 'score_weights', 'alerts', 'ai', 'retention'] as const) {
+/** Inserts defaults for missing keys only (seed). Never overwrites user edits. Returns created keys. */
+export async function ensureDefaultSettings(db: DbOrTx): Promise<DefaultedSettingKey[]> {
+  const created: DefaultedSettingKey[] = [];
+  for (const key of DEFAULTED_SETTING_KEYS) {
     const existing = await getSettingRaw(db, key);
     if (existing) continue;
-    await db.insert(settings).values({ key, valueJson: defaultSetting(key), version: 1 });
-    created.push(key);
+    // Race-safe: a concurrent seed inserting the same key is ignored, never overwritten.
+    const res = await db
+      .insert(settings)
+      .values({ key, valueJson: defaultSetting(key), version: 1 })
+      .onDuplicateKeyUpdate({ set: { key: sql`${settings.key}` } });
+    if (res[0].affectedRows === 1) created.push(key);
   }
   return created;
 }

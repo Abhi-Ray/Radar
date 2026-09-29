@@ -66,12 +66,19 @@ export async function waitForDb(url: string, opts: WaitOptions = {}): Promise<vo
 }
 
 /**
- * Locate the migrations folder: explicit dir → ./drizzle (cwd) → next to / above the running
- * script (bundled dist/migrate.mjs ships with ../drizzle or ./drizzle).
+ * Locate the migrations folder. An explicit dir (MIGRATIONS_DIR) is strict: used as-is or an
+ * error. Otherwise: ./drizzle (cwd) → next to / above the running script (bundled
+ * dist/migrate.mjs ships with ../drizzle or ./drizzle).
  */
 export function resolveMigrationsDir(explicit?: string | null): string {
+  if (explicit) {
+    // An explicitly configured folder is used as-is: a typo must fail loudly, never silently fall
+    // back to some other ./drizzle.
+    const dir = path.resolve(explicit);
+    if (existsSync(path.join(dir, 'meta', '_journal.json'))) return dir;
+    throw new Error(`MIGRATIONS_DIR has no meta/_journal.json: ${dir}`);
+  }
   const candidates: string[] = [];
-  if (explicit) candidates.push(path.resolve(explicit));
   candidates.push(path.resolve(process.cwd(), 'drizzle'));
   const script = process.argv[1];
   if (script) {
@@ -81,7 +88,6 @@ export function resolveMigrationsDir(explicit?: string | null): string {
   for (const c of candidates) {
     if (existsSync(path.join(c, 'meta', '_journal.json'))) return c;
   }
-  if (explicit) throw new Error(`MIGRATIONS_DIR has no meta/_journal.json: ${path.resolve(explicit)}`);
   throw new Error(`migrations folder not found (looked in: ${candidates.join(', ')})`);
 }
 
