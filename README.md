@@ -98,15 +98,17 @@ plus a Docker image build with smoke tests and a gitleaks secret scan.
 ## Operations in one minute
 
 - One VPS, shared with other projects. RADAR is the compose project `radar` in `/opt/radar`,
-  published only on `127.0.0.1:3100`; one nginx vhost (`/etc/nginx/sites-available/radar`)
-  serves `https://radar.187-127-129-127.sslip.io`.
+  published only on `127.0.0.1:3100`; one nginx vhost (`/etc/nginx/sites-available/radar`,
+  enabled as `sites-enabled/zz-radar`) serves `https://radar.187-127-129-127.sslip.io`. Images
+  are built in RADAR's own capped buildx builder (`radar-builder`: 3 GiB, no swap, 1 CPU).
 - `sudo ops/install.sh` installs or repairs everything and is safe to re-run.
 - Pushing to `main` deploys within ~5 minutes (`radar-autodeploy.timer`); a revision that fails
   its health check is rolled back automatically and raises a critical alert.
 - Every night at 21:00 UTC the `backup` container force-pushes an encrypted dump to `db-backups`;
   on day 1 of each month it restores that dump into a scratch database and compares every table.
-- `GET /api/health` → `{"ok":true,"db":"up","lastRunAgeHours":…,"version":"<commit>"}`; nothing
-  else is public.
+- `GET /api/health` → `{"ok":true,"db":"up"}` from the internet; the full
+  `{"ok":true,"db":"up","lastRunAgeHours":…,"version":"<commit>"}` only for loopback probes on the
+  VPS (no `X-Real-IP`). Nothing else is public.
 
 ## Security
 

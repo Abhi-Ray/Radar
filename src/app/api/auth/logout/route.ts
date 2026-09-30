@@ -8,6 +8,7 @@ import { audit } from '@/lib/audit';
 import { clearedSessionCookieOptions } from '@/lib/auth/cookie';
 import { SESSION_COOKIE, verifySessionToken } from '@/lib/auth/jwt';
 import { clientIp } from '@/lib/auth/request';
+import { evictSessionGateBySid } from '@/lib/auth/session-gate';
 import { revokeSessionBySid } from '@/lib/auth/session-store';
 import { getDb } from '@/lib/db';
 import { appOrigin, isAllowedOrigin } from '@/lib/security/origin';
@@ -25,6 +26,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const id = await revokeSessionBySid(tx, decoded.sid, 'logout');
       if (id !== null) await audit(tx, { action: 'auth.logout', entityType: 'session', entityId: id, actor: 'admin', ip });
     });
+    evictSessionGateBySid(decoded.sid);
   }
   const wantsHtml = (request.headers.get('accept') ?? '').includes('text/html');
   const response = wantsHtml

@@ -59,6 +59,7 @@ import {
   type Column,
   type RadarBlip,
 } from "@/components/ui";
+import { requireSession } from "@/lib/auth/session";
 import { FormDemo, ToastDemo } from "./demos";
 import { SPECIMEN_AI_CALLS, SPECIMEN_RECEIPT, SPECIMEN_RUNS, specimenJobs, specimenLog, type SpecimenJob } from "./specimens";
 
@@ -212,6 +213,7 @@ function Label({ children }: { children: ReactNode }) {
 }
 
 export default async function StyleguidePage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  await requireSession();
   const sp = await searchParams;
   const now = new Date();
   const jobs = specimenJobs(now);

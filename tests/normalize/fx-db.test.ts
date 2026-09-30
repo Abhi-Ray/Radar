@@ -23,7 +23,8 @@ let body = XML('2026-09-28');
 let status = 200;
 let hits = 0;
 
-// The ECB host is mapped to a local test server; the policy allows loopback for this test only.
+// The ECB host is mapped to a local test server; the policy (and the port list) allow loopback on
+// the test server's random port for this test only.
 const resolver = async () => [{ address: '127.0.0.1', family: 4 as const }];
 const addressPolicy = () => null;
 const url = () => `http://ecb.test:${port}/stats/eurofxref/eurofxref-daily.xml`;
@@ -60,7 +61,7 @@ describe('ECB rates cache', () => {
 
   it('refreshes through the safe fetcher and caches with the ECB date, without an audit row', async () => {
     const now = new Date('2026-09-29T08:00:00Z');
-    const saved = await refreshFxRates(t.db, { resolver, addressPolicy, url: url(), now });
+    const saved = await refreshFxRates(t.db, { resolver, addressPolicy, allowedPorts: [port], url: url(), now });
     expect(hits).toBe(1);
     expect(saved).toMatchObject({ date: '2026-09-28', base: 'EUR', fetchedAt: now.toISOString() });
     expect(saved.rates.USD).toBe(1.1702);
@@ -84,32 +85,32 @@ describe('ECB rates cache', () => {
   });
 
   it('fails on HTTP errors and bad documents without touching the cache', async () => {
-    await refreshFxRates(t.db, { resolver, addressPolicy, url: url() });
+    await refreshFxRates(t.db, { resolver, addressPolicy, allowedPorts: [port], url: url() });
     status = 503;
-    await expect(refreshFxRates(t.db, { resolver, addressPolicy, url: url() })).rejects.toThrow(/503/);
+    await expect(refreshFxRates(t.db, { resolver, addressPolicy, allowedPorts: [port], url: url() })).rejects.toThrow(/503/);
     status = 200;
     body = '<html>maintenance</html>';
-    await expect(refreshFxRates(t.db, { resolver, addressPolicy, url: url() })).rejects.toThrow();
+    await expect(refreshFxRates(t.db, { resolver, addressPolicy, allowedPorts: [port], url: url() })).rejects.toThrow();
     expect((await getSetting(t.db, 'fx_rates'))?.rates.USD).toBe(1.1702);
   });
 
   it('never replaces newer rates with older ones', async () => {
-    await refreshFxRates(t.db, { resolver, addressPolicy, url: url() });
+    await refreshFxRates(t.db, { resolver, addressPolicy, allowedPorts: [port], url: url() });
     body = XML('2026-09-20', '1.05');
-    const kept = await refreshFxRates(t.db, { resolver, addressPolicy, url: url() });
+    const kept = await refreshFxRates(t.db, { resolver, addressPolicy, allowedPorts: [port], url: url() });
     expect(kept.date).toBe('2026-09-28');
     expect((await getSetting(t.db, 'fx_rates'))?.rates.USD).toBe(1.1702);
   });
 
   it('a lagging answer still counts as a check, so the next run does not fetch again', async () => {
-    await refreshFxRates(t.db, { resolver, addressPolicy, url: url(), now: new Date('2026-09-29T08:00:00Z') });
+    await refreshFxRates(t.db, { resolver, addressPolicy, allowedPorts: [port], url: url(), now: new Date('2026-09-29T08:00:00Z') });
     body = XML('2026-09-20', '1.05');
     const checkedAt = new Date('2026-09-30T08:00:00Z');
-    const lag = await ensureFxRates(t.db, { resolver, addressPolicy, url: url(), now: checkedAt });
+    const lag = await ensureFxRates(t.db, { resolver, addressPolicy, allowedPorts: [port], url: url(), now: checkedAt });
     expect(lag.setting).toMatchObject({ date: '2026-09-28', fetchedAt: checkedAt.toISOString() });
     expect(lag.setting?.rates.USD).toBe(1.1702);
     expect(hits).toBe(2);
-    const next = await ensureFxRates(t.db, { resolver, addressPolicy, url: url(), now: new Date('2026-09-30T09:00:00Z') });
+    const next = await ensureFxRates(t.db, { resolver, addressPolicy, allowedPorts: [port], url: url(), now: new Date('2026-09-30T09:00:00Z') });
     expect(next.refreshed).toBe(false);
     expect(hits).toBe(2);
     const audits = await t.db.select().from(auditLog).where(eq(auditLog.entityId, 'fx_rates'));
@@ -118,16 +119,16 @@ describe('ECB rates cache', () => {
 
   it('ensureFxRates refreshes only when stale and falls back to the cache on failure', async () => {
     const t0 = new Date('2026-09-29T08:00:00Z');
-    const first = await ensureFxRates(t.db, { resolver, addressPolicy, url: url(), now: t0 });
+    const first = await ensureFxRates(t.db, { resolver, addressPolicy, allowedPorts: [port], url: url(), now: t0 });
     expect(first).toMatchObject({ refreshed: true, error: null, outdated: false });
     expect(hits).toBe(1);
 
-    const again = await ensureFxRates(t.db, { resolver, addressPolicy, url: url(), now: new Date('2026-09-29T12:00:00Z') });
+    const again = await ensureFxRates(t.db, { resolver, addressPolicy, allowedPorts: [port], url: url(), now: new Date('2026-09-29T12:00:00Z') });
     expect(again.refreshed).toBe(false);
     expect(hits).toBe(1);
 
     status = 500;
-    const later = await ensureFxRates(t.db, { resolver, addressPolicy, url: url(), now: new Date('2026-10-06T08:00:00Z') });
+    const later = await ensureFxRates(t.db, { resolver, addressPolicy, allowedPorts: [port], url: url(), now: new Date('2026-10-06T08:00:00Z') });
     expect(later.refreshed).toBe(false);
     expect(later.error).toMatch(/500/);
     expect(later.setting?.date).toBe('2026-09-28');
@@ -135,14 +136,14 @@ describe('ECB rates cache', () => {
 
     status = 200;
     body = XML('2026-09-29', '1.18');
-    const forced = await ensureFxRates(t.db, { resolver, addressPolicy, url: url(), now: new Date('2026-09-29T13:00:00Z'), force: true });
+    const forced = await ensureFxRates(t.db, { resolver, addressPolicy, allowedPorts: [port], url: url(), now: new Date('2026-09-29T13:00:00Z'), force: true });
     expect(forced.refreshed).toBe(true);
     expect(forced.setting?.rates.USD).toBe(1.18);
   });
 
   it('ensureFxRates without any cache and a failing network returns null', async () => {
     status = 502;
-    const r = await ensureFxRates(t.db, { resolver, addressPolicy, url: url() });
+    const r = await ensureFxRates(t.db, { resolver, addressPolicy, allowedPorts: [port], url: url() });
     expect(r).toMatchObject({ setting: null, refreshed: false });
     expect((await getFxTable(t.db)).date).toBeNull();
   });

@@ -6,12 +6,14 @@ import { JobCard } from "@/components/jobs/JobCard";
 import { ActiveChips, HiddenPanel, NoMatches, SortBar, revealEverythingHref } from "@/components/jobs/ListControls";
 import { JOBS_PATH, activeFilterCount, canonicalJobsRedirect, filtersToParams, parseJobFilters } from "@/components/jobs/filters";
 import { AsOf, Button, DrawerButton, EmptyState, Pagination, SectionHeader, formatNumber } from "@/components/ui";
+import { requireSession } from "@/lib/auth/session";
 import { startOfTodayInTz, appTz } from "@/lib/time";
 import { listJobs } from "@/lib/queries/jobs";
 
 export const metadata: Metadata = { title: "Jobs" };
 
 export default async function JobsPage({ searchParams }: PageProps<"/jobs">) {
+  await requireSession();
   const sp = await searchParams;
   const canonical = canonicalJobsRedirect(sp);
   if (canonical) redirect(canonical);

@@ -6,17 +6,19 @@
 #
 #   Source (default): the latest backup on BACKUP_BRANCH (db-backups). Uses the deploy key when
 #   it works, otherwise reads the public repo anonymously over https.
-#   --file PATH       a folder holding LATEST.json + radar-db.sql.gz.enc[.part-*] (e.g. a manual
-#                     download of the branch), or a single radar-db.sql.gz.enc (then --sha256 is
-#                     strongly recommended; row counts cannot be checked)
+#   --file PATH       a folder holding LATEST.json + LATEST.meta.enc + radar-db.sql.gz.enc[.part-*]
+#                     (e.g. a manual download of the branch), or a single radar-db.sql.gz.enc (then
+#                     --sha256 is strongly recommended; row counts cannot be checked)
 #   --target DB       database to restore into (default: MYSQL_DATABASE, the LIVE database)
 #   --yes-i-know      required when the target is the live database: it is DROPPED and
 #                     re-created. Stop app + worker first (docker compose stop app worker).
 #   --no-safety-dump  skip the encrypted copy of the current live DB taken before it is dropped
-#   --skip-count-check  do not compare restored row counts with LATEST.json
+#   --skip-count-check  do not compare restored row counts with the backup metadata (also lets a
+#                     backup whose LATEST.meta.enc is missing or unreadable be restored)
 #
-# Steps: fetch → verify sizes + sha256 → decrypt/gunzip test → (safety dump) → DROP/CREATE →
-# import → compare row counts with LATEST.json. Exit 0 only when everything matched.
+# Steps: fetch → verify sizes + sha256 → decrypt metadata + gunzip test → (safety dump) →
+# DROP/CREATE → import → compare row counts with the metadata (LATEST.meta.enc, encrypted with
+# BACKUP_PASSPHRASE). Exit 0 only when everything matched.
 set -Eeuo pipefail
 umask 077
 
@@ -97,12 +99,13 @@ rb_wait_for_db 300
 # ---------------------------------------------------------------------------------------------
 # 1. obtain + verify the backup
 ENC="$RB_TMP/backup.enc"
+SRC=
 META=
 if [ -n "$FILE" ]; then
   if [ -d "$FILE" ]; then
     rb_info "using backup folder $FILE"
     rb_assemble_backup "$FILE" "$ENC"
-    META="$FILE/LATEST.json"
+    SRC=$FILE
   elif [ -f "$FILE" ]; then
     rb_info "using single backup file $FILE"
     cp "$FILE" "$ENC"
@@ -119,12 +122,21 @@ else
   rb_info "fetching the latest backup from branch $BACKUP_BRANCH"
   rb_fetch_backup "$RB_TMP/src" || rb_die "could not fetch branch $BACKUP_BRANCH: $(tail -n 1 "$RB_TMP/clone.err" 2>/dev/null)"
   rb_assemble_backup "$RB_TMP/src" "$ENC"
-  META="$RB_TMP/src/LATEST.json"
+  SRC="$RB_TMP/src"
 fi
-if [ -n "$META" ]; then
-  cp "$META" "$RB_TMP/LATEST.json"
-  META="$RB_TMP/LATEST.json"
-  rb_info "backup created $(rb_json_get "$META" '$.createdAt'), $(rb_json_get "$META" '$.sizeBytes') bytes, $(rb_json_get "$META" '$.totalRows') rows"
+if [ -n "$SRC" ]; then
+  # Plain LATEST.json (verified above: sizes + sha256) and the private metadata next to it.
+  cp "$SRC/LATEST.json" "$RB_TMP/LATEST.json"
+  PUBMETA="$RB_TMP/LATEST.json"
+  META="$RB_TMP/meta.json"
+  if rb_backup_meta "$SRC" "$META"; then
+    rb_info "backup created $(rb_json_get "$PUBMETA" '$.createdAt'), $(rb_json_get "$PUBMETA" '$.sizeBytes') bytes, $(rb_json_get "$META" '$.totalRows') rows"
+  elif [ "$COUNT_CHECK" = 1 ]; then
+    rb_die "cannot read the backup metadata: $RB_META_ERROR (row counts cannot be checked; to restore anyway add --skip-count-check)"
+  else
+    rb_warn "cannot read the backup metadata ($RB_META_ERROR); restoring without it (--skip-count-check)"
+    META=
+  fi
 fi
 rb_verify_encrypted_dump "$ENC"
 rb_info "backup verified (sha256, decryption, gzip, dump completion marker)"
@@ -165,9 +177,9 @@ rb_import_dump "$ENC" "$TARGET"
 # 4. verify
 if [ -n "$META" ] && [ "$COUNT_CHECK" = 1 ]; then
   if ! rb_compare_counts "$TARGET" "$META" "$RB_TMP/mismatches"; then
-    rb_die "restored into '$TARGET' but row counts differ from LATEST.json: $(head -n 5 "$RB_TMP/mismatches" | tr '\n' ';')"
+    rb_die "restored into '$TARGET' but row counts differ from the backup metadata: $(head -n 5 "$RB_TMP/mismatches" | tr '\n' ';')"
   fi
-  rb_info "row counts match LATEST.json for all $RB_TABLES_COMPARED tables"
+  rb_info "row counts match the backup metadata for all $RB_TABLES_COMPARED tables"
 fi
 # ---------------------------------------------------------------------------------------------
 # 5. The dump was taken while its own backup_runs row still said 'running'. That backup did
@@ -177,10 +189,10 @@ if [ -n "$META" ] && rb_table_exists "$TARGET" backup_runs; then
   run_id=$(rb_json_get "$META" '$.runId' 2>/dev/null || true)
   if rb_is_uint "$run_id"; then
     printf "UPDATE backup_runs SET status = 'ok', finished_at = STR_TO_DATE(%s, %s), size_bytes = %s, sha256 = %s, details_json = JSON_OBJECT('format', %s, 'createdAt', %s, 'finishedBy', 'radar-restore') WHERE id = %s AND kind = 'backup' AND status = 'running';\n" \
-      "$(rb_sql_str "$(rb_json_get "$META" '$.createdAt')")" "$(rb_sql_str '%Y-%m-%dT%H:%i:%sZ')" \
-      "$(rb_json_get "$META" '$.sizeBytes' | grep -E '^[0-9]+$' || printf NULL)" \
-      "$(rb_sql_str "$(rb_json_get "$META" '$.sha256')")" "$(rb_sql_str "$(rb_json_get "$META" '$.format')")" \
-      "$(rb_sql_str "$(rb_json_get "$META" '$.createdAt')")" "$run_id" |
+      "$(rb_sql_str "$(rb_json_get "$PUBMETA" '$.createdAt')")" "$(rb_sql_str '%Y-%m-%dT%H:%i:%sZ')" \
+      "$(rb_json_get "$PUBMETA" '$.sizeBytes' | grep -E '^[0-9]+$' || printf NULL)" \
+      "$(rb_sql_str "$(rb_json_get "$PUBMETA" '$.sha256')")" "$(rb_sql_str "$(rb_json_get "$PUBMETA" '$.format')")" \
+      "$(rb_sql_str "$(rb_json_get "$PUBMETA" '$.createdAt')")" "$run_id" |
       rb_mysql "$TARGET" || rb_warn "could not finish backup_runs row $run_id in the restored database"
   fi
 fi

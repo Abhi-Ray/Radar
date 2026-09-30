@@ -5,7 +5,9 @@
 #   worker  `worker` : waits for migrations, then runs the scheduler (dist/worker.mjs)
 # plus one-off modes (cli, seed, eval, migrate, hash-password) — see ops/docker/entrypoint.sh.
 #
-# Build:  docker compose build            (GIT_SHA is passed by ops/deploy.sh / ops/autodeploy.sh)
+# Build:  docker compose build --builder radar-builder   (ops/lib/common.sh radar_compose_build:
+#         RADAR's own buildx builder, capped at 3 GiB RAM / no swap / 1 CPU; GIT_SHA is passed by
+#         ops/deploy.sh / ops/autodeploy.sh). CI builds it with plain `docker build`.
 
 ARG NODE_IMAGE=node:22-bookworm-slim
 
@@ -25,9 +27,12 @@ RUN --mount=type=cache,target=/root/.npm,sharing=locked \
 # build: Next.js standalone output + esbuild bundles in dist/.
 FROM ${NODE_IMAGE} AS build
 WORKDIR /app
-# The VPS has no swap: cap the V8 heap so `next build` fails cleanly instead of being OOM-killed
-# while the other sites on the box keep running.
-ARG BUILD_MAX_OLD_SPACE_MB=2560
+# The V8 heap cap is NOT what protects the other services on the VPS: `next build` uses Turbopack,
+# whose native memory it does not bound, and Next's worker processes each get their own heap.
+# The real ceiling is the cgroup of the radar-builder BuildKit container (3 GiB, no swap, 1 CPU;
+# docs/DEPLOY.md §4). The cap stays below that so a JS-heavy step fails with a clear "heap out of
+# memory" instead of an OOM kill of the build container.
+ARG BUILD_MAX_OLD_SPACE_MB=2048
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .

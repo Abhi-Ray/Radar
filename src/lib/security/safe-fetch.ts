@@ -9,17 +9,25 @@
  * - The socket connects to the exact address that was validated (pinned via a custom `lookup`),
  *   so a DNS-rebinding answer between check and connect cannot redirect the request. TLS still
  *   verifies the certificate against the hostname (SNI unchanged).
+ * - Addresses listed in SAFE_FETCH_DENY_IPS (the VPS's own public IPs, written by ops/install.sh)
+ *   are refused too: they are "public", but reach the host's nginx and its other vhosts.
+ * - Only ports 80 and 443 (explicit or implied by the scheme), on the first URL and every hop.
  * - Redirects are followed manually (max 5) and every hop is re-validated the same way.
- * - One overall deadline (default 15 s) and a hard body limit (default 5 MiB, also enforced on the
- *   decompressed size, so compression bombs fail fast).
+ * - One overall deadline (default 15 s) that also covers DNS (c-ares resolver, cancelled on
+ *   timeout/abort), and a hard body limit (default 5 MiB, also enforced on the decompressed size,
+ *   so compression bombs fail fast).
  */
-import { lookup as dnsLookup } from 'node:dns/promises';
+import { Resolver as DnsResolver } from 'node:dns/promises';
 import http from 'node:http';
 import https from 'node:https';
 import { isIP, type LookupFunction } from 'node:net';
 import type { Readable } from 'node:stream';
 import zlib from 'node:zlib';
 import { BOT_USER_AGENT } from '../contracts/connectors';
+import { getEnvVar } from '../env';
+import { canonicalIp, ipv4ToString, parseIPv4, parseIPv6 } from './ip';
+
+export { canonicalIp, parseIPv4, parseIPv6 } from './ip';
 
 // ---- IP classification ---------------------------------------------------------------------
 
@@ -46,62 +54,6 @@ export class SafeFetchError extends Error {
     this.code = code;
     this.url = url;
   }
-}
-
-/** Parses dotted-quad IPv4 into a 32-bit unsigned number (null when not a plain IPv4 literal). */
-export function parseIPv4(ip: string): number | null {
-  const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(ip);
-  if (!m) return null;
-  let n = 0;
-  for (let i = 1; i <= 4; i++) {
-    const part = Number(m[i]);
-    if (part > 255 || (m[i].length > 1 && m[i].startsWith('0'))) return null;
-    n = n * 256 + part;
-  }
-  return n >>> 0;
-}
-
-/** Parses an IPv6 literal (optionally with embedded IPv4 / zone id) into 8 16-bit groups. */
-export function parseIPv6(input: string): number[] | null {
-  let ip = input.trim();
-  if (ip.startsWith('[') && ip.endsWith(']')) ip = ip.slice(1, -1);
-  const zone = ip.indexOf('%');
-  if (zone !== -1) ip = ip.slice(0, zone);
-  if (!ip.includes(':')) return null;
-
-  let tail: number[] = [];
-  const lastColon = ip.lastIndexOf(':');
-  const maybeV4 = ip.slice(lastColon + 1);
-  if (maybeV4.includes('.')) {
-    const v4 = parseIPv4(maybeV4);
-    if (v4 === null) return null;
-    tail = [(v4 >>> 16) & 0xffff, v4 & 0xffff];
-    // Drop the IPv4 part; keep the separating ':' only when it belongs to a '::'.
-    const prefix = ip.slice(0, lastColon + 1);
-    ip = prefix.endsWith('::') ? prefix : prefix.slice(0, -1);
-  }
-
-  const halves = ip.split('::');
-  if (halves.length > 2) return null;
-  const parseGroups = (s: string): number[] | null => {
-    if (s === '') return [];
-    const out: number[] = [];
-    for (const g of s.split(':')) {
-      if (!/^[0-9a-fA-F]{1,4}$/.test(g)) return null;
-      out.push(Number.parseInt(g, 16));
-    }
-    return out;
-  };
-  const head = parseGroups(halves[0]);
-  const rest = halves.length === 2 ? parseGroups(halves[1]) : [];
-  if (!head || !rest) return null;
-  const known = head.length + rest.length + tail.length;
-  if (halves.length === 2) {
-    if (known > 7) return null;
-    return [...head, ...new Array<number>(8 - known).fill(0), ...rest, ...tail];
-  }
-  if (known !== 8) return null;
-  return [...head, ...tail];
 }
 
 interface V4Range {
@@ -270,14 +222,103 @@ export interface ResolvedAddress {
   family: 4 | 6;
 }
 
-export type Resolver = (hostname: string) => Promise<ResolvedAddress[]>;
+/** Resolves a hostname. `signal` fires on the fetch's deadline or the caller's abort. */
+export type Resolver = (hostname: string, signal?: AbortSignal) => Promise<ResolvedAddress[]>;
 
-export const systemResolver: Resolver = async (hostname) => {
-  const res = await dnsLookup(hostname, { all: true, verbatim: true });
-  return res.map((r) => ({ address: r.address, family: r.family === 6 ? 6 : 4 }));
+/** Per-query timeout and attempts of the c-ares resolver (the fetch deadline still caps the total). */
+export const DNS_TIMEOUT_MS = 3_000;
+export const DNS_TRIES = 2;
+
+/**
+ * A + AAAA via c-ares (`dns.promises.Resolver`), not getaddrinfo: a c-ares query can be cancelled,
+ * whereas a hung `dns.lookup` keeps a libuv thread-pool thread (shared with scrypt) busy with no way
+ * to stop it. One resolver per call, so `cancel()` only affects this request.
+ */
+export const systemResolver: Resolver = async (hostname, signal) => {
+  if (signal?.aborted) throw signal.reason;
+  const resolver = new DnsResolver({ timeout: DNS_TIMEOUT_MS, tries: DNS_TRIES });
+  const cancel = () => resolver.cancel();
+  signal?.addEventListener('abort', cancel, { once: true });
+  try {
+    const [a, aaaa] = await Promise.allSettled([resolver.resolve4(hostname), resolver.resolve6(hostname)]);
+    const out: ResolvedAddress[] = [];
+    if (a.status === 'fulfilled') for (const address of a.value) out.push({ address, family: 4 });
+    if (aaaa.status === 'fulfilled') for (const address of aaaa.value) out.push({ address, family: 6 });
+    if (!out.length) {
+      const failed = [a, aaaa].find((r): r is PromiseRejectedResult => r.status === 'rejected');
+      if (failed) throw failed.reason;
+    }
+    return out;
+  } finally {
+    signal?.removeEventListener('abort', cancel);
+  }
 };
 
+/** Settles like `p`, or rejects with the signal's reason as soon as it aborts (listener cleaned up). */
+function untilAborted<T>(p: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) return p;
+  if (signal.aborted) return Promise.reject(signal.reason);
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = () => reject(signal.reason);
+    signal.addEventListener('abort', onAbort, { once: true });
+    p.then(
+      (v) => {
+        signal.removeEventListener('abort', onAbort);
+        resolve(v);
+      },
+      (e) => {
+        signal.removeEventListener('abort', onAbort);
+        reject(e);
+      },
+    );
+  });
+}
+
 export type AddressPolicy = (ip: string) => string | null;
+
+// ---- Deny list (SAFE_FETCH_DENY_IPS) -------------------------------------------------------
+
+let denyMemo: { list: readonly string[]; set: ReadonlySet<string> } | null = null;
+
+/** The configured deny list (canonical forms, see env.ts); empty when unset. */
+function deniedAddresses(): ReadonlySet<string> {
+  const list = getEnvVar('SAFE_FETCH_DENY_IPS');
+  if (denyMemo?.list !== list) denyMemo = { list, set: new Set(list) };
+  return denyMemo.set;
+}
+
+/** IPv4 addresses an IPv6 literal is translated to on the way (NAT64 well-known prefix, 6to4). */
+function embeddedIPv4s(ip: string): string[] {
+  const g = parseIPv6(ip);
+  if (!g) return [];
+  const out: string[] = [];
+  if (prefixMatch(g, [0x64, 0xff9b, 0, 0, 0, 0], 96)) out.push(ipv4ToString(embeddedV4(g[6], g[7])));
+  if (prefixMatch(g, [0x2002], 16)) out.push(ipv4ToString(embeddedV4(g[1], g[2])));
+  return out;
+}
+
+/** Why `ip` is on the deny list (null = not listed). */
+export function denyListReason(ip: string, deny: ReadonlySet<string> = deniedAddresses()): string | null {
+  if (deny.size === 0) return null;
+  const c = canonicalIp(ip.startsWith('[') && ip.endsWith(']') ? ip.slice(1, -1) : ip);
+  if (c === null) return null;
+  if (deny.has(c) || embeddedIPv4s(c).some((v) => deny.has(v))) return 'denied by SAFE_FETCH_DENY_IPS';
+  return null;
+}
+
+/** The production policy: public addresses only, and none of SAFE_FETCH_DENY_IPS. */
+export const defaultAddressPolicy: AddressPolicy = (ip) => ipBlockReason(ip) ?? denyListReason(ip);
+
+// ---- Ports ---------------------------------------------------------------------------------
+
+/** Ports safeFetch may contact unless a caller (tests) injects others. */
+export const DEFAULT_ALLOWED_PORTS: readonly number[] = [80, 443];
+
+/** The port a URL connects to (explicit, or implied by the scheme). */
+export function effectivePort(url: URL): number {
+  if (url.port) return Number(url.port);
+  return url.protocol === 'https:' ? 443 : 80;
+}
 
 /**
  * Resolves `url`'s host and returns the address to connect to. Every resolved address must pass
@@ -286,7 +327,8 @@ export type AddressPolicy = (ip: string) => string | null;
 export async function resolvePublicAddress(
   url: URL,
   resolver: Resolver = systemResolver,
-  policy: AddressPolicy = ipBlockReason,
+  policy: AddressPolicy = defaultAddressPolicy,
+  signal?: AbortSignal,
 ): Promise<ResolvedAddress> {
   const host = bareHost(url);
   const literal = isIP(host);
@@ -297,8 +339,12 @@ export async function resolvePublicAddress(
   }
   let addrs: ResolvedAddress[];
   try {
-    addrs = await resolver(host);
+    // The resolver gets the signal (to cancel its queries); the race makes sure even a resolver
+    // that ignores it cannot outlive the deadline.
+    addrs = await untilAborted(resolver(host, signal), signal);
   } catch (err) {
+    // Deadline / caller abort: let the fetch report timeout / aborted, not a DNS failure.
+    if (signal?.aborted) throw err;
     throw new SafeFetchError('dns_error', `DNS lookup failed for ${host}`, url.href, { cause: err });
   }
   if (!addrs.length) throw new SafeFetchError('dns_error', `no addresses for ${host}`, url.href);
@@ -354,8 +400,13 @@ export interface SafeFetchResponse {
 
 export interface SafeFetchDeps {
   resolver?: Resolver;
-  /** Returns a reason when an address must not be contacted. Default: public addresses only. */
+  /**
+   * Returns a reason when an address must not be contacted. Default: public addresses only, minus
+   * SAFE_FETCH_DENY_IPS.
+   */
   addressPolicy?: AddressPolicy;
+  /** Ports that may be contacted, on the first URL and on every redirect hop. Default 80 + 443. */
+  allowedPorts?: readonly number[];
 }
 
 function pinnedLookup(addr: ResolvedAddress): LookupFunction {
@@ -487,7 +538,8 @@ function mapError(err: unknown, url: string, signal: AbortSignal, userSignal?: A
  */
 export function createSafeFetch(deps: SafeFetchDeps = {}) {
   const resolver = deps.resolver ?? systemResolver;
-  const policy = deps.addressPolicy ?? ipBlockReason;
+  const policy = deps.addressPolicy ?? defaultAddressPolicy;
+  const allowedPorts = new Set(deps.allowedPorts ?? DEFAULT_ALLOWED_PORTS);
 
   return async function safeFetchImpl(input: string | URL, options: SafeFetchOptions = {}): Promise<SafeFetchResponse> {
     const method = options.method ?? 'GET';
@@ -516,7 +568,10 @@ export function createSafeFetch(deps: SafeFetchDeps = {}) {
       let addr: ResolvedAddress;
       let res: HopResult;
       try {
-        addr = await resolvePublicAddress(current, resolver, policy);
+        // The port is checked first: a refused URL never even triggers a DNS lookup.
+        const port = effectivePort(current);
+        if (!allowedPorts.has(port)) throw new SafeFetchError('blocked_host', `port ${port} is not allowed`, current.href);
+        addr = await resolvePublicAddress(current, resolver, policy, signal);
         // Redirect bodies are never read (unless redirects are disabled and the caller wants it).
         res = await requestOnce(current, addr, method, baseHeaders, maxBytes, signal, (status) => {
           return !REDIRECT_STATUSES.has(status) || maxRedirects === 0;
@@ -561,5 +616,5 @@ export function createSafeFetch(deps: SafeFetchDeps = {}) {
   };
 }
 
-/** SSRF-safe fetch (public addresses only). See the module comment for guarantees. */
+/** SSRF-safe fetch (public addresses on ports 80/443 only). See the module comment for guarantees. */
 export const safeFetch = createSafeFetch();

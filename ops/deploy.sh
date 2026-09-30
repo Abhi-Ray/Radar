@@ -14,7 +14,9 @@
 #
 # Always redeploys, even when the commit did not change (picks up .env edits). Shares
 # /var/lib/radar/deploy.lock with ops/install.sh and ops/autodeploy.sh, so they never overlap.
-# Exit 0 = live, 1 = failed (previous revision restored), 3 = failed and rollback failed.
+# Builds with RADAR's capped buildx builder (radar-builder) and only when MemAvailable >= 3.5 GiB.
+# Exit 0 = live, 1 = failed (previous revision restored), 3 = failed and rollback failed,
+# 4 = not started: too little free memory for a build (nothing changed; try again later).
 set -Eeuo pipefail
 umask 022
 
@@ -76,6 +78,7 @@ fi
 
 radar_info "current ${prev:0:12} → target ${target:0:12}"
 cd "$RADAR_DIR"
+radar_ensure_builder || radar_warn "could not create the buildx builder $RADAR_BUILDER"
 rc=0
 radar_deploy_rev "$target" "$prev" || rc=$?
 if [ "$rc" = 0 ]; then

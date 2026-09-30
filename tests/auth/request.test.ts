@@ -52,14 +52,57 @@ describe('safeNextPath', () => {
     }
     expect(safeNextPath('//evil', '')).toBe('');
   });
+
+  // AUTH-1: URL parsing collapses dot segments, so the NORMALISED output must be re-checked.
+  const table: Array<[input: string, expected: string]> = [
+    ['/.//evil.com', '/'],
+    ['/..//evil.com', '/'],
+    ['/%2e//evil.com', '/'],
+    ['/%2e%2e//evil.com', '/'],
+    ['/%2E%2E//evil.com', '/'],
+    ['/jobs/..//evil.com', '/'],
+    ['/jobs/.%2e//evil.com', '/'],
+    ['/jobs/%2e%2e/%2e%2e//evil.com', '/'],
+    ['/\\evil.com', '/'],
+    ['/\t/evil.com', '/'],
+    ['/\n/evil.com', '/'],
+    ['https://evil.com', '/'],
+    ['//evil.com', '/'],
+    ['///evil.com', '/'],
+    ['javascript:alert(1)', '/'],
+    ['/jobs/../login', '/'],
+    ['/jobs/../api/export', '/'],
+    // Percent-encoded tab/backslash/slash tricks are refused outright (a later decode must not
+    // turn them into '/\\evil.com' or '//evil.com').
+    ['/%09/evil.com', '/'],
+    ['/%5c/evil.com', '/'],
+    ['/%5C/evil.com', '/'],
+    ['/%2f/evil.com', '/'],
+    ['/%2F%2Fevil.com', '/'],
+    ['/jobs/%0d%0aSet-Cookie:x', '/'],
+    ['/%7f/evil.com', '/'],
+    // Valid targets.
+    ['/jobs?x=1#y', '/jobs?x=1#y'],
+    ['/', '/'],
+    ['/./jobs', '/jobs'],
+    ['/jobs?q=a%2Fb%5Cc', '/jobs?q=a%2Fb%5Cc'],
+    ['/companies/a%2Fb', '/companies/a%2Fb'],
+  ];
+  it.each(table)('safeNextPath(%j) -> %j', (input, expected) => {
+    const out = safeNextPath(input);
+    expect(out).toBe(expected);
+    // Whatever comes out must resolve to our own origin in a browser.
+    expect(out.startsWith('//') || out.startsWith('/\\')).toBe(false);
+    expect(new URL(out, 'https://radar.example.test/login').origin).toBe('https://radar.example.test');
+  });
 });
 
 describe('public paths', () => {
-  it('only login, health and static metadata are public', () => {
+  it('only the exact /login, health and static metadata are public', () => {
     for (const p of ['/login', '/api/health', '/favicon.ico', '/robots.txt', '/icon.png', '/apple-icon.png', '/_next/static/x.js']) {
       expect(isPublicPath(p)).toBe(true);
     }
-    for (const p of ['/', '/jobs', '/api/auth/logout', '/api/export', '/loginx', '/api/healthz', '/icon/../secret']) {
+    for (const p of ['/', '/jobs', '/api/auth/logout', '/api/export', '/loginx', '/api/healthz', '/icon/../secret', '/login/', '/login/x']) {
       expect(isPublicPath(p)).toBe(false);
     }
     expect(isApiPath('/api/x')).toBe(true);

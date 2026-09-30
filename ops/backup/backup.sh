@@ -7,14 +7,17 @@
 #      (the DB password sits in a temp option file, never on the command line)
 #   2. self-check: decrypt → gunzip → "-- Dump completed" marker; sha256; exact per-table row
 #      counts taken before and after the dump (tables that changed meanwhile are "volatile")
-#   3. publish radar-db.sql.gz.enc (+ .part-* when > 45 MiB) and LATEST.json as ONE orphan
-#      commit, force-pushed to BACKUP_BRANCH (db-backups): yesterday's copy is replaced and the
-#      branch history never grows
+#   3. publish radar-db.sql.gz.enc (+ .part-* when > 45 MiB), LATEST.json (only format, time,
+#      file names, sizes, sha256, cipher) and LATEST.meta.enc (row counts, tables, migrations,
+#      run id — encrypted like the dump) as ONE orphan commit, force-pushed to BACKUP_BRANCH
+#      (db-backups): yesterday's copy is replaced and the branch history never grows
 #   4. record the result in backup_runs; on failure raise a critical `backup_failed` alert
 #      (deduplicated per UTC day) and exit 1
 #
 # Safety: refuses to replace a stored backup holding more than twice as many rows (an empty or
 # wrong database must never overwrite the only off-site copy) unless --allow-shrink is given.
+# The guard fails closed: a stored backup whose metadata cannot be fetched, decrypted or parsed
+# is not replaced either (again unless --allow-shrink).
 #
 # Exit codes: 0 ok, 1 failed (recorded + alerted), 2 usage, 75 another DB job is running.
 set -Eeuo pipefail
@@ -177,17 +180,28 @@ else
 fi
 
 CREATED_AT=$(rb_now_iso)
+# Public: only what is needed to fetch and verify the files.
 {
   printf '{\n'
   printf '  "format": "%s",\n' "$RB_FORMAT"
   printf '  "createdAt": "%s",\n' "$CREATED_AT"
-  printf '  "database": %s,\n' "$(rb_json_str "$MYSQL_DATABASE")"
   printf '  "file": "%s",\n' "$BACKUP_FILE_NAME"
   printf '  "sizeBytes": %s,\n' "$SIZE"
   printf '  "sha256": "%s",\n' "$SHA"
   printf '  "parts": [%s],\n' "$PARTS_JSON"
+  printf '  "encryption": %s\n' "$(rb_json_str "$RB_CIPHER_DESC")"
+  printf '}\n'
+} >"$PUB/LATEST.json"
+[ "$(rb_json_get "$PUB/LATEST.json" '$.format')" = "$RB_FORMAT" ] || rb_die "generated LATEST.json is not valid JSON"
+
+# Private: encrypted with BACKUP_PASSPHRASE into LATEST.meta.enc (sha256 ties it to this dump).
+{
+  printf '{\n'
+  printf '  "format": "%s",\n' "$RB_FORMAT"
+  printf '  "createdAt": "%s",\n' "$CREATED_AT"
+  printf '  "sha256": "%s",\n' "$SHA"
+  printf '  "database": %s,\n' "$(rb_json_str "$MYSQL_DATABASE")"
   printf '  "compression": "gzip -9",\n'
-  printf '  "encryption": %s,\n' "$(rb_json_str "$RB_CIPHER_DESC")"
   printf '  "mysqlVersion": %s,\n' "$(rb_json_str "$MYSQL_VERSION")"
   printf '  "tables": %s,\n' "$TABLES"
   printf '  "totalRows": %s,\n' "$TOTAL"
@@ -197,10 +211,12 @@ CREATED_AT=$(rb_now_iso)
   printf '  "migrationsApplied": %s,\n' "$MIG_COUNT"
   # The backup_runs row of this run is inside the dump as 'running'; radar-restore finishes it.
   printf '  "runId": %s,\n' "$(rb_is_uint "$RUN_ID" && printf '%s' "$RUN_ID" || printf null)"
-  printf '  "tool": "radar-backup/1"\n'
+  printf '  "tool": "radar-backup/2"\n'
   printf '}\n'
-} >"$PUB/LATEST.json"
-[ "$(rb_json_get "$PUB/LATEST.json" '$.format')" = "$RB_FORMAT" ] || rb_die "generated LATEST.json is not valid JSON"
+} >"$RB_TMP/meta.json"
+[ "$(rb_json_get "$RB_TMP/meta.json" '$.totalRows')" = "$TOTAL" ] || rb_die "generated metadata is not valid JSON"
+rb_encrypt_file "$RB_TMP/meta.json" "$PUB/$RB_META_FILE" || rb_die "cannot encrypt the backup metadata"
+rb_backup_meta "$PUB" "$RB_TMP/meta.check.json" || rb_die "self-check of $RB_META_FILE failed: $RB_META_ERROR"
 
 # ---------------------------------------------------------------------------------------------
 STEP=remote-check
@@ -211,17 +227,34 @@ REMOTE_STATE=$?
 set -e
 case "$REMOTE_STATE" in
   0)
-    if rb_clone_backup "$RB_TMP/remote" meta && git -C "$RB_TMP/remote" show HEAD:LATEST.json >"$RB_TMP/remote.json" 2>/dev/null; then
-      REMOTE_TOTAL=$(rb_json_get "$RB_TMP/remote.json" '$.totalRows' 2>/dev/null || true)
-      if rb_is_uint "$REMOTE_TOTAL" && [ "$REMOTE_TOTAL" -gt 100 ] && [ $((TOTAL * 100)) -lt $((REMOTE_TOTAL * BACKUP_SHRINK_GUARD_PCT)) ]; then
-        if [ "$ALLOW_SHRINK" = 1 ]; then
-          rb_warn "replacing a backup of $REMOTE_TOTAL rows with $TOTAL rows (--allow-shrink)"
-        else
-          rb_die "refusing to replace the stored backup ($REMOTE_TOTAL rows) with a much smaller one ($TOTAL rows); if intended run: radar-backup --allow-shrink"
-        fi
+    REMOTE_TOTAL=
+    RB_META_ERROR=
+    mkdir -p "$RB_TMP/remote-meta"
+    if rb_clone_backup "$RB_TMP/remote" meta &&
+      git -C "$RB_TMP/remote" show HEAD:LATEST.json >"$RB_TMP/remote-meta/LATEST.json" 2>/dev/null; then
+      git -C "$RB_TMP/remote" show "HEAD:$RB_META_FILE" >"$RB_TMP/remote-meta/$RB_META_FILE" 2>/dev/null ||
+        rm -f "$RB_TMP/remote-meta/$RB_META_FILE"
+      if rb_backup_meta "$RB_TMP/remote-meta" "$RB_TMP/remote.json"; then
+        REMOTE_TOTAL=$(rb_json_get "$RB_TMP/remote.json" '$.totalRows' 2>/dev/null || true)
+        rb_is_uint "$REMOTE_TOTAL" || RB_META_ERROR='the stored metadata has no totalRows'
       fi
     else
-      rb_warn "could not read the current LATEST.json from $BACKUP_BRANCH; replacing it anyway"
+      RB_META_ERROR="cannot fetch LATEST.json from $BACKUP_BRANCH ($(tail -n 1 "$RB_TMP/clone.err" 2>/dev/null))"
+    fi
+    if ! rb_is_uint "$REMOTE_TOTAL"; then
+      # Fail closed: without the stored row count the shrink guard cannot tell a healthy
+      # database from an empty one, and this push would replace the only off-site copy.
+      if [ "$ALLOW_SHRINK" = 1 ]; then
+        rb_warn "cannot read the stored backup's metadata ($RB_META_ERROR); replacing it anyway (--allow-shrink)"
+      else
+        rb_die "cannot read the stored backup's metadata ($RB_META_ERROR); refusing to replace it. Retry later; if the stored copy is known to be unusable (e.g. BACKUP_PASSPHRASE was rotated) run: radar-backup --allow-shrink"
+      fi
+    elif [ "$REMOTE_TOTAL" -gt 100 ] && [ $((TOTAL * 100)) -lt $((REMOTE_TOTAL * BACKUP_SHRINK_GUARD_PCT)) ]; then
+      if [ "$ALLOW_SHRINK" = 1 ]; then
+        rb_warn "replacing a backup of $REMOTE_TOTAL rows with $TOTAL rows (--allow-shrink)"
+      else
+        rb_die "refusing to replace the stored backup ($REMOTE_TOTAL rows) with a much smaller one ($TOTAL rows); if intended run: radar-backup --allow-shrink"
+      fi
     fi
     ;;
   1) rb_info "branch $BACKUP_BRANCH does not exist yet; creating it" ;;
@@ -257,7 +290,7 @@ printf '{"format":"%s","createdAt":"%s","branch":%s,"commit":"%s","parts":%s,"ta
   "$RB_FORMAT" "$CREATED_AT" "$(rb_json_str "$BACKUP_BRANCH")" "$COMMIT" "$PART_COUNT" "$TABLES" "$TOTAL" "$VOLATILE_JSON" "$LASTMIG_JSON" "$DURATION_MS" \
   >"$RB_TMP/details.json"
 rb_run_finish "$RUN_ID" ok "$SIZE" "$SHA" "$RB_TMP/details.json" ""
-cp "$PUB/LATEST.json" "$RB_STATE_DIR/LATEST.json"
+cp "$PUB/LATEST.json" "$PUB/$RB_META_FILE" "$RB_STATE_DIR/"
 rb_state_set last-backup-ok
 OK=1
 rb_info "backup ok: $SIZE bytes, sha256 $SHA, $TABLES tables, $TOTAL rows, commit ${COMMIT:0:12} on $BACKUP_BRANCH (${DURATION_MS} ms)"

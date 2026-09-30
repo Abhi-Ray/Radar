@@ -8,6 +8,7 @@
  *   for tools that only need one value (e.g. the migrator only needs DATABASE_URL).
  */
 import { z } from 'zod';
+import { canonicalIp } from './security/ip';
 
 const boolFromString = z
   .enum(['true', 'false', '1', '0', 'yes', 'no', 'on', 'off'])
@@ -56,6 +57,27 @@ export const envSchema = z.object({
   HEALTHCHECK_PING_URL: httpUrl.optional(),
   /** Overrides the migrations folder (the Docker image ships them at /app/drizzle). */
   MIGRATIONS_DIR: z.string().optional(),
+  /**
+   * Extra addresses safeFetch must never contact, comma-separated IPv4/IPv6 — ops/install.sh
+   * writes the VPS's own public addresses here. Parsed to canonical forms (see security/ip.ts).
+   */
+  SAFE_FETCH_DENY_IPS: z
+    .string()
+    .optional()
+    .transform((raw, ctx) => {
+      const out: string[] = [];
+      const parts = (raw ?? '').split(',').map((p) => p.trim()).filter(Boolean);
+      for (const [i, part] of parts.entries()) {
+        const ip = canonicalIp(part);
+        if (ip === null) {
+          // Position only: never echo env values.
+          ctx.addIssue({ code: 'custom', message: `entry ${i + 1} is not an IPv4/IPv6 address` });
+          return z.NEVER;
+        }
+        if (!out.includes(ip)) out.push(ip);
+      }
+      return out;
+    }),
 });
 
 export type Env = z.output<typeof envSchema>;

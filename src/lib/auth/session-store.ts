@@ -75,9 +75,14 @@ export async function validateSessionToken(
 ): Promise<ValidatedSession | null> {
   const decoded = await verifySessionToken(token, { secret: opts.secret, now: opts.now });
   if (!decoded) return null;
+  return validateSessionRow(db, decoded, opts.expectedEmail);
+}
+
+/** DB half of `validateSessionToken` for an already verified token. */
+export async function validateSessionRow(db: DbOrTx, decoded: SessionToken, expectedEmail?: string): Promise<ValidatedSession | null> {
   const [row] = await db.select().from(sessions).where(eq(sessions.sidHash, hashSid(decoded.sid))).limit(1);
   if (!row || row.revokedAt) return null;
-  if (opts.expectedEmail !== undefined && !constantTimeEqual(row.email, normalizeEmail(opts.expectedEmail))) return null;
+  if (expectedEmail !== undefined && !constantTimeEqual(row.email, normalizeEmail(expectedEmail))) return null;
   return { row, token: decoded };
 }
 

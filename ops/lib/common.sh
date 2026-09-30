@@ -98,6 +98,55 @@ radar_primary_ipv4() {
   ip -4 route get 1.1.1.1 2>/dev/null | sed -n 's/.* src \([0-9.]*\).*/\1/p' | head -n 1
 }
 
+# 0 when ADDR is a well-formed public unicast address (IPv4, or IPv6 in 2000::/3). Private,
+# CGNAT, loopback, link-local, ULA, documentation, benchmark, multicast and reserved ranges fail.
+radar_is_public_ip() { # addr
+  local a=$1 o o1 o2 o3 o4
+  if printf '%s' "$a" | grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
+    IFS=. read -r o1 o2 o3 o4 <<<"$a"
+    for o in "$o1" "$o2" "$o3" "$o4"; do
+      case "$o" in 0?*) return 1 ;; esac # leading zeros: ambiguous, refuse
+      [ "$o" -le 255 ] || return 1
+    done
+    [ "$o1" -eq 0 ] || [ "$o1" -eq 10 ] || [ "$o1" -eq 127 ] || [ "$o1" -ge 224 ] && return 1
+    [ "$o1" -eq 100 ] && [ "$o2" -ge 64 ] && [ "$o2" -le 127 ] && return 1
+    [ "$o1" -eq 169 ] && [ "$o2" -eq 254 ] && return 1
+    [ "$o1" -eq 172 ] && [ "$o2" -ge 16 ] && [ "$o2" -le 31 ] && return 1
+    [ "$o1" -eq 192 ] && [ "$o2" -eq 168 ] && return 1
+    [ "$o1" -eq 192 ] && [ "$o2" -eq 0 ] && { [ "$o3" -eq 0 ] || [ "$o3" -eq 2 ]; } && return 1
+    [ "$o1" -eq 198 ] && { [ "$o2" -eq 18 ] || [ "$o2" -eq 19 ]; } && return 1
+    [ "$o1" -eq 198 ] && [ "$o2" -eq 51 ] && [ "$o3" -eq 100 ] && return 1
+    [ "$o1" -eq 203 ] && [ "$o2" -eq 0 ] && [ "$o3" -eq 113 ] && return 1
+    return 0
+  fi
+  a=$(printf '%s' "$a" | tr 'A-F' 'a-f')
+  # IPv6: hex groups and colons only (no zone id, no embedded IPv4), global unicast 2000::/3.
+  printf '%s' "$a" | grep -Eq '^[23][0-9a-f]{0,3}(:[0-9a-f]{0,4}){2,7}$' || return 1
+  case "$a" in
+    *:::* | *::*::* | *[0-9a-f]: | 2001:db8:* | 2001:0db8:*) return 1 ;;
+    *::*) ;;
+    *) printf '%s' "$a" | grep -Eq '^[0-9a-f]{1,4}(:[0-9a-f]{1,4}){7}$' || return 1 ;;
+  esac
+  return 0
+}
+
+# This host's own public addresses, comma-separated, detected locally with no external lookup:
+# `ip -o addr show scope global`, falling back to `hostname -I`. Non-public ones (docker bridges,
+# private LANs, …) are left out; safe-fetch refuses those anyway.
+radar_public_ips() {
+  local addrs a out=''
+  addrs=$(ip -o addr show scope global 2>/dev/null |
+    awk '{ for (i = 1; i < NF; i++) if ($i == "inet" || $i == "inet6") { split($(i + 1), p, "/"); print p[1] } }' || true)
+  [ -n "$addrs" ] || addrs=$(hostname -I 2>/dev/null | tr ' ' '\n' || true)
+  for a in $addrs; do
+    a=$(printf '%s' "$a" | tr 'A-F' 'a-f')
+    radar_is_public_ip "$a" || continue
+    case ",$out," in *",$a,"*) continue ;; esac
+    out=${out:+$out,}$a
+  done
+  [ -z "$out" ] || printf '%s\n' "$out"
+}
+
 # Renders an nginx template: substitutes exactly ${DOMAIN}, ${LISTEN_HTTP2}, ${HTTP2_DIRECTIVE}
 # (nginx's own $variables are left alone) and refuses to emit any leftover ${…}.
 radar_render_nginx() { # template domain listen_http2 http2_directive → stdout
@@ -111,6 +160,17 @@ radar_render_nginx() { # template domain listen_http2 http2_directive → stdout
     radar_die "unrendered placeholder left in $1"
   fi
   printf '%s\n' "$out"
+}
+
+# Of the given ports, prints those that no `listen` directive in an `nginx -T` dump marks as
+# default_server (any address: 80, 0.0.0.0:80, [::]:80 …).
+radar_nginx_ports_without_default() { # dump_file port...
+  local dump=$1 port
+  shift
+  for port in "$@"; do
+    grep -Eq "^[[:space:]]*listen[[:space:]]+([^[:space:];#]*:)?$port([[:space:]][^;#]*)?[[:space:]]default_server([[:space:];]|$)" "$dump" ||
+      printf '%s\n' "$port"
+  done
 }
 
 # "1.24.0" "1.25.1" → 0 when $1 >= $2 (numeric, dot-separated, up to three parts).
@@ -150,10 +210,65 @@ radar_wait_healthy() { # timeout_seconds [expected_version]
   done
 }
 
+# ---------------------------------------------------------------------------------------------
+# Image builds on a shared, swapless box (docs/DEPLOY.md §4). `next build` runs Turbopack, whose
+# native memory no V8 heap flag bounds, so builds never use dockerd's built-in, unlimited builder:
+# they run in RADAR's own BuildKit container (buildx, docker-container driver) whose cgroup caps
+# them at RADAR_BUILD_MEMORY (swap included) and one CPU. An out-of-memory build then kills only
+# itself. Compose loads what it builds into dockerd's local image store (`--load` is implied for
+# `docker compose build`); radar_compose_build checks that the new revision really landed there.
+RADAR_BUILDER="${RADAR_BUILDER:-radar-builder}"
+RADAR_BUILD_MEMORY=3g
+# Deploys wait until MemAvailable is at least this (3.5 GiB: the build cap + headroom).
+RADAR_BUILD_MIN_AVAILABLE_KB="${RADAR_BUILD_MIN_AVAILABLE_KB:-3670016}"
+
+radar_ensure_builder() {
+  docker buildx inspect "$RADAR_BUILDER" >/dev/null 2>&1 && return 0
+  radar_info "creating buildx builder $RADAR_BUILDER (docker-container driver; $RADAR_BUILD_MEMORY RAM, no swap, 1 CPU)"
+  docker buildx create --name "$RADAR_BUILDER" --driver docker-container \
+    --driver-opt "memory=$RADAR_BUILD_MEMORY" --driver-opt "memory-swap=$RADAR_BUILD_MEMORY" \
+    --driver-opt cpu-quota=100000 --driver-opt cpu-period=100000 \
+    --bootstrap >/dev/null
+}
+
+radar_mem_available_kb() { # → MemAvailable in kB (0 if unknown)
+  local kb
+  kb=$(sed -n 's/^MemAvailable:[[:space:]]*\([0-9][0-9]*\) kB$/\1/p' "${RADAR_MEMINFO:-/proc/meminfo}" 2>/dev/null | head -n 1)
+  case "$kb" in '' | *[!0-9]*) kb=0 ;; esac
+  printf '%s\n' "$kb"
+}
+
+radar_build_memory_ok() { [ "$(radar_mem_available_kb)" -ge "$RADAR_BUILD_MIN_AVAILABLE_KB" ]; }
+
+radar_compose_build() { # sha
+  local rev
+  radar_ensure_builder || { radar_warn "cannot create the buildx builder $RADAR_BUILDER"; return 1; }
+  GIT_SHA=$1 radar_compose build --builder "$RADAR_BUILDER" || return 1
+  rev=$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' radar-app:latest 2>/dev/null || true)
+  [ "$rev" = "$1" ] || { radar_warn "radar-app:latest in the local image store is '${rev:-missing}', not $1 (image not loaded?)"; return 1; }
+}
+
 # Build + (re)start the stack at the checked-out revision; prunes only RADAR's dangling images.
 radar_compose_deploy() { # sha
-  GIT_SHA=$1 radar_compose up -d --build --remove-orphans || return 1
+  radar_compose_build "$1" || return 1
+  GIT_SHA=$1 radar_compose up -d --no-build --remove-orphans || return 1
+  # RADAR-scoped clean-up only: its own dangling images and its own builder's cache.
   docker image prune -f --filter "label=com.radar.project=radar" >/dev/null 2>&1 || true
+  docker buildx prune --builder "$RADAR_BUILDER" -f --filter until=168h >/dev/null 2>&1 || true
+}
+
+# Not enough free memory for a build now: nothing is changed and no failed attempt is counted —
+# the next timer run tries again. At most one in-app alert per UTC day.
+radar_defer_deploy() { # target
+  local short=${1:0:12} kb day stamp="$RADAR_STATE_DIR/deploy-deferred-day"
+  kb=$(radar_mem_available_kb)
+  radar_warn "deploy of $short deferred: MemAvailable is $((kb / 1024)) MiB, a build needs $((RADAR_BUILD_MIN_AVAILABLE_KB / 1024)) MiB; retrying at the next run"
+  day=$(date -u +%Y-%m-%d)
+  [ "$(cat "$stamp" 2>/dev/null || true)" = "$day" ] && return 0
+  printf '%s\n' "$day" >"$stamp"
+  radar_alert deploy_deferred warn "Deploy of $short deferred: low memory" \
+    "Only $((kb / 1024)) MiB of memory was available; building RADAR needs $((RADAR_BUILD_MIN_AVAILABLE_KB / 1024)) MiB and this box has no swap, so the build was skipped to protect the other services. Auto-deploy retries every 5 minutes. Check: free -m." \
+    "deploy_deferred:$day"
 }
 
 # Stores an alert in the app DB through the backup container (best effort).
@@ -198,10 +313,16 @@ radar_record_failure() { # sha
 # /api/health reports it. On failure the checkout and the stack go back to PREV and a critical
 # `deploy_failed` alert is stored (Telegram too, when configured).
 # Returns 0 = TARGET is live, 1 = TARGET failed (PREV restored, or nothing to restore),
-# 3 = TARGET failed and the rollback failed as well (RADAR may be down).
+# 3 = TARGET failed and the rollback failed as well (RADAR may be down), 4 = deferred: too little
+# free memory for a build, nothing changed (radar_defer_deploy). A rollback is not deferred: PREV
+# is usually still in the builder's cache, and a broken RADAR must not wait for memory.
 radar_deploy_rev() { # target [prev]
   local target=$1 prev=${2:-} short=${1:0:12} timeout=${RADAR_HEALTH_TIMEOUT_SEC:-300}
   radar_is_sha "$target" || radar_die "radar_deploy_rev: not a full commit id: $target"
+  if ! radar_build_memory_ok; then
+    radar_defer_deploy "$target"
+    return 4
+  fi
   radar_git reset --quiet --hard "$target" || { radar_warn "git reset --hard $short failed"; return 1; }
   radar_info "deploying $short ($(radar_git log -1 --format=%s "$target" | cut -c1-80))"
   if radar_compose_deploy "$target" && radar_wait_healthy "$timeout" "$target"; then

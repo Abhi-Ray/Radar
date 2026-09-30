@@ -9,12 +9,19 @@
 # Secrets: the DB password only ever lives in a mode-600 option file inside a private temp dir
 # (removed on exit); BACKUP_PASSPHRASE is handed to openssl as `-pass env:…`; the deploy key is
 # copied to the temp dir with mode 600. None of them ever appears on a command line or in a log.
+#
+# The backup branch may be public: its plain LATEST.json holds only what is needed to fetch and
+# verify the files (format, time, names, sizes, sha256, cipher). Row counts, schema level and run
+# id are activity metadata and live in LATEST.meta.enc, encrypted exactly like the dump.
 
 RADAR_SCRIPT="${RADAR_SCRIPT:-radar-backup}"
 
 # Encryption parameters — MUST stay identical to ops/secrets.sh and docs/RECOVERY.md.
 RB_CIPHER_DESC='openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -md sha256 -salt, passphrase = BACKUP_PASSPHRASE'
-RB_FORMAT='radar-db-backup/1'
+RB_FORMAT='radar-db-backup/2'
+# Format 1 kept the row counts etc. in the plain LATEST.json; such backups stay readable.
+RB_FORMAT_LEGACY='radar-db-backup/1'
+RB_META_FILE='LATEST.meta.enc'
 RB_FILE_RE='^radar-db\.sql\.gz\.enc(\.part-[a-z]{3})?$'
 
 # ---------------------------------------------------------------------------------------------
@@ -208,27 +215,81 @@ rb_cleanup_tmp() {
   RB_TMP=
 }
 
-# One DB job (backup / restore / restore test) at a time: an atomic mkdir lock in the work volume.
-# A lock older than 6 h or owned by a dead process is broken.
+# This container's name for the job lock (a container has its own hostname and PID namespace).
+rb_host() {
+  local h=${HOSTNAME:-}
+  [ -n "$h" ] || h=$(uname -n 2>/dev/null || true)
+  printf '%s\n' "${h:-unknown}" | tr -c 'A-Za-z0-9._\n-' '_'
+}
+
+# 0 = the owner of the job lock may still be running. Owner line: "pid host epoch" (older
+# versions wrote "pid epoch"). A pid can only be checked from the same host: containers have
+# separate PID namespaces, so the scheduler container cannot see a `docker compose run` job.
+# A lock from another (or an unknown) host is trusted until it is 6 h old — no job runs that long.
+rb_lock_owner_live() { # owner now this_host
+  local pid host started
+  read -r pid host started <<EOF
+$1
+EOF
+  if [ -z "$started" ]; then
+    started=$host
+    host=
+  fi
+  rb_is_uint "$pid" && rb_is_uint "$started" || return 1
+  [ $(($2 - started)) -lt 21600 ] || return 1
+  if [ -n "$host" ] && [ "$host" = "$3" ]; then
+    kill -0 "$pid" 2>/dev/null
+    return
+  fi
+  return 0
+}
+
+# One DB job (backup / restore / restore test) at a time: an atomic mkdir lock in the work volume,
+# which the scheduler container shares with one-off `docker compose run` containers.
 rb_lock() {
-  local dir="$BACKUP_WORK_DIR/locks/db-job.lock" owner pid started now
+  local dir="$BACKUP_WORK_DIR/locks/db-job.lock" owner now me
   mkdir -p "$BACKUP_WORK_DIR/locks"
   now=$(date -u +%s)
+  me=$(rb_host)
   if ! mkdir "$dir" 2>/dev/null; then
     owner=$(cat "$dir/owner" 2>/dev/null || true)
-    pid=${owner%% *}
-    started=${owner##* }
-    if rb_is_uint "$pid" && rb_is_uint "$started" && kill -0 "$pid" 2>/dev/null && [ $((now - started)) -lt 21600 ]; then
+    # The owner file is written right after mkdir: an empty one younger than a minute is a job
+    # that is just starting.
+    if { [ -n "$owner" ] && rb_lock_owner_live "$owner" "$now" "$me"; } ||
+      { [ -z "$owner" ] && [ -z "$(find "$dir" -maxdepth 0 -mmin +1 2>/dev/null)" ]; }; then
       RB_LOCK_BUSY=1
-      rb_error "another backup/restore job is running (pid $pid); try again later"
+      rb_error "another backup/restore job is running (${owner:-starting}); try again later"
       exit 75
     fi
-    rb_warn "breaking stale lock ($owner)"
+    rb_warn "breaking stale lock (${owner:-no owner})"
     rm -rf "$dir"
     mkdir "$dir" 2>/dev/null || rb_die "could not take the job lock"
   fi
-  printf '%s %s\n' "$$" "$now" >"$dir/owner"
+  printf '%s %s %s\n' "$$" "$me" "$now" >"$dir/owner"
   RB_LOCK_DIR=$dir
+}
+
+# Scheduler start-up: a job lock owned by this container's previous run is stale (that process
+# is gone). A restart keeps the hostname; a re-created container gets a new one, so the
+# scheduler passes the one it recorded last time. Locks of other containers are left to rb_lock.
+rb_break_own_stale_lock() { # previous_scheduler_host
+  local dir="$BACKUP_WORK_DIR/locks/db-job.lock" owner pid host started
+  [ -d "$dir" ] || return 0
+  owner=$(cat "$dir/owner" 2>/dev/null || true)
+  read -r pid host started <<EOF
+$owner
+EOF
+  [ -n "$started" ] || return 0
+  if [ "$host" = "$(rb_host)" ] || { [ -n "${1:-}" ] && [ "$host" = "$1" ]; }; then
+    rb_warn "removing the job lock left by this container's previous run ($owner)"
+    rm -rf "$dir"
+  fi
+}
+
+# Removes job temp dirs left by killed containers — only ones older than 6 h: TMPDIR lives in the
+# work volume, shared with one-off `docker compose run` jobs that may be using theirs right now.
+rb_prune_stale_tmp() {
+  find "${TMPDIR:-/tmp}" -maxdepth 1 -type d -name 'radar-backup.*' -mmin +360 -exec rm -rf {} + 2>/dev/null || true
 }
 
 rb_unlock() {
@@ -457,7 +518,7 @@ rb_remote_branch_state() {
 }
 
 # Shallow single-branch clone of the backup branch into $1. Big blobs are fetched lazily when
-# the remote supports partial clone ("meta" mode = only LATEST.json is needed).
+# the remote supports partial clone ("meta" mode = only LATEST.json + LATEST.meta.enc are needed).
 rb_clone_backup() { # dir [meta]
   local dir=$1 filter=''
   [ "${2:-}" = "meta" ] && filter='--filter=blob:limit=1m'
@@ -483,12 +544,51 @@ rb_fetch_backup() { # dir
 # ---------------------------------------------------------------------------------------------
 # backup artefacts
 
+# Encrypts $1 to $2 exactly like the dump (same cipher, KDF and passphrase).
+rb_encrypt_file() { # in out
+  openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -md sha256 -salt -pass env:BACKUP_PASSPHRASE -in "$1" -out "$2"
+}
+
+# Writes the private metadata of the backup in $1 (row counts, tables, migrations, run id, …) as
+# JSON to $2. Format 2 decrypts $RB_META_FILE and checks it belongs to this LATEST.json (same dump
+# sha256); format 1 (legacy) kept it all in LATEST.json itself. Returns 1 and sets RB_META_ERROR
+# when the metadata is missing, cannot be decrypted (wrong BACKUP_PASSPHRASE) or is not valid.
+rb_backup_meta() { # dir out
+  local dir=$1 out=$2 format sha msha
+  RB_META_ERROR=
+  rm -f "$out"
+  [ -s "$dir/LATEST.json" ] || { RB_META_ERROR='LATEST.json missing'; return 1; }
+  format=$(rb_json_get "$dir/LATEST.json" '$.format' 2>/dev/null) || { RB_META_ERROR='LATEST.json is not valid JSON'; return 1; }
+  case "$format" in
+    "$RB_FORMAT_LEGACY")
+      cp "$dir/LATEST.json" "$out" || { RB_META_ERROR='cannot copy LATEST.json'; return 1; }
+      return 0
+      ;;
+    "$RB_FORMAT") ;;
+    *) RB_META_ERROR="unsupported backup format: ${format:-none}"; return 1 ;;
+  esac
+  [ -s "$dir/$RB_META_FILE" ] || { RB_META_ERROR="$RB_META_FILE missing"; return 1; }
+  if ! openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -md sha256 -pass env:BACKUP_PASSPHRASE \
+    -in "$dir/$RB_META_FILE" -out "$out" 2>/dev/null; then
+    rm -f "$out"
+    RB_META_ERROR="cannot decrypt $RB_META_FILE (wrong BACKUP_PASSPHRASE or corrupted file)"
+    return 1
+  fi
+  sha=$(rb_json_get "$dir/LATEST.json" '$.sha256' 2>/dev/null || true)
+  msha=$(rb_json_get "$out" '$.sha256' 2>/dev/null) || { rm -f "$out"; RB_META_ERROR="$RB_META_FILE is not valid JSON"; return 1; }
+  if [ -z "$sha" ] || [ "$msha" != "$sha" ]; then
+    rm -f "$out"
+    RB_META_ERROR="$RB_META_FILE belongs to a different backup (sha256 mismatch)"
+    return 1
+  fi
+}
+
 # Validates LATEST.json + the files it lists in $1 and assembles the encrypted stream into $2.
 rb_assemble_backup() { # dir out
   local dir=$1 out=$2 meta="$1/LATEST.json" format sha parts line name size psha actual
   [ -s "$meta" ] || rb_die "LATEST.json missing in the backup"
   format=$(rb_json_get "$meta" '$.format') || rb_die "LATEST.json is not valid JSON"
-  [ "$format" = "$RB_FORMAT" ] || rb_die "unsupported backup format: ${format:-none}"
+  [ "$format" = "$RB_FORMAT" ] || [ "$format" = "$RB_FORMAT_LEGACY" ] || rb_die "unsupported backup format: ${format:-none}"
   sha=$(rb_json_get "$meta" '$.sha256')
   parts=$(printf "SELECT p.name, p.size, p.sha FROM JSON_TABLE(CAST(%s AS JSON), '\$.parts[*]' COLUMNS (name VARCHAR(255) PATH '\$.name', size BIGINT UNSIGNED PATH '\$.sizeBytes', sha CHAR(64) PATH '\$.sha256', ord FOR ORDINALITY)) p ORDER BY p.ord;\n" \
     "$(rb_sql_file "$meta")" | rb_mysql) || rb_die "cannot read the parts list"
@@ -528,14 +628,15 @@ rb_import_dump() { # file db
     rb_die "import into $2 failed: $(grep -v -i 'password' "$RB_TMP/import.err" | tail -n 2 | tr '\n' ' ')"
 }
 
-# Compares the row counts of database $1 with LATEST.json ($2). Volatile tables (rows changed
+# Compares the row counts of database $1 with the backup metadata ($2, see rb_backup_meta).
+# Volatile tables (rows changed
 # while the dump ran) may fall anywhere in their recorded [min,max]. Writes mismatches to $3.
 # Returns 0 when everything matches.
 rb_compare_counts() { # db meta mismatches_file
   local db=$1 meta=$2 out=$3 expected actual_file="$RB_TMP/actual.counts" name exp lo hi act bad=0 tab
   tab=$(printf '\t')
   expected=$(printf "SELECT k.name, CAST(JSON_EXTRACT(d.doc, CONCAT('\$.rowCounts.', JSON_QUOTE(k.name))) AS UNSIGNED), COALESCE(CAST(JSON_EXTRACT(d.doc, CONCAT('\$.volatileTables.', JSON_QUOTE(k.name), '[0]')) AS SIGNED), -1), COALESCE(CAST(JSON_EXTRACT(d.doc, CONCAT('\$.volatileTables.', JSON_QUOTE(k.name), '[1]')) AS SIGNED), -1) FROM (SELECT CAST(%s AS JSON) AS doc) d, JSON_TABLE(JSON_KEYS(d.doc, '\$.rowCounts'), '\$[*]' COLUMNS (name VARCHAR(64) PATH '\$')) k ORDER BY k.name;\n" \
-    "$(rb_sql_file "$meta")" | rb_mysql) || rb_die "cannot read rowCounts from LATEST.json"
+    "$(rb_sql_file "$meta")" | rb_mysql) || rb_die "cannot read rowCounts from the backup metadata"
   rb_row_counts "$db" >"$actual_file" || rb_die "cannot count rows in $db"
   : >"$out"
   RB_TABLES_COMPARED=0
@@ -543,7 +644,7 @@ rb_compare_counts() { # db meta mismatches_file
     [ -n "$name" ] || continue
     RB_TABLES_COMPARED=$((RB_TABLES_COMPARED + 1))
     if ! rb_valid_ident "$name"; then
-      printf 'unexpected table name in LATEST.json\n' >>"$out"
+      printf 'unexpected table name in the backup metadata\n' >>"$out"
       bad=1
       continue
     fi
@@ -563,6 +664,6 @@ rb_compare_counts() { # db meta mismatches_file
   done <<EOF
 $expected
 EOF
-  [ "$RB_TABLES_COMPARED" -gt 0 ] || { printf 'LATEST.json has no rowCounts\n' >>"$out"; bad=1; }
+  [ "$RB_TABLES_COMPARED" -gt 0 ] || { printf 'the backup metadata has no rowCounts\n' >>"$out"; bad=1; }
   return $bad
 }

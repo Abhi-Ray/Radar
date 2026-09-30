@@ -3,7 +3,7 @@
  * systemd on a dev laptop): VPS isolation, image hardening and the CI gates. Text-level checks on
  * purpose — they pin the few lines whose silent change would hurt production.
  */
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -73,8 +73,13 @@ describe('docker-compose.yml: isolated from everything else on the VPS', () => {
     expect(code(text)).toMatch(/x-hardening: &hardening\n\s+security_opt:\n\s+- no-new-privileges:true\n\s+cap_drop:\n\s+- ALL/);
   });
 
-  it('the internet-facing containers never get the root password or the backup key', () => {
+  it('the internet-facing containers never get the root password, the backup key or the backup DB account', () => {
     expect(code(text)).toMatch(/x-app-env: &app-env[\s\S]*?MYSQL_ROOT_PASSWORD: ""[\s\S]*?BACKUP_PASSPHRASE: ""/);
+    const body = code(text);
+    const appEnv = body.slice(body.indexOf('x-app-env: &app-env'), body.indexOf('\nservices:\n'));
+    for (const key of ['MYSQL_ROOT_PASSWORD', 'BACKUP_PASSPHRASE', 'BACKUP_DB_USER', 'BACKUP_DB_PASSWORD']) {
+      expect(appEnv, key).toMatch(new RegExp(`^\\s+${key}: ""$`, 'm'));
+    }
     expect(services.app).toMatch(/<<: \*app-env/);
     expect(services.worker).toMatch(/<<: \*app-env/);
     expect(services.backup).toMatch(/OPENROUTER_API_KEY: ""/);
@@ -174,5 +179,145 @@ describe('CI workflow', () => {
     const scripts = (JSON.parse(read('package.json')) as { scripts: Record<string, string> }).scripts;
     for (const s of ['lint', 'typecheck', 'test', 'build', 'build:worker']) expect(scripts[s], s).toBeTruthy();
     expect(scripts['build:worker']).toBe('node scripts/build-worker.mjs');
+  });
+});
+
+/** Every host/backup shell script under ops/ (comments stripped). */
+function opsShell(): Record<string, string> {
+  const out: Record<string, string> = {};
+  const walk = (dir: string) => {
+    for (const name of readdirSync(path.join(REPO, dir))) {
+      const rel = `${dir}/${name}`;
+      if (statSync(path.join(REPO, rel)).isDirectory()) walk(rel);
+      else if (name.endsWith('.sh')) out[rel] = code(read(rel));
+    }
+  };
+  walk('ops');
+  return out;
+}
+
+/** The body of a shell function `name() { … }` (up to the first line that is just `}`). */
+function shellFn(text: string, name: string): string {
+  const m = new RegExp(`^${name}\\(\\) \\{[^\\n]*\\n([\\s\\S]*?)^\\}$`, 'm').exec(text);
+  expect(m, name).toBeTruthy();
+  return m?.[1] ?? '';
+}
+
+describe('image builds on the shared, swapless VPS (VPS-1)', () => {
+  const common = code(read('ops/lib/common.sh'));
+  const shell = opsShell();
+
+  it('builds only in radar-builder: docker-container driver, 3 GiB RAM = RAM+swap, 1 CPU', () => {
+    expect(common).toMatch(/^RADAR_BUILDER="\$\{RADAR_BUILDER:-radar-builder\}"$/m);
+    expect(common).toMatch(/^RADAR_BUILD_MEMORY=3g$/m);
+    const ensure = shellFn(common, 'radar_ensure_builder');
+    expect(ensure).toMatch(/docker buildx inspect "\$RADAR_BUILDER"/);
+    expect(ensure).toMatch(/docker buildx create --name "\$RADAR_BUILDER" --driver docker-container/);
+    for (const opt of ['"memory=$RADAR_BUILD_MEMORY"', '"memory-swap=$RADAR_BUILD_MEMORY"', 'cpu-quota=100000', 'cpu-period=100000']) {
+      expect(ensure, opt).toContain(`--driver-opt ${opt}`);
+    }
+    const build = shellFn(common, 'radar_compose_build');
+    expect(build).toMatch(/radar_ensure_builder/);
+    expect(build).toMatch(/GIT_SHA=\$1 radar_compose build --builder "\$RADAR_BUILDER"/);
+    // The image must have been loaded into the local store at exactly this revision.
+    expect(build).toMatch(/docker image inspect .*org\.opencontainers\.image\.revision.* radar-app:latest/);
+    expect(code(read('Dockerfile'))).toMatch(/org\.opencontainers\.image\.revision="\$\{GIT_SHA\}"/);
+    const deploy = shellFn(common, 'radar_compose_deploy');
+    expect(deploy).toMatch(/radar_compose_build "\$1" \|\| return 1\n\s+GIT_SHA=\$1 radar_compose up -d --no-build --remove-orphans/);
+  });
+
+  it('no ops script builds any other way; clean-up is RADAR-scoped', () => {
+    for (const [file, text] of Object.entries(shell)) {
+      expect(text, file).not.toMatch(/up -d[^\n]*--build\b/);
+      expect(text, file).not.toMatch(/radar_compose build(?! --builder)/);
+      expect(text, file).not.toMatch(/docker (system|builder) prune|docker image prune[^\n]*-a\b|docker buildx prune(?! --builder)/);
+    }
+    const deploy = shellFn(common, 'radar_compose_deploy');
+    expect(deploy).toMatch(/docker image prune -f --filter "label=com\.radar\.project=radar"/);
+    expect(deploy).toMatch(/docker buildx prune --builder "\$RADAR_BUILDER" -f --filter until=168h/);
+    // Every entry point makes sure the builder exists (an upgrade of Docker may have lost it).
+    expect(shell['ops/install.sh']).toMatch(/radar_ensure_builder \|\| radar_die/);
+    expect(shell['ops/deploy.sh']).toMatch(/radar_ensure_builder \|\| radar_warn[^\n]*\n(?:.*\n){0,2}radar_deploy_rev /);
+    expect(shell['ops/autodeploy.sh']).toMatch(/radar_ensure_builder \|\| radar_warn[^\n]*\n(?:.*\n){0,2}radar_deploy_rev /);
+  });
+
+  it('memory guard: < 3.5 GiB MemAvailable defers the deploy (exit 4) before anything changes, never counts as a failure', () => {
+    expect(common).toMatch(/^RADAR_BUILD_MIN_AVAILABLE_KB="\$\{RADAR_BUILD_MIN_AVAILABLE_KB:-3670016\}"$/m);
+    expect(3670016).toBe(3.5 * 1024 * 1024);
+    const rev = shellFn(common, 'radar_deploy_rev');
+    const guard = /if ! radar_build_memory_ok; then\n\s+radar_defer_deploy "\$target"\n\s+return 4\n\s+fi/.exec(rev);
+    expect(guard).toBeTruthy();
+    expect(rev.indexOf(guard?.[0] ?? '#')).toBeLessThan(rev.indexOf('radar_git reset'));
+    expect(rev.indexOf(guard?.[0] ?? '#')).toBeLessThan(rev.indexOf('radar_record_failure'));
+    const defer = shellFn(common, 'radar_defer_deploy');
+    expect(defer).not.toMatch(/radar_record_failure|radar_git|radar_compose /);
+    expect(defer).toMatch(/radar_alert deploy_deferred warn /);
+    expect(defer).toMatch(/"deploy_deferred:\$day"/);
+    // autodeploy: deferred = success for systemd (the next tick retries); deploy.sh passes 4 on.
+    expect(shell['ops/autodeploy.sh']).toMatch(/radar_deploy_rev "\$target" "\$deployed" \|\| rc=\$\?\n\[ "\$rc" = 4 \] && rc=0\nexit "\$rc"/);
+    expect(shell['ops/deploy.sh']).toMatch(/radar_deploy_rev "\$target" "\$prev" \|\| rc=\$\?/);
+    expect(shell['ops/install.sh']).toMatch(/radar_build_memory_ok \|\|\n\s+radar_die/);
+  });
+
+  it('keeps a V8 heap cap below the builder cgroup, and the comments tell the truth', () => {
+    const docker = read('Dockerfile');
+    const heap = Number(/^ARG BUILD_MAX_OLD_SPACE_MB=(\d+)$/m.exec(docker)?.[1]);
+    expect(heap).toBeGreaterThan(0);
+    expect(heap).toBeLessThan(3 * 1024);
+    expect(code(docker)).toMatch(/NODE_OPTIONS="--max-old-space-size=\$\{BUILD_MAX_OLD_SPACE_MB\}" npm run build/);
+    expect(docker).not.toMatch(/fails? cleanly/);
+    expect(docker).toMatch(/radar-builder/);
+    const unit = read('ops/systemd/radar-autodeploy.service');
+    expect(unit).not.toMatch(/heap is capped in the Dockerfile/);
+    expect(unit).toMatch(/radar-builder BuildKit container/);
+    const deployDoc = read('docs/DEPLOY.md');
+    expect(deployDoc).toContain('docker buildx create --name radar-builder --driver docker-container');
+    expect(deployDoc).toContain('--driver-opt memory=3g --driver-opt memory-swap=3g');
+    expect(deployDoc).toContain('--driver-opt cpu-quota=100000 --driver-opt cpu-period=100000');
+    expect(deployDoc).toMatch(/GHCR/);
+    for (const doc of ['docs/DEPLOY.md', 'docs/RECOVERY.md', 'docs/ARCHITECTURE.md', 'README.md']) {
+      expect(read(doc), doc).not.toMatch(/`[^`\n]*up -d --build[^`\n]*`/);
+      // Only RADAR-scoped pruning is ever recommended.
+      expect(read(doc), doc).not.toMatch(/`sudo docker (builder|system) prune[^`]*`/);
+    }
+  });
+});
+
+describe('nginx site name and default server (NGINX-1)', () => {
+  const install = code(read('ops/install.sh'));
+
+  it('enables the vhost as sites-enabled/zz-radar and removes only our own old radar link', () => {
+    expect(install).toMatch(/^NGINX_ENABLED=\/etc\/nginx\/sites-enabled\/zz-radar$/m);
+    expect(install).toMatch(/^NGINX_ENABLED_OLD=\/etc\/nginx\/sites-enabled\/radar$/m);
+    expect(install).toMatch(/nginx_old_link_is_ours\(\) \{ \[ -L "\$NGINX_ENABLED_OLD" \] && \[ "\$\(readlink "\$NGINX_ENABLED_OLD"\)" = "\$NGINX_AVAIL" \]; \}/);
+    const vhost = shellFn(install, 'nginx_install_vhost');
+    expect(vhost).toMatch(/ln -sfn "\$NGINX_AVAIL" "\$NGINX_ENABLED"/);
+    expect(vhost).toMatch(/nginx_old_link_is_ours[^\n]*\n?[^\n]*rm -f "\$NGINX_ENABLED_OLD"/);
+    // The http2 neighbour check ignores RADAR's own file under both names.
+    expect(install).toMatch(/grep -v -e "\^\$NGINX_ENABLED:" -e "\^\$NGINX_ENABLED_OLD:"/);
+    // `zz-radar` sorts after any plausible neighbour name in the sites-enabled/* glob.
+    for (const neighbour of ['default', 'growviax', 'loop', 'radar', 'sahithya', 'shop', 'www', 'zeta']) {
+      expect(['zz-radar', neighbour].sort()[1]).toBe('zz-radar');
+    }
+  });
+
+  it('warns (does not fail) when nginx -T shows no default_server for :80 / :443', () => {
+    const check = shellFn(install, 'nginx_default_server_check');
+    expect(check).toMatch(/nginx -T/);
+    expect(check).toMatch(/radar_nginx_ports_without_default "[^"]+" 80 443/);
+    expect(check).toMatch(/radar_warn/);
+    expect(check).not.toMatch(/radar_die|exit /);
+    expect(shellFn(install, 'setup_nginx')).toMatch(/nginx_default_server_check/);
+  });
+
+  it('docs name the new link (and the old one only as the pre-upgrade name)', () => {
+    for (const doc of ['docs/DEPLOY.md', 'docs/RECOVERY.md']) {
+      const text = read(doc);
+      expect(text, doc).toContain('/etc/nginx/sites-enabled/zz-radar');
+      for (const m of text.matchAll(/sites-enabled\/radar\b/g)) {
+        const around = text.slice(Math.max(0, (m.index ?? 0) - 160), (m.index ?? 0) + 160);
+        expect(around, doc).toMatch(/older installs|before (this|that) name|readlink/);
+      }
+    }
   });
 });

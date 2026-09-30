@@ -172,6 +172,8 @@ describe('deployedVersion', () => {
 
 describe('GET /api/health', () => {
   const getPool = vi.fn();
+  /** A direct loopback probe (Docker HEALTHCHECK / radar_wait_healthy) unless headers say otherwise. */
+  const probe = (headers: Record<string, string> = {}) => new Request('http://127.0.0.1:3000/api/health', { headers });
 
   beforeEach(() => {
     vi.resetModules();
@@ -192,13 +194,37 @@ describe('GET /api/health', () => {
     getPool.mockReturnValue({ query: vi.fn(async () => [[{ last_finished: null }], []]) });
     const route = await import('@/app/api/health/route');
     expect(route.dynamic).toBe('force-dynamic');
-    const res = await route.GET();
+    const res = await route.GET(probe());
     expect(res.status).toBe(200);
     expect(res.headers.get('cache-control')).toBe('no-store, max-age=0');
     expect(res.headers.get('x-robots-tag')).toBe('noindex');
     const body = (await res.json()) as Record<string, unknown>;
     expect(Object.keys(body).sort()).toEqual(['db', 'lastRunAgeHours', 'ok', 'version']);
     expect(body).toMatchObject({ ok: true, db: 'up', lastRunAgeHours: null });
+  });
+
+  it('through nginx (X-Real-IP present) answers only {ok, db}', async () => {
+    process.env.GIT_SHA = 'deadbeef';
+    try {
+      getPool.mockReturnValue({ query: vi.fn(async () => [[{ last_finished: new Date() }], []]) });
+      const route = await import('@/app/api/health/route');
+      const res = await route.GET(probe({ 'x-real-ip': '203.0.113.5' }));
+      expect(res.status).toBe(200);
+      expect(res.headers.get('cache-control')).toBe('no-store, max-age=0');
+      const body = (await res.json()) as Record<string, unknown>;
+      expect(Object.keys(body).sort()).toEqual(['db', 'ok']);
+      expect(body).toEqual({ ok: true, db: 'up' });
+      // The loopback probe (no X-Real-IP) still gets the version radar_wait_healthy looks for.
+      const direct = (await (await route.GET(probe())).json()) as Record<string, unknown>;
+      expect(direct.version).toBe('deadbeef');
+
+      getPool.mockReturnValue({ query: vi.fn(async () => Promise.reject(Object.assign(new Error('x'), { code: 'ECONNREFUSED' }))) });
+      const down = await route.GET(probe({ 'x-real-ip': '203.0.113.5' }));
+      expect(down.status).toBe(503);
+      expect(await down.json()).toEqual({ ok: false, db: 'down' });
+    } finally {
+      delete process.env.GIT_SHA;
+    }
   });
 
   it('answers 503 when the database is down (and logs the code once)', async () => {
@@ -208,10 +234,10 @@ describe('GET /api/health', () => {
     try {
       getPool.mockReturnValue({ query: vi.fn(async () => Promise.reject(Object.assign(new Error('x'), { code: 'ECONNREFUSED' }))) });
       const route = await import('@/app/api/health/route');
-      const res = await route.GET();
+      const res = await route.GET(probe());
       expect(res.status).toBe(503);
       expect(await res.json()).toMatchObject({ ok: false, db: 'down', lastRunAgeHours: null });
-      await route.GET();
+      await route.GET(probe());
       expect(warn).toHaveBeenCalledTimes(1);
       expect(warn.mock.calls[0]?.[1]).toEqual({ code: 'ECONNREFUSED', suppressedSinceLast: 0 });
     } finally {

@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { ModulePending } from "@/components/shell/ModulePending";
+import { requireSession } from "@/lib/auth/session";
 
 export const metadata: Metadata = { title: "Kit" };
 
-export default function KitPage() {
+export default async function KitPage() {
+  await requireSession();
   return (
     <ModulePending
       section="/kit"

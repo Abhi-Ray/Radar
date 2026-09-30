@@ -8,6 +8,8 @@
  * - Global: more than 30 failures (all IPs) in the last hour → every attempt waits an extra 2s.
  *   There is deliberately NO global hard lock (it would let anyone lock the owner out).
  * - Every failure costs ~400ms (the caller sleeps `failureDelayMs()`).
+ * - Gate → password check → record runs under a per-IP in-process lock (`withLoginIpLock`), so
+ *   parallel requests cannot all pass the gate before the first failure is written.
  */
 import { randomInt } from 'node:crypto';
 import { and, count, desc, eq, gt, gte, inArray, lt } from 'drizzle-orm';
@@ -46,6 +48,35 @@ export function failureDelayMs(): number {
 
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, Math.max(0, ms)));
+}
+
+// Per-IP login critical sections (in-process; see withLoginIpLock). On globalThis so every copy of
+// this module in the process shares one table.
+const ipLockKey = Symbol.for('radar.auth.loginIpLocks');
+const ipLockGlobal = globalThis as typeof globalThis & { [ipLockKey]?: Map<string, Promise<void>> };
+const ipLocks: Map<string, Promise<void>> = (ipLockGlobal[ipLockKey] ??= new Map());
+
+/**
+ * Runs `fn` (gate → verify → record) with no other login attempt from the same IP in between.
+ * Without this, N parallel POSTs all pass `checkLoginGate` before the first failure is recorded and
+ * get N password guesses instead of `maxFailures`. Waiters queue in arrival order.
+ */
+export async function withLoginIpLock<T>(ip: string, fn: () => Promise<T>): Promise<T> {
+  const prev = ipLocks.get(ip) ?? Promise.resolve();
+  let release!: () => void;
+  const mine = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const tail = prev.then(() => mine);
+  ipLocks.set(ip, tail);
+  await prev;
+  try {
+    return await fn();
+  } finally {
+    release();
+    // Last in the queue: drop the entry so the map does not grow with every IP ever seen.
+    if (ipLocks.get(ip) === tail) ipLocks.delete(ip);
+  }
 }
 
 export type LoginGate = { allowed: true; delayMs: number } | { allowed: false; lockedUntil: Date; delayMs: number };

@@ -5,8 +5,10 @@ import { ToastProvider } from "@/components/ui/Toast";
 import { requireSession } from "@/lib/auth/session";
 
 /**
- * Everything behind the login wall. The proxy already rejected missing/expired JWTs; this does the
- * DB-backed check (revoked sessions, wrong operator) on every render.
+ * Everything behind the login wall. The proxy is the DB-backed gate for every request; this check
+ * repeats it for full-page renders (it needs the session email anyway). It is NOT sufficient on its
+ * own: partial (RSC) renders can skip this layout, so every page and data-reading generateMetadata
+ * calls `requireSession()` itself.
  *
  * Desktop: sticky ink rail + content column. Phone: sticky top bar + fixed bottom tabs, with the
  * content padded clear of the tab bar (and the home-indicator safe area).

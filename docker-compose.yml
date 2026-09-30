@@ -4,7 +4,8 @@
 # never published, and the app is reachable only on 127.0.0.1:3100 (host nginx proxies the
 # domain to it). Nothing here binds 80/443/3000/3001/3306.
 #
-#   docker compose up -d --build        build + (re)start everything
+#   docker compose build --builder radar-builder && docker compose up -d --no-build
+#                                       build (capped builder, docs/DEPLOY.md §4) + (re)start
 #   docker compose logs -f app worker   follow logs
 #   docker compose exec backup radar-backup-scheduler run-now backup
 #
@@ -29,9 +30,12 @@ x-app-env: &app-env
   # Built from the MYSQL_* values so the app and the database can never disagree.
   DATABASE_URL: mysql://${MYSQL_USER:-radar}:${MYSQL_PASSWORD:?MYSQL_PASSWORD must be set in .env}@mysql:3306/${MYSQL_DATABASE:-radar}
   MIGRATIONS_DIR: /app/drizzle
-  # The internet-facing processes never hold the database root password or the backup key.
+  # The internet-facing processes never hold the database root password, the backup key or the
+  # backup account's credentials (env_file passes every .env key; these blank them again).
   MYSQL_ROOT_PASSWORD: ""
   BACKUP_PASSPHRASE: ""
+  BACKUP_DB_USER: ""
+  BACKUP_DB_PASSWORD: ""
 
 services:
   app:

@@ -1,6 +1,7 @@
 # RADAR — bootstrap vhost for ${DOMAIN} (plain HTTP, before the certificate exists).
 #
-# Rendered by ops/install.sh into /etc/nginx/sites-available/radar ONLY until
+# Rendered by ops/install.sh into /etc/nginx/sites-available/radar (enabled as the symlink
+# /etc/nginx/sites-enabled/zz-radar, which sorts after every other site) ONLY until
 # `certbot certonly --webroot` has issued the certificate; then it is replaced by
 # radar.conf.template. It serves the ACME HTTP-01 challenge and nothing else: the app (and its
 # login form) is never exposed over plain HTTP.

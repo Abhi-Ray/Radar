@@ -16,6 +16,7 @@ import { describeFactValue } from "@/components/jobs/fact-display";
 import { EDITABLE_FIELDS, type EditableField } from "@/components/jobs/field-edit";
 import { JOBS_PATH } from "@/components/jobs/filters";
 import { Icon, Notice } from "@/components/ui";
+import { requireSession } from "@/lib/auth/session";
 import { getJobDetail } from "@/lib/queries/jobs";
 
 /** "123" → 123; anything else (signs, decimals, huge numbers, junk) → null. */
@@ -32,6 +33,7 @@ const loadJob = cache(async (raw: string) => {
 });
 
 export async function generateMetadata({ params }: PageProps<"/jobs/[id]">): Promise<Metadata> {
+  await requireSession();
   const detail = await loadJob((await params).id);
   if (!detail) return { title: "Job not found" };
   return { title: `${detail.job.canonicalTitle || detail.job.titleRaw} · ${detail.company.name}` };
@@ -48,6 +50,7 @@ const JUMPS = [
 ] as const;
 
 export default async function JobPage({ params }: PageProps<"/jobs/[id]">) {
+  await requireSession();
   const detail = await loadJob((await params).id);
   if (!detail) notFound();
   const { job } = detail;
