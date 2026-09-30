@@ -163,10 +163,33 @@ describe('save, hide, mark applied', () => {
     expect(app).toMatchObject({ id: first.applicationId, currentStage: 'applied' });
     const second = await actions.markAppliedAction(undefined, form({ jobId }));
     expect(second).toMatchObject({ ok: true, applicationId: first.applicationId });
-    expect(second.message).toMatch(/already had this job/);
+    expect(second.message).toBe('The tracker already has this application at "applied", so its stage was left alone.');
     const marks = (await audits(jobId)).filter((r) => r.action === 'job.mark_applied');
     expect(marks.map((r) => (r.afterJson as { created: boolean }).created)).toEqual([true, false]);
     expect(marks.every((r) => r.ip === IP)).toBe(true);
+  });
+
+  it('never claims to move an application that is already past "applied"', async () => {
+    const { jobId } = await seedJob(t.db);
+    const first = await actions.markAppliedAction(undefined, form({ jobId }));
+    await t.db.update(applications).set({ currentStage: 'technical' }).where(eq(applications.id, first.applicationId!));
+    const again = await actions.markAppliedAction(undefined, form({ jobId, note: 'Second round booked' }));
+    expect(again).toMatchObject({ ok: true, applicationId: first.applicationId });
+    expect(again.message).toBe('The tracker already has this application at "technical", so its stage was left alone. Your note was added to it.');
+    const [app] = await t.db.select().from(applications).where(eq(applications.id, first.applicationId!));
+    expect(app.currentStage).toBe('technical');
+    const marks = (await audits(jobId)).filter((r) => r.action === 'job.mark_applied');
+    expect((marks.at(-1)?.afterJson as { stage: string }).stage).toBe('technical');
+  });
+
+  it('moves a saved application on to "applied" and snapshots the posting', async () => {
+    const { jobId } = await seedJob(t.db);
+    const first = await actions.markAppliedAction(undefined, form({ jobId }));
+    await t.db.update(applications).set({ currentStage: 'saved' }).where(eq(applications.id, first.applicationId!));
+    const again = await actions.markAppliedAction(undefined, form({ jobId }));
+    expect(again.message).toBe('The tracker already had this job — it is now at "applied". The posting was snapshotted.');
+    const [app] = await t.db.select().from(applications).where(eq(applications.id, first.applicationId!));
+    expect(app.currentStage).toBe('applied');
   });
 });
 
@@ -176,6 +199,10 @@ describe('corrections and overrides', () => {
     expect(await actions.reportWrongInfoAction(undefined, form({ jobId, field: 'visa_status', knowsCorrect: 'no' }))).toMatchObject({
       ok: false,
       error: 'Say what is wrong in the note when you do not know the correct value.',
+    });
+    expect(await actions.reportWrongInfoAction(undefined, form({ jobId, field: 'visa_status', knowsCorrect: 'maybe', note: 'x' }))).toMatchObject({
+      ok: false,
+      error: 'Say whether you know the correct value.',
     });
     expect(await actions.reportWrongInfoAction(undefined, form({ jobId, field: 'visa_status', knowsCorrect: 'no', note: 'x', applyAsOverride: '1' }))).toMatchObject({
       ok: false,

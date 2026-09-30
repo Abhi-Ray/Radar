@@ -5,7 +5,7 @@
  * Each is a real <form> bound to a server action through useActionState, so it degrades to a plain
  * POST without JavaScript, shows pending state, and reports the result as a toast + inline text.
  */
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { Icon } from "@/components/ui/icons";
@@ -66,31 +66,36 @@ export function SaveButton({ jobId, saved }: { jobId: number; saved: boolean }) 
 
 // ---- hide ------------------------------------------------------------------------------------
 
+/**
+ * One component for both directions: the refresh after hiding swaps Hide for Unhide, and if they
+ * were separate components the one that ran the action would unmount before its toast fired.
+ * Focus lands on the swapped-in button, so keyboard users are not dropped back to the page top.
+ */
 export function HideButton({ jobId, hidden, hiddenReason }: { jobId: number; hidden: boolean; hiddenReason: string | null }) {
-  if (hidden) return <UnhideButton jobId={jobId} hiddenReason={hiddenReason} />;
-  return <HideWithReason jobId={jobId} />;
-}
-
-function UnhideButton({ jobId, hiddenReason }: { jobId: number; hiddenReason: string | null }) {
-  const [state, action] = useActionState(setHiddenAction, undefined);
-  useActionFeedback(state);
-  return (
-    <form action={action}>
-      <input type="hidden" name="jobId" value={jobId} />
-      <input type="hidden" name="hidden" value="0" />
-      <SubmitButton variant="secondary" icon="eye" pendingLabel="Unhiding…" title={hiddenReason ? `Hidden because: ${hiddenReason}` : undefined}>
-        Unhide
-      </SubmitButton>
-    </form>
-  );
-}
-
-function HideWithReason({ jobId }: { jobId: number }) {
   const m = useLazyModal();
   const { state, pending, onSubmit, formKey } = useKeepValuesAction(setHiddenAction, { onOk: m.hide });
+  const [unhideState, unhideAction] = useActionState(setHiddenAction, undefined);
+  useActionFeedback(unhideState);
+  if (hidden) {
+    return (
+      <form action={unhideAction}>
+        <input type="hidden" name="jobId" value={jobId} />
+        <input type="hidden" name="hidden" value="0" />
+        <SubmitButton
+          variant="secondary"
+          icon="eye"
+          pendingLabel="Unhiding…"
+          title={hiddenReason ? `Hidden because: ${hiddenReason}` : undefined}
+          autoFocus={Boolean(state?.ok)}
+        >
+          Unhide
+        </SubmitButton>
+      </form>
+    );
+  }
   return (
     <>
-      <Button variant="ghost" icon="eye-off" onClick={m.show} aria-haspopup="dialog">
+      <Button variant="ghost" icon="eye-off" onClick={m.show} aria-haspopup="dialog" autoFocus={Boolean(unhideState?.ok)}>
         Hide
       </Button>
       {m.mounted ? (
@@ -122,19 +127,41 @@ function HideWithReason({ jobId }: { jobId: number }) {
 
 // ---- mark applied ----------------------------------------------------------------------------
 
-export function MarkAppliedButton({ jobId, applicationId }: { jobId: number; applicationId: number | null }) {
+export function MarkAppliedButton({ jobId, application }: { jobId: number; application: { id: number; stage: string } | null }) {
   const m = useLazyModal();
   const { state, pending, onSubmit, formKey } = useKeepValuesAction(markAppliedAction, { onOk: m.hide });
-  const linked = state?.applicationId ?? applicationId;
+  const linked = state?.applicationId ?? application?.id ?? null;
+  // Past "saved" the tracker owns the stage (it never moves an application backwards).
+  const tracked = application && application.stage !== "saved" ? application.stage.replace(/_/g, " ") : null;
+  // Right after "Log application" the dialog and its opener are gone: hand keyboard focus to the
+  // tracker link (once per result; the refreshed props may land a render after the result).
+  const wrap = useRef<HTMLSpanElement>(null);
+  const focusedAt = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (!state?.ok || !state.at || focusedAt.current === state.at) return;
+    const link = wrap.current?.querySelector<HTMLAnchorElement>("a[data-tracker-link]");
+    if (!link) return;
+    focusedAt.current = state.at;
+    link.focus();
+  }, [state, tracked]);
+  if (tracked && linked) {
+    return (
+      <span ref={wrap} className="contents">
+        <Button href={`/applications/${linked}`} variant="secondary" icon="tracker" title="Open the application in the tracker" data-tracker-link>
+          In tracker · {tracked}
+        </Button>
+      </span>
+    );
+  }
   return (
-    <>
+    <span ref={wrap} className="contents">
       {linked ? (
-        <Button href={`/applications/${linked}`} variant="secondary" icon="tracker">
+        <Button href={`/applications/${linked}`} variant="secondary" icon="tracker" data-tracker-link>
           In tracker
         </Button>
       ) : null}
       <Button variant="primary" icon="check" onClick={m.show} aria-haspopup="dialog">
-        {linked ? "Mark applied again" : "Mark applied"}
+        Mark applied
       </Button>
       {m.mounted ? (
         <Modal open={m.open} onClose={m.hide} title="Mark as applied" kicker="Jobs · Tracker" size="sm" tone="radar">
@@ -142,7 +169,7 @@ export function MarkAppliedButton({ jobId, applicationId }: { jobId: number; app
             <input type="hidden" name="jobId" value={jobId} />
             <p className="text-sm text-ink-soft">
               Logs an application at stage <strong>applied</strong> in the tracker and snapshots the posting as it is now, so
-              you keep the text even if the ad disappears.{linked ? " The existing application is moved to “applied”." : ""}
+              you keep the text even if the ad disappears.{linked ? " The saved application is moved on to “applied”." : ""}
             </p>
             <Field label="Note" optional hint="Which CV, who referred you, anything worth remembering.">
               {(p) => <Textarea {...p} name="note" rows={3} maxLength={1000} data-autofocus />}
@@ -159,7 +186,7 @@ export function MarkAppliedButton({ jobId, applicationId }: { jobId: number; app
           </form>
         </Modal>
       ) : null}
-    </>
+    </span>
   );
 }
 

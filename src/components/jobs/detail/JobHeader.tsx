@@ -119,7 +119,10 @@ export function JobHeader({ detail }: { detail: JobDetail }) {
           </Button>
         )}
         <SaveButton jobId={job.id} saved={job.saved} />
-        <MarkAppliedButton jobId={job.id} applicationId={detail.applications[0]?.id ?? null} />
+        <MarkAppliedButton
+          jobId={job.id}
+          application={detail.applications[0] ? { id: detail.applications[0].id, stage: detail.applications[0].currentStage } : null}
+        />
         <HideButton jobId={job.id} hidden={job.hidden} hiddenReason={job.hiddenReason} />
         <span className="hidden grow sm:block" aria-hidden="true" />
         <EditFieldButton mode="report" field="visa_status" variant="ghost" size="md">

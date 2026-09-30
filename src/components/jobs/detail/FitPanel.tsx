@@ -22,8 +22,8 @@ export function FitPanel({ detail }: { detail: JobDetail }) {
       <div className="flex flex-wrap items-center gap-4">
         <FitGauge score={score.score} variant="block" size="sm" />
         <p className="min-w-0 flex-1 text-sm">
-          <strong>{band.label}.</strong> The score adds up the points below. Each bar is that part&apos;s share of the 100; the fill is how
-          much of it this job earned.
+          <strong>{band.label}.</strong> The score adds up the points below. Each part can give up to its share of the 100 (the number
+          after the slash); the fill is how much of that share this job earned. Weak evidence counts for less.
           <span className="mt-1 block font-mono text-xs text-muted">logic {score.version}</span>
         </p>
       </div>
@@ -51,6 +51,11 @@ export function FitPanel({ detail }: { detail: JobDetail }) {
               >
                 <div className={cn("h-full border-r-2 border-ink", TONE_SOLID[fitBand(b.fill * 100).tone], b.fill === 0 && "border-r-0")} style={{ width: `${b.fill * 100}%` }} />
               </div>
+              {b.discounted ? (
+                <p className="font-mono text-xs text-muted tabular">
+                  Matched {Math.round(b.match * 100)}%, counted at {Math.round(b.fill * 100)}% — {b.confidence} confidence.
+                </p>
+              ) : null}
               {b.reason ? <p className="text-sm text-ink-soft [overflow-wrap:anywhere]">{b.reason}</p> : null}
             </li>
           ))}

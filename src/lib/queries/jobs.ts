@@ -6,7 +6,7 @@
  * the same rows). Every query goes through Drizzle or the `sql` template with bound parameters.
  */
 import 'server-only';
-import { and, desc, eq, inArray, isNotNull, isNull, ne, notInArray, or, sql, type SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNotNull, isNull, ne, notInArray, or, sql, type SQL } from 'drizzle-orm';
 import {
   applications,
   auditLog,
@@ -28,6 +28,7 @@ import {
   type JobRow,
   type VisaRuleVersionRow,
 } from '@/db/schema';
+import { ELIGIBILITY_RESULTS } from '@/db/schema/_enums';
 import {
   CLOSED_STATES,
   JOBS_PAGE_SIZE,
@@ -569,6 +570,25 @@ export function asSalaryValue(v: unknown): SalaryValue | null {
   return v as unknown as SalaryValue;
 }
 
+const ELIGIBILITY_RESULT_SET: ReadonlySet<string> = new Set(ELIGIBILITY_RESULTS);
+
+/**
+ * A stored eligibility value, normalised (JSON turns `ruleVerifiedAt` into a string), or null when
+ * the shape is not usable — the page then works the answer out afresh instead of crashing.
+ */
+export function asEligibilityValue(v: unknown): EligibilityValue | null {
+  if (!isObj(v) || typeof v.result !== 'string' || !ELIGIBILITY_RESULT_SET.has(v.result)) return null;
+  const at = v.ruleVerifiedAt;
+  const verified = at instanceof Date ? at : typeof at === 'string' && !Number.isNaN(Date.parse(at)) ? new Date(at) : null;
+  return {
+    result: v.result as EligibilityResult,
+    reason: typeof v.reason === 'string' ? v.reason : '',
+    marginPct: typeof v.marginPct === 'number' && Number.isFinite(v.marginPct) ? v.marginPct : null,
+    ruleVerifiedAt: verified && !Number.isNaN(verified.getTime()) ? verified : null,
+    rule: typeof v.rule === 'string' ? v.rule : null,
+  };
+}
+
 /** Rule in force on `today` ('YYYY-MM-DD'): effective window contains today; highest version wins. */
 export function pickRuleVersion(versions: readonly VisaRuleVersionRow[], today: string): { rule: VisaRuleVersionRow | null; current: boolean } {
   const inForce = versions.filter((v) => (!v.effectiveFrom || v.effectiveFrom <= today) && (!v.effectiveTo || v.effectiveTo >= today));
@@ -706,7 +726,8 @@ export async function getJobDetail(id: number, opts: { db?: DbOrTx; now?: Date }
       })
       .from(applications)
       .where(eq(applications.jobId, id))
-      .orderBy(desc(applications.createdAt)),
+      // Oldest first: the first one is the application "Mark applied" updates (see createApplicationFromJob).
+      .orderBy(asc(applications.id)),
     db
       .select({ id: corrections.id, field: corrections.field, note: corrections.note, createdAt: corrections.createdAt, addedToGolden: corrections.addedToGolden })
       .from(corrections)
@@ -762,9 +783,11 @@ export async function getJobDetail(id: number, opts: { db?: DbOrTx; now?: Date }
   const resolved = resolveJobFacts(facts, overrides);
   const bestRule = visaRules.find((r) => r.current && r.rule) ?? null;
   const storedEligibility = resolved.eligibility?.winner ?? null;
-  const eligibility: EligibilityView = storedEligibility
-    ? { fact: storedEligibility as StoredFact<EligibilityValue>, computedNow: false, rule: bestRule }
-    : {
+  const storedEligibilityValue = storedEligibility ? asEligibilityValue(storedEligibility.value) : null;
+  const eligibility: EligibilityView =
+    storedEligibility && storedEligibilityValue
+      ? { fact: { ...storedEligibility, value: storedEligibilityValue }, computedNow: false, rule: bestRule }
+      : {
         fact: checkEligibility({ salary: asSalaryValue(resolved.salary?.winner?.value), rule: bestRule?.rule ?? null, profile, now }),
         computedNow: true,
         rule: bestRule,

@@ -203,8 +203,13 @@ function OverrideDialog({ open, onClose, jobId, field, setField, defaults, curre
 }
 
 function ReportDialog({ open, onClose, jobId, field, setField, defaults, current }: DialogProps) {
-  const { state, pending, onSubmit, formKey } = useKeepValuesAction(reportWrongInfoAction, { onOk: onClose, errorTitle: "Correction not saved" });
   const [knows, setKnows] = useState(true);
+  // After a report the next one starts fresh, like the rest of the form (remounted on formKey).
+  const onOk = () => {
+    setKnows(true);
+    onClose();
+  };
+  const { state, pending, onSubmit, formKey } = useKeepValuesAction(reportWrongInfoAction, { onOk, errorTitle: "Correction not saved" });
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   return (
     <Modal

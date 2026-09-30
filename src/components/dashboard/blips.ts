@@ -15,7 +15,7 @@ export interface RegionSector {
   countries: readonly string[];
 }
 
-/** Clockwise from north. The last one catches jobs without a (known) country. */
+/** Clockwise from north. The last one catches every other country and jobs with no country at all. */
 export const REGION_SECTORS: readonly RegionSector[] = [
   { key: "dach", label: "DACH & Benelux", short: "DACH·BNL", countries: ["DE", "AT", "CH", "NL", "BE", "LU"] },
   { key: "nordics", label: "Nordics & Baltics", short: "NORDIC", countries: ["DK", "SE", "FI", "NO", "IS", "EE", "LT", "LV"] },
@@ -26,13 +26,13 @@ export const REGION_SECTORS: readonly RegionSector[] = [
   { key: "ukie", label: "UK & Ireland", short: "UK·IE", countries: ["GB", "IE"] },
   { key: "swe", label: "Southern & Western Europe", short: "S·W EU", countries: ["FR", "ES", "PT", "IT", "MT", "GR", "CY"] },
   { key: "remote", label: "Remote / worldwide", short: "REMOTE", countries: ["XW"] },
-  { key: "unplaced", label: "Unplaced", short: "?", countries: [] },
+  { key: "unplaced", label: "Elsewhere or no country", short: "OTHER", countries: [] },
 ];
 
 export const SECTOR_SPAN = 360 / REGION_SECTORS.length;
 const UNPLACED = REGION_SECTORS.length - 1;
 
-/** Sector index for a country code (unknown / null → "Unplaced"). */
+/** Sector index for a country code (unlisted / unknown / null → the last, catch-all sector). */
 export function sectorFor(countryIso2: string | null | undefined): number {
   if (!countryIso2) return UNPLACED;
   const c = countryIso2.toUpperCase();

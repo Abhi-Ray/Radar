@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { describeFactValue, describeSalary, evidenceOf, factLabel } from '@/components/jobs/fact-display';
 import { fitBars, historyItems, ledgerEntries, lingeringColumnOverride, linkCheckText, marginText, visaDecisionOf, visaSignalOf } from '@/components/jobs/detail/detail-model';
+import { markAppliedMessage } from '@/components/jobs/action-messages';
+import { feedbackToast } from '@/components/jobs/useActionFeedback';
 import type { ScoreComponent } from '@/lib/contracts/jobs';
 import type { StoredFact } from '@/lib/contracts/provenance';
 import { resolveJobFacts } from '@/lib/provenance/resolve';
@@ -93,19 +95,31 @@ describe('visa helpers', () => {
 describe('fitBars', () => {
   const c = (key: string, raw: number, weight: number, contribution: number): ScoreComponent => ({ key, label: key, raw, weight, contribution, confidence: 'high', reason: '' });
 
-  it('turns relative weights into point shares and clamps the fill', () => {
-    const bars = fitBars([c('visa', 1, 30, 30), c('salary', 0.5, 10, 5), c('role', 1.4, 10, 10)]);
+  it('turns relative weights into point shares; the fill is the points earned of that share', () => {
+    // Weights 30/10/10 → shares 60/20/20 of the 100; contributions are points on the 0–100 score.
+    const bars = fitBars([c('visa', 1, 30, 60), c('salary', 0.5, 10, 10), c('role', 1.4, 10, 20)]);
     expect(bars.map((b) => b.maxPoints)).toEqual([60, 20, 20]);
+    expect(bars.map((b) => b.points)).toEqual([60, 10, 20]);
     expect(bars.map((b) => b.fill)).toEqual([1, 0.5, 1]);
-    expect(bars[1].points).toBe(5);
+    expect(bars.map((b) => b.match)).toEqual([1, 0.5, 1]);
+    expect(bars.some((b) => b.discounted)).toBe(false);
   });
 
-  it('copes with zero / negative weights', () => {
-    expect(fitBars([c('a', 0.5, 0, 0)])[0].maxPoints).toBe(0);
-    expect(fitBars([c('a', -1, -5, 0), c('b', 0.2, 5, 1)]).map((b) => [b.maxPoints, b.fill])).toEqual([
+  it('shows a low-confidence discount instead of the raw match', () => {
+    // A full visa match on weak evidence only adds 30 of its 50 points.
+    const [visa] = fitBars([{ ...c('visa', 1, 50, 30), confidence: 'low' }, c('role', 1, 50, 50)]);
+    expect(visa.fill).toBeCloseTo(0.6);
+    expect(visa.match).toBe(1);
+    expect(visa.discounted).toBe(true);
+  });
+
+  it('copes with zero / negative weights and non-finite numbers', () => {
+    expect(fitBars([c('a', 0.5, 0, 0)])[0]).toMatchObject({ maxPoints: 0, fill: 0.5 });
+    expect(fitBars([c('a', -1, -5, 0), c('b', 0.2, 5, 20)]).map((b) => [b.maxPoints, b.fill])).toEqual([
       [0, 0],
       [100, 0.2],
     ]);
+    expect(fitBars([c('a', Number.NaN, 10, Number.NaN)])[0]).toMatchObject({ points: 0, fill: 0, match: 0 });
   });
 });
 
@@ -217,5 +231,33 @@ describe('lingeringColumnOverride', () => {
     expect(lingeringColumnOverride([ov(2, 'Berlin-Mitte', false, '2026-09-29T10:00:00Z')], 'title', 'Berlin-Mitte')).toBeNull();
     expect(lingeringColumnOverride([ov(2, null, false, '2026-09-29T10:00:00Z')], 'city', null)).toBeNull();
     expect(lingeringColumnOverride([], 'city', 'Berlin')).toBeNull();
+  });
+});
+
+describe('markAppliedMessage', () => {
+  it('only says "now at applied" when the tracker really moved it', () => {
+    expect(markAppliedMessage({ created: true, snapshotId: 4 }, null, false)).toBe('Application logged in the tracker. The posting was snapshotted.');
+    expect(markAppliedMessage({ created: false, snapshotId: 5 }, 'applied', false)).toMatch(/it is now at "applied"\. The posting was snapshotted\.$/);
+    expect(markAppliedMessage({ created: false, snapshotId: null }, 'no_response', true)).toBe(
+      'The tracker already has this application at "no response", so its stage was left alone. Your note was added to it.',
+    );
+    expect(markAppliedMessage({ created: false, snapshotId: null }, null, false)).toBe('The tracker already has this application, so its stage was left alone.');
+  });
+});
+
+describe('feedbackToast', () => {
+  it('turns an action result into one toast (raised even if the form unmounts with the refresh)', () => {
+    expect(feedbackToast({ ok: true, message: 'Override removed — the evidence decides again.', at: 1 })).toEqual({
+      kind: 'ok',
+      title: 'Override removed — the evidence decides again.',
+    });
+    expect(feedbackToast({ ok: true, at: 2 })).toEqual({ kind: 'ok', title: 'Done' });
+    expect(feedbackToast({ ok: false, error: 'unknown country: ZZ', at: 3 }, 'Override not set')).toEqual({
+      kind: 'error',
+      title: 'Override not set',
+      body: 'unknown country: ZZ',
+    });
+    expect(feedbackToast({ ok: false, error: 'x', at: 4 })).toMatchObject({ title: 'Nothing changed' });
+    expect(feedbackToast({})).toBeNull();
   });
 });

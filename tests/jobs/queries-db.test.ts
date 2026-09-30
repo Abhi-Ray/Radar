@@ -29,9 +29,10 @@ import {
 } from '../../src/components/jobs/filters';
 import type { CompanyType, ConfidenceKey, JobState, RemoteClass, RoleFamily } from '../../src/components/jobs/labels';
 import type { Fact } from '../../src/lib/contracts/provenance';
+import { ELIGIBILITY_RESULTS } from '../../src/db/schema/_enums';
 import { addFact, clearOverride, setOverride } from '../../src/lib/provenance/store';
 import { getDeskData } from '../../src/lib/queries/dashboard';
-import { RULE_STALE_DAYS, getJobDetail, hiddenBreakdown, jobFacets, likeNeedle, listJobs } from '../../src/lib/queries/jobs';
+import { RULE_STALE_DAYS, asEligibilityValue, getJobDetail, hiddenBreakdown, jobFacets, likeNeedle, listJobs } from '../../src/lib/queries/jobs';
 import { addCalendarDaysInTz, appTz, startOfTodayInTz } from '../../src/lib/time';
 import { startTestDb, type TestDb } from '../helpers/db';
 import { seedCountry, seedJob, seedSource } from '../helpers/fixtures';
@@ -398,6 +399,54 @@ describe('getJobDetail', () => {
     expect(rule).toMatchObject({ routeCode: 'eu_blue_card', current: true, verified: true, ageDays: RULE_STALE_DAYS + 30, stale: true });
     expect(rule.rule?.version).toBe(2);
     expect(d?.eligibility.rule?.routeId).toBe(routeId);
+  });
+
+  it('shows a stored eligibility answer (dates revived) and recomputes one it cannot read', async () => {
+    await t.truncateAll();
+    const { jobId } = await seedJob(t.db, { countryIso2: 'DE' });
+    await addFact(t.db, jobId, 'eligibility', {
+      ...posting({ result: 'meets', reason: 'Salary clears the Blue Card line by 12%', marginPct: 12, ruleVerifiedAt: new Date('2026-08-01T00:00:00Z'), rule: 'DE eu_blue_card v2' }),
+      method: 'rule',
+      source: 'visa rule DE eu_blue_card v2',
+    });
+    const d = await getJobDetail(jobId, { db: t.db, now: NOW });
+    expect(d?.eligibility.computedNow).toBe(false);
+    expect(d?.eligibility.fact.value).toEqual({
+      result: 'meets',
+      reason: 'Salary clears the Blue Card line by 12%',
+      marginPct: 12,
+      ruleVerifiedAt: new Date('2026-08-01T00:00:00Z'),
+      rule: 'DE eu_blue_card v2',
+    });
+
+    // A shape the page cannot trust (unknown result) is not rendered as-is: it is worked out afresh.
+    const { jobId: other } = await seedJob(t.db, { countryIso2: 'DE' });
+    await addFact(t.db, other, 'eligibility', { ...posting({ result: 'probably', reason: 7 }), method: 'rule', source: 'visa rule' });
+    const d2 = await getJobDetail(other, { db: t.db, now: NOW });
+    expect(d2?.eligibility.computedNow).toBe(true);
+    expect(ELIGIBILITY_RESULTS).toContain(d2?.eligibility.fact.value.result);
+  });
+});
+
+describe('asEligibilityValue', () => {
+  it('normalises the stored JSON shape and rejects unusable ones', () => {
+    expect(asEligibilityValue({ result: 'cant_tell', reason: 'No verified rule', marginPct: null, ruleVerifiedAt: null })).toEqual({
+      result: 'cant_tell',
+      reason: 'No verified rule',
+      marginPct: null,
+      ruleVerifiedAt: null,
+      rule: null,
+    });
+    expect(asEligibilityValue({ result: 'borderline', reason: 3, marginPct: Number.NaN, ruleVerifiedAt: 'not a date', rule: 5 })).toEqual({
+      result: 'borderline',
+      reason: '',
+      marginPct: null,
+      ruleVerifiedAt: null,
+      rule: null,
+    });
+    expect(asEligibilityValue({ result: 'yes' })).toBeNull();
+    expect(asEligibilityValue('meets')).toBeNull();
+    expect(asEligibilityValue(null)).toBeNull();
   });
 });
 

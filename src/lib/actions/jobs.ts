@@ -8,7 +8,8 @@ import { eq } from 'drizzle-orm';
 import { refresh } from 'next/cache';
 import { headers } from 'next/headers';
 import { z } from 'zod';
-import { jobs } from '@/db/schema';
+import { applications, jobs } from '@/db/schema';
+import { markAppliedMessage } from '@/components/jobs/action-messages';
 import { buildFieldValue, type FieldValueContext } from '@/components/jobs/field-values';
 import { EDITABLE_FIELDS, type EditableField } from '@/components/jobs/field-edit';
 import { aiExtract, getAiBudget } from '@/lib/ai';
@@ -171,24 +172,27 @@ export async function markAppliedAction(_prev: ActionState | undefined, formData
   if (!parsed.success) return fail(firstIssue(parsed.error));
   const { jobId: id, note } = parsed.data;
   let result: Awaited<ReturnType<typeof createApplicationFromJob>>;
+  let stage: string | null = null;
   try {
     const db = getDb();
     result = await createApplicationFromJob(db, id, { stage: 'applied', note: note ?? undefined });
+    if (!result.created) {
+      // The tracker never moves an application backwards: say where it really is now.
+      const [app] = await db.select({ stage: applications.currentStage }).from(applications).where(eq(applications.id, result.applicationId)).limit(1);
+      stage = app?.stage ?? null;
+    }
     await audit(db, {
       action: 'job.mark_applied',
       entityType: 'job',
       entityId: id,
-      after: { applicationId: result.applicationId, created: result.created, snapshotId: result.snapshotId },
+      after: { applicationId: result.applicationId, created: result.created, snapshotId: result.snapshotId, stage: result.created ? 'applied' : stage },
       ip,
     });
   } catch (err) {
     return unexpected('mark the job as applied', err);
   }
   refresh();
-  const snap = result.snapshotId ? ' The posting was snapshotted.' : '';
-  return done(result.created ? `Application logged in the tracker.${snap}` : `The tracker already had this job — it is now at "applied".${snap}`, {
-    applicationId: result.applicationId,
-  });
+  return done(markAppliedMessage(result, stage, note !== null), { applicationId: result.applicationId });
 }
 
 // ---- corrections and overrides ---------------------------------------------------------------
@@ -198,6 +202,8 @@ const reportSchema = z.object({
   field,
   note: optionalNote,
   applyAsOverride: flag,
+  /** "no" = I only know the value is wrong. Absent = the form without the choice (knows it). */
+  knowsCorrect: z.enum(['yes', 'no'], 'Say whether you know the correct value.').optional(),
 });
 
 /** Current displayed value of a field: the resolved winner, or the job column. */
@@ -226,7 +232,7 @@ export async function reportWrongInfoAction(_prev: ActionState | undefined, form
   if (!parsed.success) return fail(firstIssue(parsed.error));
   const { jobId: id, field: f, note, applyAsOverride } = parsed.data;
   const raw = valueInputs(formData);
-  const knowsCorrect = formData.get('knowsCorrect') !== 'no';
+  const knowsCorrect = parsed.data.knowsCorrect !== 'no';
   let correctValue: unknown;
   if (knowsCorrect) {
     const built = buildFieldValue(f, raw, await fieldContext());

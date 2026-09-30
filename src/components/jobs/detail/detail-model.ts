@@ -83,9 +83,14 @@ export interface FitBar {
   label: string;
   /** Share of the score this component can give, in points (weights are relative). */
   maxPoints: number;
+  /** Points it actually added (low confidence already discounted, per the scoring contract). */
   points: number;
-  /** 0..1 — how much of its share the job earned. */
+  /** 0..1 — how much of its share the job earned: points / maxPoints (raw match when it has no share). */
   fill: number;
+  /** 0..1 — the match before weighting and before any confidence discount. */
+  match: number;
+  /** The confidence discount visibly lowered what the match was worth. */
+  discounted: boolean;
   confidence: Confidence;
   reason: string;
 }
@@ -94,17 +99,27 @@ function clamp01(n: number): number {
   return Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0;
 }
 
+const round1 = (n: number) => Math.round(n * 10) / 10;
+
 export function fitBars(components: readonly ScoreComponent[]): FitBar[] {
   const totalWeight = components.reduce((s, c) => s + (Number.isFinite(c.weight) && c.weight > 0 ? c.weight : 0), 0);
-  return components.map((c) => ({
-    key: c.key,
-    label: c.label,
-    maxPoints: totalWeight > 0 && c.weight > 0 ? Math.round((c.weight / totalWeight) * 1000) / 10 : 0,
-    points: Math.round(c.contribution * 10) / 10,
-    fill: clamp01(c.raw),
-    confidence: c.confidence,
-    reason: c.reason,
-  }));
+  return components.map((c) => {
+    const share = totalWeight > 0 && Number.isFinite(c.weight) && c.weight > 0 ? (c.weight / totalWeight) * 100 : 0;
+    const points = Number.isFinite(c.contribution) ? c.contribution : 0;
+    const match = clamp01(c.raw);
+    const fill = share > 0 ? clamp01(points / share) : match;
+    return {
+      key: c.key,
+      label: c.label,
+      maxPoints: round1(share),
+      points: round1(points),
+      fill,
+      match,
+      discounted: share > 0 && match - fill > 0.05,
+      confidence: c.confidence,
+      reason: c.reason,
+    };
+  });
 }
 
 // ---- fact ledger -----------------------------------------------------------------------------
