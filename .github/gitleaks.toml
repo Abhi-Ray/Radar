@@ -1,0 +1,15 @@
+# gitleaks rules for RADAR: the default rule set, plus allow-listed files that are encrypted or
+# public by design.
+title = "radar"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "encrypted or public-by-design files"
+paths = [
+  # AES-256 ciphertext of the production .env (ops/secrets.sh); unreadable without BACKUP_PASSPHRASE.
+  '''^ops/secrets\.env\.enc$''',
+  # github.com's published SSH host keys.
+  '''^ops/backup/github_known_hosts$''',
+]

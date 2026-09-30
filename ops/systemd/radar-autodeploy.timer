@@ -1,0 +1,14 @@
+# Installed by ops/install.sh as /etc/systemd/system/radar-autodeploy.timer.
+#   systemctl list-timers radar-autodeploy.timer
+[Unit]
+Description=Run radar-autodeploy every 5 minutes
+
+[Timer]
+OnBootSec=3min
+# Counted from the end of the previous run, so a long build never overlaps the next check.
+OnUnitInactiveSec=5min
+RandomizedDelaySec=30s
+AccuracySec=30s
+
+[Install]
+WantedBy=timers.target

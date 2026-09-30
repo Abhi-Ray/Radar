@@ -1,0 +1,112 @@
+# RADAR CI: lint, typecheck, tests (against a MySQL 8.4 service), production builds, the two
+# Docker images, and a secret scan. The db-backups branch (encrypted dumps pushed by the backup
+# container) is never built.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches-ignore: [db-backups]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NEXT_TELEMETRY_DISABLED: '1'
+  npm_config_audit: 'false'
+  npm_config_fund: 'false'
+
+jobs:
+  test:
+    name: lint · typecheck · test · build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          # Throw-away CI container, reachable only from this job.
+          MYSQL_ROOT_PASSWORD: ci-root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -uroot -pci-root --silent"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 30
+    env:
+      # tests/helpers/db.ts creates (and drops) a uniquely named database per test file here.
+      TEST_DATABASE_URL: mysql://root:ci-root@127.0.0.1:3306/
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      # Strict: fails if any worker/cli/migrate/seed/eval entry point is missing.
+      - run: npm run build:worker
+      - name: shell syntax
+        run: |
+          set -e
+          for f in ops/*.sh ops/lib/*.sh ops/backup/*.sh; do bash -n "$f"; done
+          sh -n ops/docker/entrypoint.sh
+
+  images:
+    name: docker images
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: compose file is valid
+        run: |
+          set -e
+          # Placeholder values only: this .env exists just long enough for `compose config`.
+          {
+            echo 'MYSQL_ROOT_PASSWORD=ci-placeholder'
+            echo 'MYSQL_PASSWORD=ci-placeholder'
+          } > .env
+          mkdir -p secrets && : > secrets/backup_deploy_key
+          docker compose config --quiet
+          rm -rf .env secrets
+      - name: app image
+        run: docker build --build-arg GIT_SHA=${{ github.sha }} -t radar-app:ci .
+      - name: app image smoke test
+        run: |
+          set -e
+          docker run --rm radar-app:ci help
+          test "$(docker run --rm --entrypoint sh radar-app:ci -c 'id -u')" = 10001
+          docker run --rm --entrypoint sh radar-app:ci -c 'test -f server.js && test -f drizzle/meta/_journal.json'
+      - name: backup image
+        run: docker build -t radar-backup:ci ops/backup
+      - name: backup image smoke test
+        run: |
+          set -e
+          docker run --rm radar-backup:ci radar-backup-scheduler next-slots 0
+          docker run --rm radar-backup:ci radar-alert --help
+
+  gitleaks:
+    name: secret scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .github/gitleaks.toml
+          GITLEAKS_ENABLE_COMMENTS: 'false'
