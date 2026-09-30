@@ -165,9 +165,10 @@ export async function refreshFxRates(db: DbOrTx, opts: RefreshFxOptions = {}): P
   const parsed = parseEcbXml(res.text());
   const previous = await getSetting(db, 'fx_rates').catch(() => null);
   if (previous && previous.date > parsed.date) {
-    // A lagging mirror or cache must not replace newer rates.
+    // A lagging mirror or cache must not replace newer rates. The check still counts as a fetch,
+    // so the next runs do not ask again before FX_REFRESH_AFTER_HOURS.
     log.warn('fx: fetched rates are older than the cache; keeping the cache', { cached: previous.date, fetched: parsed.date });
-    return previous;
+    return setSetting(db, 'fx_rates', { ...previous, fetchedAt: now.toISOString() }, { skipAudit: true, actor: 'worker', reason: 'ECB daily reference rates (cache kept)' });
   }
   const value: FxRatesSetting = { date: parsed.date, base: 'EUR', rates: parsed.rates, fetchedAt: now.toISOString(), source: ECB_SOURCE };
   // A daily machine refresh, not a user decision: no audit row (settings.setSetting skipAudit).

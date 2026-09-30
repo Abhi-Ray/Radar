@@ -6,9 +6,11 @@
  *   "between $90,000 and $110,000", "ab 60.000 € brutto/Jahr", "RAL 35.000", "600万円".
  * - Period (hour/day/month/year), gross/net, B2B invoice rates, open ranges ("up to", "ab") and
  *   stated payment counts ("14 Gehälter", "13 mensilità") are detected in EN/DE/FR/NL/ES/IT/PT/
- *   PL/SV/DA/NO/FI/CS/HU/RO.
+ *   PL/SV/DA/NO/FI/CS/HU/RO/EL/HR/SL/SK/BG/ET/LV/LT, plus the Japanese/Korean pay words.
  * - Monthly figures are annualised with the posting's stated payment count, else the country's
- *   customary one (AT/PT/GR 14, IT 13, BE 13.92, NL 12.96), and labelled via `installments`.
+ *   customary one (AT/PT/GR 14, IT/BR 13, BE 13.92, NL 12.96, MX 12.5), and labelled via
+ *   `installments`. Where extra payments are common but not universal (ES/CH/LU) 12 is used and the
+ *   label and the `installments_uncertain` flag say the yearly total may be higher.
  * - Converted to EUR with the ECB table (pegs for AED/SAR/QAR); the rate and its date are stored.
  * - Sanity checks catch annual/monthly mix-ups and non-salary amounts (budgets, funding, bonuses).
  *
@@ -20,7 +22,7 @@ import { lowerConfidence, type Confidence, type Fact } from '../contracts/proven
 import { countryInfo } from '../../data/places';
 import { AMBIGUOUS_SYMBOLS, CURRENCIES, CURRENCY_BY_CODE, KNOWN_CURRENCY_CODES } from '../../data/salary/currencies';
 import { ESTIMATES_AS_OF, ESTIMATES_SOURCE, SALARY_ESTIMATES, estimateTrackFor, type CountrySalaryEstimate } from '../../data/salary/estimates';
-import { DEFAULT_INSTALLMENTS, installmentRule } from '../../data/salary/installments';
+import { DEFAULT_INSTALLMENTS, installmentRule, installmentsVaryNote, NL_HOLIDAY_INCLUDED_LABEL } from '../../data/salary/installments';
 import {
   B2B_PATTERNS,
   EMPLOYMENT_CONTRACT_PATTERNS,
@@ -39,7 +41,7 @@ import {
 import { lookupRate } from '../fx/rates';
 import { collapseWhitespace, escapeRegExp, quoteAround } from './text';
 
-export const SALARY_LOGIC_VERSION = 'salary@2026-09-29.1';
+export const SALARY_LOGIC_VERSION = 'salary@2026-09-30.1';
 
 /** Working time used to annualise hourly and daily rates. */
 export const HOURS_PER_YEAR = 1760;
@@ -61,6 +63,8 @@ export type SalaryFlag =
   | 'currency_ambiguous'
   | 'installments_stated'
   | 'installments_customary'
+  /** Monthly figure annualised at 12 where 13/14 payments are common but not stated (ES, CH, LU). */
+  | 'installments_uncertain'
   | 'range_inverted'
   | 'range_wide'
   | 'open_min'
@@ -128,6 +132,10 @@ export function parseLocaleNumber(raw: string): number | null {
 
 // ── Currency tokens ──────────────────────────────────────────────────────────────────────
 
+/** Scripts written without spaces: a word boundary is not needed next to them ("30万円以上"). */
+const CJK = '\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}\\p{Script=Hangul}';
+const CJK_RE = new RegExp(`[${CJK}]`, 'u');
+
 interface CurrencyTokenInfo {
   code: string | null;
   ambiguous: boolean;
@@ -152,8 +160,8 @@ const CI_ALT = tokenAlt(CI_TOKENS.keys());
 const CS_ALT = tokenAlt(CS_TOKENS.keys());
 const CUR_BEFORE_CI = new RegExp(`(?:${CI_ALT})\\.?\\s?$`, 'iu');
 const CUR_BEFORE_CS = new RegExp(`(?:${CS_ALT})\\.?\\s?$`, 'u');
-const CUR_AFTER_CI = new RegExp(`^(?:,-{1,2}|\\.-|,–)?\\s?(?:${CI_ALT})(?![\\p{L}])`, 'iu');
-const CUR_AFTER_CS = new RegExp(`^(?:,-{1,2}|\\.-|,–)?\\s?(?:${CS_ALT})(?![\\p{L}])`, 'u');
+const CUR_AFTER_CI = new RegExp(`^(?:,-{1,2}|\\.-|,–)?\\s?(?:${CI_ALT})(?:(?![\\p{L}])|(?<=[${CJK}]))`, 'iu');
+const CUR_AFTER_CS = new RegExp(`^(?:,-{1,2}|\\.-|,–)?\\s?(?:${CS_ALT})(?:(?![\\p{L}])|(?<=[${CJK}]))`, 'u');
 
 function resolveToken(token: string, countryIso2: string | null): { code: string | null; ambiguous: boolean } {
   const t = token.replace(/\.$/, '').trim();
@@ -187,7 +195,8 @@ function currencyAfter(t: string, end: number): { token: string; to: number } | 
 // ── Vocabulary regexes ───────────────────────────────────────────────────────────────────
 
 const B = '(?<![\\p{L}\\p{N}])';
-const E = '(?![\\p{L}\\p{N}])';
+/** Japanese / Korean write the figure straight after the pay word ("年収600万円", "월급300만원"). */
+const E = `(?:(?![\\p{L}\\p{N}])|(?<=[${CJK}])(?=\\p{N}))`;
 const words = (xs: readonly string[]) => xs.map((x) => x.replace(/ /g, '\\s+')).join('|');
 const wordRe = (xs: readonly string[], flags = 'iu') => new RegExp(`${B}(?:${words(xs)})${E}`, flags);
 
@@ -214,12 +223,15 @@ const CONTRACT_LABEL_RE = /(?<![\p{L}])(?:uop|b2b|umowa o pracę|hpp|ičo|cdi|fr
 const PAY_EXTRAS_AFTER_RE = /^\s*(?:[a-z]{0,6}\s+)?(?:\+|plus|and|und|&|\+\s*)\s*(?:(?:annual|yearly|performance|target|variable)\s+)?(?:bonus|bonuses|benefits|equity|stock|commission|provision|prämie|variable)/iu;
 const OPEN_MAX_RE = new RegExp(`${B}(?:${words(OPEN_MAX_PATTERNS)})\\s*$`, 'iu');
 const OPEN_MIN_RE = new RegExp(`${B}(?:${words(OPEN_MIN_PATTERNS)})\\s*$`, 'iu');
+/** Japanese / Korean put "or more" / "up to" after the figure: "30万円以上", "800万円まで", "5000만원 이상". */
+const OPEN_MIN_AFTER_RE = /^\s*(?:以上|から|이상|~(?!\s*[\p{N}¥￥€$£]))/u;
+const OPEN_MAX_AFTER_RE = /^\s*(?:以下|まで|이하|까지)/u;
 const BETWEEN_RE = /(?<![\p{L}])(?:between|zwischen|entre|tra|fra|tussen|mellan|mellem|między|pomiędzy|välillä|mezi)\s*$/iu;
 const PERIOD_PREFIX_RE = new RegExp(
   `^\\s*(?:(?:${words(GROSS_PATTERNS)})\\s*)?(?:${Object.values(PERIOD_PATTERNS).flat().map((x) => x.replace(/ /g, '\\s+')).join('|')})(?![\\p{L}])`,
   'iu',
 );
-const RANGE_SEP_RE = /^\s*(?:-{1,2}|–|—|~|to|bis|à|a|au|tot|till|til|do|até|ate|al|hasta|-\s*bis)\s*$/iu;
+const RANGE_SEP_RE = /^\s*(?:-{1,2}|–|—|~|to|bis|à|a|au|tot|till|til|do|até|ate|al|hasta|-\s*bis|έως|εως|μέχρι|до|kuni|līdz|iki)\s*$/iu;
 const AND_SEP_RE = /^\s*(?:and|und|et|y|e|en|och|og|i|ja|a)\s*$/iu;
 const INSTALLMENT_RES = INSTALLMENT_PATTERNS.map((p) => new RegExp(p.startsWith('(?<=') ? p : `${B}${p}`, 'iu'));
 const EXTRA_13_RE = new RegExp(`${B}(?:${EXTRA_MONTH_13})${E}`, 'iu');
@@ -305,7 +317,9 @@ function tokens(t: string, countryIso2: string | null): AmountToken[] {
     let end = end0;
     const before = currencyBefore(t, numStart);
     // Digits glued to letters ("B2B", "ISO27001", "S3") are not amounts unless the letters are a currency ("EUR45k").
-    if (numStart > 0 && /\p{L}/u.test(t[numStart - 1]) && !(before && before.from + before.token.length === numStart)) continue;
+    // Japanese / Korean have no spaces, so a figure right after a CJK character is still an amount.
+    const prevChar = numStart > 0 ? t[numStart - 1] : '';
+    if (prevChar && /\p{L}/u.test(prevChar) && !CJK_RE.test(prevChar) && !(before && before.from + before.token.length === numStart)) continue;
     const after = currencyAfter(t, end0);
     if (mult?.currency) currencyToken = mult.currency;
     else if (before) {
@@ -397,8 +411,8 @@ export function findSalaryMentions(text: string, countryIso2: string | null = nu
     const nonSalaryContext = (nonSalaryAt >= 0 && nonSalaryAt > lastIndexOfMatch(KEYWORD_G, preNear)) || NON_SALARY_AFTER_RE.test(post);
     const postNear = post.slice(0, 50);
     const preCtx = pre.slice(-60);
-    const openMax = !b && OPEN_MAX_RE.test(pre.slice(-24));
-    const openMin = !b && !openMax && OPEN_MIN_RE.test(pre.slice(-64));
+    const openMax = !b && (OPEN_MAX_RE.test(pre.slice(-24)) || OPEN_MAX_AFTER_RE.test(post));
+    const openMin = !b && !openMax && (OPEN_MIN_RE.test(pre.slice(-64)) || OPEN_MIN_AFTER_RE.test(post));
     const currencyTok = a.currency || a.currencyToken ? a : b && (b.currency || b.currencyToken) ? b : null;
     const currency = currencyTok?.currency ?? null;
     let min: number | null = lo;
@@ -616,13 +630,16 @@ function build(inp: BuildInput, fx: FxTable): Built | null {
       flags.add('installments_stated');
     } else {
       const rule = installmentRule(inp.countryIso2);
-      if (rule && !(inp.countryIso2 === 'NL' && inp.holidayIncluded)) {
+      const nlIncluded = inp.countryIso2 === 'NL' && inp.holidayIncluded;
+      const varyNote = installmentsVaryNote(inp.countryIso2);
+      if (rule && !nlIncluded) {
         installments = rule.count;
         installmentsLabel = rule.label;
         flags.add('installments_customary');
       } else {
         installments = DEFAULT_INSTALLMENTS;
-        installmentsLabel = `${DEFAULT_INSTALLMENTS} payments`;
+        installmentsLabel = nlIncluded ? NL_HOLIDAY_INCLUDED_LABEL : varyNote ?? `${DEFAULT_INSTALLMENTS} payments`;
+        if (varyNote) flags.add('installments_uncertain');
       }
     }
   } else if (inp.statedInstallments) {

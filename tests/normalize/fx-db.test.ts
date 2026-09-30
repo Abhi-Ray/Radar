@@ -101,6 +101,21 @@ describe('ECB rates cache', () => {
     expect((await getSetting(t.db, 'fx_rates'))?.rates.USD).toBe(1.1702);
   });
 
+  it('a lagging answer still counts as a check, so the next run does not fetch again', async () => {
+    await refreshFxRates(t.db, { resolver, addressPolicy, url: url(), now: new Date('2026-09-29T08:00:00Z') });
+    body = XML('2026-09-20', '1.05');
+    const checkedAt = new Date('2026-09-30T08:00:00Z');
+    const lag = await ensureFxRates(t.db, { resolver, addressPolicy, url: url(), now: checkedAt });
+    expect(lag.setting).toMatchObject({ date: '2026-09-28', fetchedAt: checkedAt.toISOString() });
+    expect(lag.setting?.rates.USD).toBe(1.1702);
+    expect(hits).toBe(2);
+    const next = await ensureFxRates(t.db, { resolver, addressPolicy, url: url(), now: new Date('2026-09-30T09:00:00Z') });
+    expect(next.refreshed).toBe(false);
+    expect(hits).toBe(2);
+    const audits = await t.db.select().from(auditLog).where(eq(auditLog.entityId, 'fx_rates'));
+    expect(audits).toHaveLength(0);
+  });
+
   it('ensureFxRates refreshes only when stale and falls back to the cache on failure', async () => {
     const t0 = new Date('2026-09-29T08:00:00Z');
     const first = await ensureFxRates(t.db, { resolver, addressPolicy, url: url(), now: t0 });
