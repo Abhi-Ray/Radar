@@ -18,7 +18,7 @@ import { lowerConfidence, type Confidence, type Fact } from '../contracts/proven
 import { detectSeniority } from './title';
 import { collapseWhitespace, quoteAround } from './text';
 
-export const EXPERIENCE_LOGIC_VERSION = 'experience@2026-09-29.1';
+export const EXPERIENCE_LOGIC_VERSION = 'experience@2026-09-30.1';
 
 /** Same shape as settings profile.experienceBand. */
 export interface ExperienceBandSettings {
@@ -196,7 +196,7 @@ const NEG_AFTER_RE = new RegExp(
     `placement|secondment|roadmap|term|period|zeitraum|degree|bachelor\\p{L}*|master\\p{L}*|studium|studies|study|studiengang|diploma|diplôme|licence|ausbildung|lehre|apprenticeship|` +
     `training|formation|formación|formazione|formação|opleiding|utbildning|uddannelse|utdanning|studi\\p{L}*|program\\p{L}*|in (?:the )?(?:market|business|industry)|am markt|` +
     `sur le marché|en el mercado|sul mercato|op de markt|på marknaden|på markedet|na rynku|of (?:growth|operation|existence|success|innovation|history|tradition)|im geschäft|in business|` +
-    `de existencia|d'existence|di attività|of (?:combined|collective|joint|shared|cumulative|cumulated)|with (?:us|the company)|bei uns|chez nous|con nosotros|con noi|bij ons|hos oss|hos os|u nas|tenure|seniority|betriebszugehörigkeit)${E}`,
+    `de existencia|d'existence|di attività|of (?:combined|collective|joint|shared|cumulative|cumulated)|with (?:us|the company)|of (?:[\\p{L}.]+\\s+){0,2}(?:residency|residence|citizenship)|(?:uk |us |eu )?residency|(?:ununterbrochene[nr]? )?aufenthalt\\p{L}*|de (?:résidence|residence|séjour|sejour)|de residencia|bei uns|chez nous|con nosotros|con noi|bij ons|hos oss|hos os|u nas|tenure|seniority|betriebszugehörigkeit)${E}`,
   'iu',
 );
 

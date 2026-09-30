@@ -29,7 +29,7 @@
  */
 import type { Confidence } from '../../lib/contracts/provenance';
 
-export const REMOTE_PHRASES_VERSION = 'remote-phrases@2026-09-30.2';
+export const REMOTE_PHRASES_VERSION = 'remote-phrases@2026-09-30.3';
 
 export type RemoteRuleKind =
   | 'worldwide'
@@ -217,6 +217,8 @@ export const REMOTE_PHRASE_RULES: readonly RemotePhraseRule[] = [
   // ── Workplace: hybrid ────────────────────────────────────────────────────────────────────────
   r('en.wp.hybrid_role', 'en', 'hybrid', 'high', "(?:this|the) (?:role|position|job) (?:is|will be) (?:a )?hybrid|hybrid (?:role|position|job|working model|work model|model|setup|set-up|arrangement|schedule|working|work)", { strong: true }),
   r('en.wp.office_days', 'en', 'hybrid', 'high', '(?:[1-4]|one|two|three|four)(?: ?- ?[2-5])? (?:days?|x) (?:a |per |each |every )?(?:week )?(?:in|at|from) (?:the |our |an )?(?:office|hq|headquarters|studio|site)', { strong: true }),
+  // "based in our Dublin office with one remote day per week", "2 days a week working from home".
+  r('en.wp.remote_days', 'en', 'hybrid', 'high', '(?:[1-4]|one|two|three|four|a|up to (?:[1-4]|one|two|three|four))(?: ?- ?[2-4])? (?:remote|wfh|work[ -]from[ -]home|home[ -]?office|home[ -]?working) days?|(?:[1-4]|one|two|three|four)(?: ?- ?[2-4])? days? (?:a |per |each |every )?(?:week )?(?:of )?(?:remote(?: work(?:ing)?)?|working remotely|working from home|work from home|from home|wfh|home[ -]?office)', { strong: true }),
   r('en.wp.hybrid', 'en', 'hybrid', 'medium', 'hybrid|partial(?:ly)? remote|partly remote|part[ -]remote|semi[ -]remote|mix of (?:remote|home) and office'),
   r('de.wp.hybrid', 'de', 'hybrid', 'high', '(?:[1-4]|ein|zwei|drei|vier) (?:tage?n?|x) (?:pro woche |die woche |wochentlich )?(?:im buro|im office|vor ort|am standort|in der firma)|hybrides? (?:arbeiten|arbeitsmodell|modell)', { strong: true }),
   r('fr.wp.hybrid', 'fr', 'hybrid', 'high', '(?:[1-4]|un|deux|trois|quatre) jours? (?:de teletravail|sur site|au bureau)|teletravail partiel|mode hybride|travail hybride', { strong: true }),

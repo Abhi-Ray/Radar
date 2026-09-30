@@ -28,7 +28,7 @@
 import type { Confidence } from '../../lib/contracts/provenance';
 import type { VisaSignalKind } from '../../lib/contracts/jobs';
 
-export const VISA_PHRASES_VERSION = 'visa-phrases@2026-09-30.3';
+export const VISA_PHRASES_VERSION = 'visa-phrases@2026-09-30.4';
 
 export const VISA_SIGNAL_LANGS = ['en', 'de', 'fr', 'nl', 'es', 'pt', 'it', 'sv', 'da', 'no', 'fi', 'pl', 'cs'] as const;
 export type VisaSignalLang = (typeof VISA_SIGNAL_LANGS)[number];
@@ -56,7 +56,7 @@ const r = (
 
 // Shared fragments (folded).
 const EN_VISA_OBJ =
-  '(?:visas?|work visas?|work permits?|employment visas?|skilled worker visas?|(?:eu )?blue cards?|h-?1b(?: visas?)?|visa applications?|immigration|work authori[sz]ations?|residence permits?|employment pass(?:es)?|critical skills employment permits?|employment permits?)';
+  '(?:visas?|work visas?|work permits?|work and residence permits?|residence and work permits?|employment visas?|skilled worker visas?|(?:eu )?blue cards?|h-?1b(?: visas?)?|visa applications?|immigration|work authori[sz]ations?|residence permits?|employment pass(?:es)?|critical skills employment permits?|employment permits?)';
 const EN_NEG_AUX =
   "(?:(?:unfortunately|currently|presently|sadly|regrettably|regretfully|still) )?(?:do not|don't|does not|doesn't|cannot|can't|can not|will not|won't|would not|wouldn't|will never|never|do not ever|are unable to|is unable to|am unable to|are not able to|aren't able to|is not able to|isn't able to|unable to|not able to|are not in a position to|is not in a position to|not in a position to|no longer|are not currently able to|is not currently able to)(?: (?:currently|presently|yet|normally|usually|generally|typically|ever|always|unfortunately))?";
 const EN_RTW_OBJ =
@@ -131,7 +131,7 @@ export const VISA_PHRASE_RULES: readonly VisaPhraseRule[] = [
   r('en.offer.sponsorship_available', 'en', 'statement', 'offered', 'high',
     '(?:visa |work permit |immigration |employer |skilled worker |h-?1b |work visa |tier 2 |tier-2 |skilled worker visa )sponsorships? (?:is |are |will be |can be |may be )?(?:available|offered|provided|possible|supported|included|an option|on offer)'),
   r('en.offer.sponsorship_available_generic', 'en', 'statement', 'offered', 'medium',
-    'sponsorships? (?:is |are |will be |can be )?(?:available|offered|provided|possible|on offer)(?: for (?:the right|qualified|suitable|strong|exceptional|successful) (?:candidates?|applicants?))?'),
+    'sponsorships? (?:is |are |will be |can be |may be |might be |could be )?(?:available|offered|provided|possible|on offer)(?: for (?:the right|qualified|suitable|strong|exceptional|successful) (?:candidates?|applicants?))?'),
   r('en.offer.we_sponsor', 'en', 'statement', 'offered', 'high',
     "(?:we|we'll|we will|we can|we do|we are able to|we're able to|we are happy to|we're happy to|we are glad to|we're glad to|we are willing to|we're willing to|we are open to|we're open to|company will|employer will|they will|we'd be happy to|we would be happy to|happy to|willing to|able to|can) (?:also )?(?:fully )?sponsor (?:your |the |a |an |their |all |any |eligible |successful )?(?:candidates? |applicants? )?(?:for )?(?:the |a |an |your )?" + EN_VISA_OBJ),
   r('en.offer.offer_sponsorship', 'en', 'statement', 'offered', 'high',
@@ -141,7 +141,7 @@ export const VISA_PHRASE_RULES: readonly VisaPhraseRule[] = [
   r('en.offer.visa_support_available', 'en', 'statement', 'offered', 'high',
     '(?:visa|work permit|immigration|blue card) (?:support|assistance|help|sponsorship) (?:is |are |will be )?(?:available|offered|provided|included|possible)'),
   r('en.offer.help_with_visa', 'en', 'statement', 'offered', 'medium',
-    "(?:we(?:'ll| will)? |we can |we're happy to |we are happy to )?(?:help|support|assist|guide) (?:you )?(?:with|through|in|during) (?:the |your |all )?(?:visa|work permit|immigration|blue card|relocation and visa|visa and relocation)(?: application| process| paperwork| requirements| formalities| procedures?)?"),
+    "(?:we(?:'ll| will)? |we can |we're happy to |we are happy to )?(?:help|support|assist|guide) (?:you )?(?:with|through|in|during) (?:the |your |all )?(?:visas?|work permits?|work and residence permits?|immigration|blue cards?|relocation and visa|visa and relocation)(?: application| process| paperwork| requirements| formalities| procedures?)?"),
   r('en.offer.blue_card_support', 'en', 'statement', 'offered', 'high',
     '(?:eu )?blue card (?:support|sponsorship|assistance|application support|processing|application)'),
   r('en.offer.support_blue_card', 'en', 'statement', 'offered', 'high',
@@ -158,6 +158,11 @@ export const VISA_PHRASE_RULES: readonly VisaPhraseRule[] = [
     '(?:visa|work permit|immigration|work visa|skilled worker visa|h-?1b|blue card) sponsorship'),
   r('en.offer.bare_visa_support', 'en', 'bare', 'offered', 'medium',
     '(?:relocation (?:and|&|/) )?(?:visa|work permit|immigration)(?: (?:and|&|/) relocation)? (?:support|assistance)'),
+  // "Package: - Employment visa, medical insurance and flights provided" (common in GCC postings):
+  // only with a "provided / included / covered" later in the clause (so "must hold a valid work
+  // visa" never matches); an offer in a benefit context, a low-confidence mention elsewhere.
+  r('en.offer.bare_employment_visa', 'en', 'bare', 'offered', 'medium',
+    "(?:employment|work|working|residence|residency) visas?(?=(?:(?! not | no |n't | never )[^.\\n;?]){0,80} (?:provided|included|covered|arranged|sponsored|paid for|on us))"),
   // Relocation.
   r('en.reloc.package', 'en', 'statement', 'relocation', 'high',
     '(?:paid |full |generous |competitive |comprehensive )?relocation(?: (?:and|&|/) (?:visa|immigration))? (?:package|support|assistance|allowance|bonus|budget|help|stipend|grant|services?|costs? (?:are )?covered|expenses (?:are )?covered|reimbursement|lump sum|benefits?)'),
@@ -174,6 +179,9 @@ export const VISA_PHRASE_RULES: readonly VisaPhraseRule[] = [
     '(?:existing |current |valid |full |unrestricted |permanent |legal )?' + EN_RTW_OBJ + '(?: (?:in|for|within) ' + EN_PLACES + ')? (?:is |are )?(?:required|mandatory|essential|a must|necessary|a requirement|compulsory|needed)'),
   r('en.rtw.must_be_authorised', 'en', 'statement', 'right_to_work_required', 'high',
     '(?:must|need to|needs to|required to|have to|will need to) (?:already )?be (?:legally |fully )?(?:authori[sz]ed|eligible|entitled|permitted|allowed|able) to (?:legally )?(?:live and )?work (?:in|within|for|from)'),
+  // "You must be based in, and legally authorised to work in, an EU country" (the place comes last).
+  r('en.rtw.based_and_authorised', 'en', 'statement', 'right_to_work_required', 'high',
+    '(?:must|need to|needs to|required to|have to|will need to) (?:already )?be (?:based|located|resident|living) in,? (?:and|&) (?:legally |fully )?(?:authori[sz]ed|eligible|entitled|permitted|allowed) to (?:legally )?work in'),
   r('en.rtw.should_be_authorised', 'en', 'statement', 'right_to_work_required', 'medium',
     '(?:should|ideally) (?:already )?be (?:legally )?(?:authori[sz]ed|eligible|entitled|permitted|able) to (?:legally )?work (?:in|within|for)'),
   r('en.rtw.existing_right', 'en', 'statement', 'right_to_work_required', 'high',
@@ -210,6 +218,12 @@ export const VISA_PHRASE_RULES: readonly VisaPhraseRule[] = [
     '(?:unterstutzung|hilfe|begleitung|beratung) (?:bei|beim|mit|fur|im|in) (?:dem |der |deinem |ihrem |deiner |ihrer |allen |den )?(?:visum|visa|visumsantrag|visumsprozess|visaprozess|visa-prozess|visaverfahren|visumsverfahren|aufenthaltstitel|aufenthaltserlaubnis|arbeitserlaubnis|arbeitsgenehmigung|blue card|blauen karte|einwanderung|einwanderungsprozess|behordengangen|formalitaten rund um (?:das |dein |ihr )?visum)'),
   r('de.offer.wir_unterstutzen', 'de', 'statement', 'offered', 'high',
     '(?:wir )?(?:unterstutzen|helfen|begleiten) (?:dich|sie|euch|ihnen|dir)? ?(?:gerne )?(?:bei|beim|mit|im) (?:dem |der |deinem |ihrem |deiner |ihrer )?(?:visum|visa|visumsantrag|visaprozess|aufenthaltstitel|arbeitserlaubnis|blue card|blauen karte|einwanderungsprozess)'),
+  // "Wir unterstützen Sie bei der Beantragung der Rot-Weiß-Rot-Karte / des Visums".
+  r('de.offer.beantragung', 'de', 'statement', 'offered', 'high',
+    '(?:unterstutzen|helfen|begleiten|unterstutzung|hilfe|begleitung)(?:(?! nicht| kein| leider)[^.\\n]){0,40} (?:bei|beim|mit|in) (?:der |dem )?(?:beantragung|antragstellung|erlangung|einholung|beschaffung) (?:der |des |ihres |deines |ihrer |deiner |eines |einer |von |fur (?:das |die |den )?)?(?:visums?|visa|arbeitsvisums?|aufenthaltstitels?|aufenthaltserlaubnis|arbeitserlaubnis|arbeitsgenehmigung|arbeitsbewilligung|aufenthaltsbewilligung|blue card|blauen karte|rot-weiss-rot-karte)'),
+  // "Wir unterstützen internationale Pflegekräfte bei der Anerkennung und beim Visum."
+  r('de.offer.und_beim_visum', 'de', 'statement', 'offered', 'high',
+    '(?:unterstutzen|helfen|begleiten|unterstutzung|hilfe|begleitung)(?:(?! nicht| kein| leider)[^.\\n]){0,60} (?:und|sowie) (?:beim|bei dem|bei der|mit dem|mit der) (?:visum|visumsantrag|visumsverfahren|visaverfahren|aufenthaltstitel|arbeitserlaubnis|arbeitsgenehmigung|arbeitsbewilligung)'),
   r('de.offer.wir_sponsern', 'de', 'statement', 'offered', 'high',
     '(?:wir )?(?:sponsern|sponsoren|ubernehmen|bieten|ermoglichen|finanzieren) (?:dir |ihnen )?(?:das |ein |dein |ihr |die |eine )?(?:visum|visa|visa-sponsoring|visasponsoring|visumsponsoring|visa-unterstutzung|visumsunterstutzung|arbeitsvisum|blue card|blaue karte)'),
   r('de.offer.sponsoring_moglich', 'de', 'statement', 'offered', 'high',
@@ -226,9 +240,9 @@ export const VISA_PHRASE_RULES: readonly VisaPhraseRule[] = [
   r('de.reloc.wir_helfen', 'de', 'statement', 'relocation', 'high',
     '(?:wir )?(?:helfen|unterstutzen) (?:dir|dich|ihnen|sie) (?:gerne )?(?:bei|beim) (?:dem |deinem |ihrem )?umzug'),
   r('de.rtw.erforderlich', 'de', 'statement', 'right_to_work_required', 'high',
-    '(?:gultige |bestehende |vorhandene |uneingeschrankte |unbefristete )?(?:arbeitserlaubnis|arbeitsgenehmigung|aufenthalts- und arbeitserlaubnis|arbeitsberechtigung)(?: (?:fur|in) (?:deutschland|der eu|die eu|osterreich|der schweiz|die schweiz|den ewr))? (?:ist |wird )?(?:zwingend |unbedingt )?(?:erforderlich|notwendig|vorausgesetzt|voraussetzung|pflicht|benotigt|ein muss)'),
+    '(?:gultige |bestehende |vorhandene |uneingeschrankte |unbefristete )?(?:arbeitserlaubnis|arbeitsgenehmigung|aufenthalts- und arbeitserlaubnis|arbeitsberechtigung|arbeitsbewilligung|aufenthaltsbewilligung)(?: (?:fur|in) (?:deutschland|der eu|die eu|osterreich|der schweiz|die schweiz|den ewr))? (?:ist |wird )?(?:zwingend |unbedingt )?(?:erforderlich|notwendig|vorausgesetzt|voraussetzung|pflicht|benotigt|ein muss)'),
   r('de.rtw.gultige', 'de', 'statement', 'right_to_work_required', 'high',
-    '(?:gultige|bestehende|vorhandene|uneingeschrankte|unbefristete) (?:arbeitserlaubnis|arbeitsgenehmigung|aufenthalts- und arbeitserlaubnis|arbeitsberechtigung)'),
+    '(?:gultige|bestehende|vorhandene|uneingeschrankte|unbefristete) (?:arbeitserlaubnis|arbeitsgenehmigung|aufenthalts- und arbeitserlaubnis|arbeitsberechtigung|arbeitsbewilligung|aufenthaltsbewilligung)'),
   r('de.rtw.eu_staatsburgerschaft', 'de', 'statement', 'right_to_work_required', 'high',
     '(?:eu|ewr)[- ]?(?:staatsburgerschaft|staatsangehorigkeit|burgerschaft|pass) (?:ist )?(?:erforderlich|voraussetzung|notwendig|pflicht)'),
   r('de.rtw.berechtigt', 'de', 'statement', 'right_to_work_required', 'medium',
@@ -250,9 +264,12 @@ export const VISA_PHRASE_RULES: readonly VisaPhraseRule[] = [
   r('fr.neg.ue_uniquement', 'fr', 'negative', 'right_to_work_required', 'high',
     "(?:ressortissants?|citoyens?|candidats?) (?:de l'ue|europeens?|de l'union europeenne|ue|communautaires?) (?:uniquement|seulement|exclusivement)"),
   r('fr.offer.aide_visa', 'fr', 'statement', 'offered', 'high',
-    "(?:aide|accompagnement|soutien|assistance|prise en charge|appui|support) (?:complet |personnalise )?(?:a l'obtention |pour l'obtention |dans l'obtention |dans les demarches |aux demarches |pour les demarches |administratif |dans vos demarches )?(?:du |de |d'|de votre |de ton |au |aux |a votre |pour le |pour votre |de la )?(?:visa|visas|titre de sejour|permis de travail|autorisation de travail|demarches d'immigration|immigration|carte bleue europeenne|passeport talent|carte de sejour)"),
+    "(?:aide|accompagnement|soutien|assistance|prise en charge|appui|support) (?:complet |personnalise )?(?:a l'obtention |pour l'obtention |dans l'obtention |dans les demarches |aux demarches |pour les demarches |administratif |dans vos demarches )?(?:du |de |d'|de votre |de ton |au |aux |a votre |pour le |pour votre |de la |pour l'|de l'|a l')?(?:visa|visas|titre de sejour|permis de travail|autorisation de travail|demarches d'immigration|immigration|carte bleue europeenne|passeport talent|carte de sejour)"),
   r('fr.offer.nous_sponsorisons', 'fr', 'statement', 'offered', 'high',
     '(?:nous )?(?:sponsorisons|parrainons|prenons en charge|finan[cs]ons|accompagnons|facilitons|gerons|assurons) (?:les |le |votre |ton |vos |la |l\'obtention du |l\'obtention de votre )?(?:visa|visas|demarches de visa|titre de sejour|permis de travail|passeport talent)'),
+  // "Nous accompagnons les candidats internationaux dans leurs démarches de visa."
+  r('fr.offer.accompagnons_demarches', 'fr', 'statement', 'offered', 'high',
+    "(?:accompagnons|aidons|assistons|soutenons|accompagnerons|aiderons)(?:(?! pas| aucun| plus)[^.\\n]){0,50} (?:dans|pour|avec) (?:leurs |vos |tes |les |ses |toutes les |l'ensemble des )?(?:demarches|formalites|procedures?) (?:administratives )?(?:de |d'|pour (?:le |l'obtention (?:du |de (?:votre |leur )?)?)?)?(?:visas?|immigration|titre de sejour|permis de travail|autorisation de travail|passeport talent)"),
   r('fr.offer.sponsoring_possible', 'fr', 'statement', 'offered', 'high',
     '(?:sponsoring|parrainage|sponsorisation)(?: (?:de |du )?visa)? (?:est |sera )?(?:possible|disponible|propose|offert|pris en charge|envisageable)'),
   r('fr.offer.bare_sponsoring', 'fr', 'bare', 'offered', 'medium',
@@ -261,7 +278,7 @@ export const VISA_PHRASE_RULES: readonly VisaPhraseRule[] = [
     "(?:aide|package|pack|prime|forfait|indemnite|accompagnement|soutien|assistance|participation|prise en charge) (?:(?:des frais )?(?:a la |de |au |pour la |pour le |du |a votre |de votre |aux frais de ))?(?:relocation|relocalisation|demenagement|mobilite geographique|installation)"),
   r('fr.reloc.package_relocation', 'fr', 'statement', 'relocation', 'high', '(?:package|pack|forfait|prime) (?:de )?relocation'),
   r('fr.rtw.requis', 'fr', 'statement', 'right_to_work_required', 'high',
-    "(?:autorisation|permis) de travail (?:valide |valable |en cours de validite )?(?:en france |dans l'ue |dans l'union europeenne |en belgique |au luxembourg |en suisse )?(?:est |sera )?(?:requise?|obligatoire|exigee?|necessaire|indispensable|imperative?)"),
+    "(?:autorisation|permis) de travail (?:europeen(?:ne)? |valide |valable |en cours de validite )?(?:valide |valable |en cours de validite )?(?:en france |dans l'ue |dans l'union europeenne |en belgique |au luxembourg |en suisse )?(?:est |sera )?(?:requise?|obligatoire|exigee?|necessaire|indispensable|imperative?)"),
   r('fr.rtw.autorise', 'fr', 'statement', 'right_to_work_required', 'high',
     "(?:devez|doit|devrez|devra|etre deja) (?:deja )?(?:etre )?(?:autorise|autorisee|autorises|habilite|habilitee|en droit|legalement autorise) (?:a|de) travailler (?:en|dans|au|sur)"),
   r('fr.rtw.valide', 'fr', 'statement', 'right_to_work_required', 'high',
@@ -692,7 +709,7 @@ export const HEDGE_CUES: readonly string[] = [
  */
 export const BENEFIT_HEADINGS: readonly string[] = [
   'benefits', 'our benefits', 'perks', 'perks and benefits', 'perks & benefits', 'benefits and perks', 'benefits & perks', 'what we offer', 'we offer',
-  'our offer', 'what we provide', 'we provide', 'what you get', "what you'll get", 'what you will get', "what's in it for you", 'what is in it for you',
+  'our offer', 'offer', 'the offer', 'what we provide', 'we provide', 'what you get', "what you'll get", 'what you will get', "what's in it for you", 'what is in it for you',
   'why join us', 'why us', 'why you will love working here', 'compensation and benefits', 'compensation & benefits', 'package', 'the package', 'our package',
   'you get', "you'll get", 'you will get', 'what we can offer', 'what can we offer', 'what can you expect', 'what you can expect',
   'wir bieten', 'was wir bieten', 'das bieten wir', 'das bieten wir dir', 'das bieten wir ihnen', 'unser angebot', 'deine vorteile', 'ihre vorteile', 'vorteile', 'deine benefits', 'ihre benefits',

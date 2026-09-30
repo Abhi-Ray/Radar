@@ -1,0 +1,41 @@
+{
+  "_about": "Minimum metrics for tests/golden/samples.json (tests/accuracy/golden.test.ts, npm run eval -- --file tests/golden/samples.json --thresholds tests/golden/thresholds.json). Set just below what the rules scored on 2026-09-30 (see _measured). Raise a threshold when the rules improve; never lower one to make a change pass — fix the rule or the label instead. Precision / recall of multi-class fields are macro averages, so one mistake on a rare class moves them more than accuracy.",
+  "_measured": "2026-09-30, 74 samples: every field 100% accuracy / precision / recall except role_key (65 labelled): accuracy 98.5%, precision 98.3%, recall 95.8% (1 miss: en-nl-cloudeng-security-silent -> grc_cloud). visa confirmed precision 100% (19/19), role_match precision 100%.",
+  "visa_status.confirmed_precision": 0.98,
+  "role_match.precision": 0.98,
+
+  "role_match.accuracy": 0.98,
+  "role_match.recall": 0.98,
+
+  "role_key.accuracy": 0.97,
+  "role_key.precision": 0.96,
+  "role_key.recall": 0.93,
+
+  "seniority.accuracy": 0.98,
+  "seniority.precision": 0.95,
+  "seniority.recall": 0.95,
+
+  "visa_status.accuracy": 0.98,
+  "visa_status.precision": 0.95,
+  "visa_status.recall": 0.95,
+
+  "remote_class.accuracy": 0.98,
+  "remote_class.precision": 0.95,
+  "remote_class.recall": 0.95,
+
+  "salary.accuracy": 0.98,
+  "salary.precision": 0.98,
+  "salary.recall": 0.98,
+
+  "language.accuracy": 0.98,
+  "language.precision": 0.95,
+  "language.recall": 0.95,
+
+  "country_iso2.accuracy": 0.98,
+  "country_iso2.precision": 0.95,
+  "country_iso2.recall": 0.95,
+
+  "experience_min_years.accuracy": 0.98,
+  "experience_min_years.precision": 0.98,
+  "experience_min_years.recall": 0.98
+}

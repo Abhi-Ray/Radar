@@ -44,7 +44,7 @@ import {
 import { LANGUAGE_LABELS, LANGUAGE_NAMES } from './language-names';
 import { collapseWhitespace, fold, foldWithMap, quoteAround } from './text';
 
-export const LANGUAGE_LOGIC_VERSION = 'language@2026-09-29.1';
+export const LANGUAGE_LOGIC_VERSION = 'language@2026-09-30.1';
 
 const MAX_TEXT = 60_000;
 const SAMPLE_CHARS = 4_000;
@@ -702,7 +702,11 @@ export function detectLanguage(text: string, opts: DetectLanguageOptions = {}): 
   }
 
   const negated = new Set(notRequired.map((m) => m.lang));
-  const contradictory = unique([...strongLocal, ...weakLocal].map((m) => m.lang).filter((l) => negated.has(l)));
+  // A mention that only counts as required because it sits under a requirements heading
+  // ("the Danish Fast-track scheme") yields to an explicit "Danish is not required".
+  const contradictory = unique(
+    [...strongLocal, ...weakLocal.filter((m) => m.cls !== 'section_required')].map((m) => m.lang).filter((l) => negated.has(l)),
+  );
   const reqStrong = strongLocal.filter((m) => !negated.has(m.lang));
   const reqWeak = weakLocal.filter((m) => !negated.has(m.lang));
   const requiredCodes = unique([...reqStrong, ...reqWeak].map((m) => m.lang));

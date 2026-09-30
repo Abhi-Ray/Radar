@@ -1,0 +1,2064 @@
+{
+  "_about": "RADAR golden sample (spec 17.1): hand-written, fictional job postings (no real companies, people or contact data; URLs use example domains). Labels are written from the posting TEXT only, never from RADAR's output. Conventions: role_match = the title names a target role (primary, secondary or fallback family); seniority = the level word in the title (Staff/Teamleiter = lead, II/Tier 2/Medior/Mid-level = mid); visa_status from the posting alone (offered = confirmed; refused or right-to-work required = not_offered; relocation-only or hedged = likely; both = conflicting; nothing = unknown); remote_class from the point of view of a candidate in India (UTC+5:30): on-site/hybrid = not_remote; salary as written (currency, period, amounts; a single figure labels only min); language: a non-English language required = local_required, English working language or an English posting without a statement = english_ok, a local-language posting without a statement = unclear; experience_min_years only when the posting states a minimum (a vague \"several years\" / \"mehrjährige\" reads as 2, more than one year). An absent label = not labelled.",
+  "samples": [
+    {
+      "id": "en-de-cloudsec-bluecard",
+      "notes": "Sponsorship + Blue Card stated explicitly; hybrid Berlin; annual EUR range.",
+      "snapshot": {
+        "title": "Senior Cloud Security Engineer (AWS)",
+        "company": "Nordwind Cloud GmbH",
+        "locationRaw": "Berlin, Germany",
+        "sourceKey": "greenhouse:nordwind",
+        "applyUrl": "https://boards.example.com/nordwind/jobs/4102",
+        "descriptionText": "About Nordwind\nNordwind runs the payment infrastructure for more than 400 European online shops. Our platform lives on AWS and we are growing our security team.\n\nWhat you will do\n- Own the security architecture of our AWS organisation (SCPs, IAM, GuardDuty, Security Hub).\n- Build guardrails as code with Terraform and review infrastructure changes.\n- Lead incident response for cloud findings together with the SRE team.\n\nWhat you bring\n- 5+ years in security engineering, at least two of them securing AWS workloads.\n- Solid Terraform and Python.\n- Kubernetes (EKS) security experience is a plus.\n\nWhat we offer\n- Salary: €75,000 – €90,000 gross per year, depending on experience.\n- Hybrid work: two days a week in our Kreuzberg office.\n- We sponsor visas and support you with the EU Blue Card application, plus a relocation package.\n- English is our working language; German is not required."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "cloud_security_engineer",
+        "seniority": "senior",
+        "visa_status": "confirmed",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "year",
+          "min": 75000,
+          "max": 90000
+        },
+        "language": "english_ok",
+        "country_iso2": "DE",
+        "experience_min_years": 5
+      }
+    },
+    {
+      "id": "en-nl-devsecops-ind-sponsor",
+      "notes": "Recognised IND sponsor; monthly salary excluding holiday allowance.",
+      "snapshot": {
+        "title": "DevSecOps Engineer",
+        "company": "Kestrel Payments B.V.",
+        "locationRaw": "Amsterdam, Netherlands",
+        "sourceKey": "lever:kestrel",
+        "applyUrl": "https://jobs.example.com/kestrel/8e1c2a",
+        "descriptionText": "Kestrel is a regulated payment institution headquartered in Amsterdam. We are looking for a DevSecOps Engineer to make security part of every pipeline.\n\nResponsibilities\n- Integrate SAST, dependency scanning and container scanning into GitLab CI.\n- Harden our Kubernetes clusters and manage secrets with Vault.\n- Work with developers to fix findings quickly.\n\nRequirements\n- At least 3 years of experience in DevOps or security engineering.\n- Hands-on experience with GitLab CI or GitHub Actions, Docker and Kubernetes.\n- Good communication skills in English.\n\nOur offer\n- €5,000 - €6,500 gross per month, excluding 8% holiday allowance.\n- Hybrid: three days per week in our Amsterdam office.\n- Kestrel is a recognised sponsor with the IND, so we can sponsor your highly skilled migrant visa."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "devsecops_engineer",
+        "seniority": null,
+        "visa_status": "confirmed",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "month",
+          "min": 5000,
+          "max": 6500
+        },
+        "language": "english_ok",
+        "country_iso2": "NL",
+        "experience_min_years": 3
+      }
+    },
+    {
+      "id": "en-ie-appsec-no-sponsor",
+      "notes": "Right-to-work requirement plus explicit refusal.",
+      "snapshot": {
+        "title": "Application Security Engineer",
+        "company": "Brightwater Health Technologies Ltd",
+        "locationRaw": "Dublin, Ireland",
+        "sourceKey": "workable:brightwater",
+        "applyUrl": "https://apply.example.com/brightwater/j/51A2",
+        "descriptionText": "Brightwater builds clinical scheduling software used by hospitals across Ireland and the UK.\n\nAs an Application Security Engineer you will:\n- Run threat modelling sessions with product teams.\n- Triage findings from our SAST/DAST tools and bug bounty programme.\n- Coach engineers on secure coding in TypeScript and Java.\n\nYou have:\n- 3-5 years of experience in application security or software engineering.\n- Good knowledge of the OWASP Top 10 and authentication protocols (OAuth 2.0, OIDC).\n\nThis role is based in our Dublin office with one remote day per week.\n\nPlease note: applicants must have the right to work in Ireland. We are unable to offer visa sponsorship for this role."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "appsec_engineer",
+        "seniority": null,
+        "visa_status": "not_offered",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": false
+        },
+        "language": "english_ok",
+        "country_iso2": "IE",
+        "experience_min_years": 3
+      }
+    },
+    {
+      "id": "en-gb-staff-productsec-rtw",
+      "notes": "Staff title (lead); right to work required; GBP without period word.",
+      "snapshot": {
+        "title": "Staff Product Security Engineer",
+        "company": "Lumen Ledger Ltd",
+        "locationRaw": "London, United Kingdom",
+        "sourceKey": "ashby:lumenledger",
+        "applyUrl": "https://jobs.example.com/lumenledger/7731",
+        "descriptionText": "Lumen Ledger is an accounting platform for small businesses. Our product security team protects the data of 90,000 customers.\n\nThe role\nYou will set the technical direction for product security: secure design reviews, a paved road for authentication and authorisation, and a vulnerability management process that engineers actually like.\n\nAbout you\n- 8+ years of experience in software or security engineering.\n- Deep knowledge of web application security and cloud-native architectures.\n- You enjoy mentoring and writing clear design documents.\n\nCompensation: £95,000 - £115,000 + equity + private health insurance.\n\nWe work hybrid from our Shoreditch office (two days a week). You must already have the right to work in the UK."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "product_security_engineer",
+        "seniority": "lead",
+        "visa_status": "not_offered",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "GBP",
+          "period": "year",
+          "min": 95000,
+          "max": 115000
+        },
+        "language": "english_ok",
+        "country_iso2": "GB",
+        "experience_min_years": 8
+      }
+    },
+    {
+      "id": "en-remote-worldwide-appsec",
+      "notes": "Work from anywhere via employer of record; no visa statement.",
+      "snapshot": {
+        "title": "Senior Application Security Engineer",
+        "company": "Driftwood Labs Inc.",
+        "locationRaw": "Remote",
+        "sourceKey": "remotive:all",
+        "applyUrl": "https://remote.example.com/driftwood/senior-appsec",
+        "workplaceHint": "remote",
+        "descriptionText": "Driftwood Labs makes developer tooling for mobile teams. We are a remote-first company with 120 people in 34 countries.\n\nThis position is fully remote: work from anywhere in the world. We hire globally through our employer of record partner, so you keep living where you are.\n\nWhat you'll do\n- Own our secure development lifecycle end to end.\n- Review designs and code for our Go and TypeScript services.\n- Run our bug bounty programme.\n\nWhat we look for\n- 6+ years of experience, including at least 3 in application security.\n- Strong written English: most of our communication is asynchronous.\n\nCompensation: $140,000–$170,000 USD per year, plus stock options."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "appsec_engineer",
+        "seniority": "senior",
+        "visa_status": "unknown",
+        "remote_class": "worldwide",
+        "salary": {
+          "stated": true,
+          "currency": "USD",
+          "period": "year",
+          "min": 140000,
+          "max": 170000
+        },
+        "language": "english_ok",
+        "experience_min_years": 6
+      }
+    },
+    {
+      "id": "en-remote-eu-devsecops-authorised",
+      "notes": "Remote limited to the EU; must already be authorised to work there.",
+      "snapshot": {
+        "title": "DevSecOps Engineer (Remote, EU)",
+        "company": "Polaris Grid SAS",
+        "locationRaw": "Remote - European Union",
+        "sourceKey": "himalayas:all",
+        "applyUrl": "https://remote.example.com/polaris-grid/devsecops",
+        "workplaceHint": "remote",
+        "descriptionText": "Polaris Grid builds software for energy grid operators.\n\nWe are hiring a DevSecOps Engineer to secure our delivery pipelines and our Azure environment.\n\nWhere: remote within the EU. You must be based in, and legally authorised to work in, an EU country. We do not hire contractors outside the EU.\n\nWhat you need\n- 4 years of experience with CI/CD and cloud infrastructure.\n- Experience with Azure DevOps, Terraform and container security.\n- Fluent English; French is a plus.\n\nWhat you get\n- A remote setup budget and a yearly team meetup in Lyon.\n- 30 days of paid holiday."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "devsecops_engineer",
+        "seniority": null,
+        "visa_status": "not_offered",
+        "remote_class": "region_limited",
+        "salary": {
+          "stated": false
+        },
+        "language": "english_ok",
+        "experience_min_years": 4
+      }
+    },
+    {
+      "id": "en-remote-timezone-cloudsec",
+      "notes": "Remote defined only by a UTC offset window.",
+      "snapshot": {
+        "title": "Cloud Security Engineer",
+        "company": "Quillstack Ltd",
+        "locationRaw": "Remote",
+        "sourceKey": "remotive:all",
+        "applyUrl": "https://remote.example.com/quillstack/cloud-security",
+        "workplaceHint": "remote",
+        "descriptionText": "Quillstack is a document collaboration platform for law firms.\n\nWe are looking for a Cloud Security Engineer to own the security of our GCP estate.\n\nLocation: remote. You can live anywhere between UTC-1 and UTC+3, because the whole team works roughly the same hours.\n\nYou will\n- Design and enforce organisation policies, VPC Service Controls and IAM.\n- Build detection rules in Chronicle.\n- Prepare evidence for our ISO 27001 audit.\n\nYou have\n- 3+ years securing Google Cloud or another major cloud.\n- Experience with Terraform.\n\nSalary: €70,000 – €85,000 per year."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "cloud_security_engineer",
+        "seniority": null,
+        "visa_status": "unknown",
+        "remote_class": "timezone_limited",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "year",
+          "min": 70000,
+          "max": 85000
+        },
+        "language": "english_ok",
+        "experience_min_years": 3
+      }
+    },
+    {
+      "id": "en-us-cloudsec-ii-no-sponsor",
+      "notes": "Level numeral II; US; sponsorship not available.",
+      "snapshot": {
+        "title": "Cloud Security Engineer II",
+        "company": "Hudson Freight Systems",
+        "locationRaw": "New York, NY, United States",
+        "sourceKey": "greenhouse:hudsonfreight",
+        "applyUrl": "https://boards.example.com/hudsonfreight/jobs/99120",
+        "descriptionText": "Hudson Freight Systems provides logistics software to 3,000 carriers in North America.\n\nResponsibilities\n- Monitor and remediate cloud security posture findings across AWS and Azure.\n- Automate security controls with Python and Terraform.\n- Participate in the security on-call rotation.\n\nQualifications\n- 3+ years of experience in cloud security or cloud infrastructure.\n- AWS Security Specialty or equivalent certification preferred.\n\nThis is an on-site position at our Manhattan office.\n\nThe base salary range for this role is $135,000 - $165,000 per year.\n\nVisa sponsorship is not available for this position."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "cloud_security_engineer",
+        "seniority": "mid",
+        "visa_status": "not_offered",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "USD",
+          "period": "year",
+          "min": 135000,
+          "max": 165000
+        },
+        "language": "english_ok",
+        "country_iso2": "US",
+        "experience_min_years": 3
+      }
+    },
+    {
+      "id": "en-ca-appsec-relocation",
+      "notes": "Relocation assistance only (no visa wording) -> likely.",
+      "snapshot": {
+        "title": "Application Security Engineer",
+        "company": "Maplecrest Software Inc.",
+        "locationRaw": "Toronto, Ontario, Canada",
+        "sourceKey": "lever:maplecrest",
+        "applyUrl": "https://jobs.example.com/maplecrest/a61f",
+        "descriptionText": "Maplecrest builds point-of-sale software for restaurants.\n\nWe're hiring an Application Security Engineer to join our five-person security team.\n\nIn this role you will\n- Build and maintain our SAST and SCA tooling.\n- Perform security reviews of new features.\n- Help run our annual penetration test.\n\nYou bring\n- Experience securing web applications written in Ruby, Go or TypeScript.\n- A pragmatic approach to risk.\n\nWe work hybrid from our Toronto office on Tuesdays and Thursdays.\n\nSalary range: CAD 120,000 – 145,000 annually.\n\nWe offer relocation assistance for candidates moving to Toronto."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "appsec_engineer",
+        "seniority": null,
+        "visa_status": "likely",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "CAD",
+          "period": "year",
+          "min": 120000,
+          "max": 145000
+        },
+        "language": "english_ok",
+        "country_iso2": "CA",
+        "experience_min_years": null
+      }
+    },
+    {
+      "id": "en-ch-cloudsec-permit",
+      "notes": "Work permit support = offered; Swiss apostrophe thousands separator.",
+      "snapshot": {
+        "title": "Senior Cloud Security Engineer",
+        "company": "Alpenlicht Versicherungen AG",
+        "locationRaw": "Zürich, Switzerland",
+        "sourceKey": "smartrecruiters:alpenlicht",
+        "applyUrl": "https://careers.example.com/alpenlicht/744310",
+        "descriptionText": "Alpenlicht is a Swiss insurer moving its core systems to Microsoft Azure.\n\nYour tasks\n- Define the security baseline for our Azure landing zones.\n- Implement Defender for Cloud, Sentinel and Azure Policy at scale.\n- Advise project teams on secure architecture.\n\nYour profile\n- At least 5 years of experience in IT security, including cloud security.\n- Azure certifications (AZ-500, SC-100) are an advantage.\n- Very good English; good German skills are an advantage.\n\nWhat we offer\n- Salary: CHF 130'000 – 150'000 per year plus bonus.\n- Hybrid working: up to 40% home office.\n- We can support work permit applications for non-EU candidates."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "cloud_security_engineer",
+        "seniority": "senior",
+        "visa_status": "confirmed",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "CHF",
+          "period": "year",
+          "min": 130000,
+          "max": 150000
+        },
+        "language": "english_ok",
+        "country_iso2": "CH",
+        "experience_min_years": 5
+      }
+    },
+    {
+      "id": "en-sg-cloudsec-analyst-ep",
+      "notes": "Employment Pass sponsorship; monthly SGD.",
+      "snapshot": {
+        "title": "Cloud Security Analyst",
+        "company": "Straitline Digital Pte. Ltd.",
+        "locationRaw": "Singapore",
+        "sourceKey": "workable:straitline",
+        "applyUrl": "https://apply.example.com/straitline/j/C0FFEE",
+        "descriptionText": "Straitline Digital operates a digital bank for SMEs in Southeast Asia.\n\nThe Cloud Security Analyst will:\n- Review cloud security posture reports and drive remediation with engineering teams.\n- Maintain security monitoring use cases in our SIEM.\n- Support MAS TRM compliance assessments.\n\nRequirements\n- 2+ years of experience in security operations or cloud security.\n- Familiarity with AWS security services.\n\nWe offer SGD 7,000 - 9,000 per month, an annual performance bonus and full medical coverage. This role is office-based at our Raffles Place office.\n\nWe will sponsor the Employment Pass for the successful candidate."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "cloud_security_analyst",
+        "seniority": null,
+        "visa_status": "confirmed",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "SGD",
+          "period": "month",
+          "min": 7000,
+          "max": 9000
+        },
+        "language": "english_ok",
+        "country_iso2": "SG",
+        "experience_min_years": 2
+      }
+    },
+    {
+      "id": "en-au-grc-citizens-only",
+      "notes": "Citizens / permanent residents only -> not offered; AUD with k suffix.",
+      "snapshot": {
+        "title": "GRC Analyst – Cloud & Security",
+        "company": "Southern Cross Utilities Pty Ltd",
+        "locationRaw": "Sydney, NSW, Australia",
+        "sourceKey": "smartrecruiters:southerncross",
+        "applyUrl": "https://careers.example.com/southerncross/100245",
+        "descriptionText": "Southern Cross Utilities supplies water and energy services to 1.2 million households.\n\nAbout the role\nYou will maintain our cloud security control framework, run risk assessments for new cloud services, and coordinate evidence for ISO 27001 and the Essential Eight.\n\nAbout you\n- 3 years of experience in governance, risk and compliance, ideally with cloud platforms.\n- Knowledge of ISO 27001, NIST CSF or the Essential Eight.\n\nPackage: AUD 110k–125k + super.\n\nHybrid: three days per week at our Parramatta office.\n\nDue to the nature of our work, this role is open to Australian citizens or permanent residents only, and a police check is required."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "grc_cloud",
+        "seniority": null,
+        "visa_status": "not_offered",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "AUD",
+          "period": "year",
+          "min": 110000,
+          "max": 125000
+        },
+        "language": "english_ok",
+        "country_iso2": "AU",
+        "experience_min_years": 3
+      }
+    },
+    {
+      "id": "en-de-seceng-cloud-hedged-german",
+      "notes": "Hedged sponsorship ('may be considered') -> likely; German required in an English posting.",
+      "snapshot": {
+        "title": "Security Engineer (Cloud)",
+        "company": "Isarblick Mobility GmbH",
+        "locationRaw": "Munich, Germany",
+        "sourceKey": "personio:isarblick",
+        "applyUrl": "https://isarblick.jobs.example.com/job/88213",
+        "descriptionText": "Isarblick develops fleet management software for public transport operators in Germany and Austria.\n\nYour role\n- Secure our cloud platform on Azure and our on-premise Kubernetes clusters.\n- Maintain our vulnerability management and patch processes.\n- Support customers' security questionnaires and audits.\n\nYour profile\n- 3 years of experience as a security or systems engineer.\n- Fluent German (C1) is required, as you will work directly with German-speaking customers.\n- Good English.\n\nWe work in our Munich office with up to two home office days per week.\n\nVisa sponsorship may be considered for exceptional candidates."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "security_engineer_cloud",
+        "seniority": null,
+        "visa_status": "likely",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": false
+        },
+        "language": "local_required",
+        "country_iso2": "DE",
+        "experience_min_years": 3
+      }
+    },
+    {
+      "id": "en-nl-cloudeng-security-silent",
+      "notes": "No visa wording at all -> unknown; k-suffixed euro range.",
+      "snapshot": {
+        "title": "Cloud Engineer – Security & Compliance",
+        "company": "Havenmeester Logistics B.V.",
+        "locationRaw": "Rotterdam, Netherlands",
+        "sourceKey": "recruitee:havenmeester",
+        "applyUrl": "https://havenmeester.recruitee.example.com/o/cloud-engineer-security",
+        "descriptionText": "Havenmeester builds planning software for container terminals in the port of Rotterdam.\n\nAs a Cloud Engineer with a security focus you will\n- Build and run our AWS landing zone with Terraform.\n- Implement security baselines, logging and backup policies.\n- Prepare our platform for ISO 27001 and NIS2.\n\nYou have\n- Experience with AWS, Terraform and Linux.\n- Interest in security and compliance topics.\n- You communicate well in English.\n\nWe offer €55k–€70k per year, a lease bike and a hybrid working model (two office days in Rotterdam)."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "cloud_engineer_security",
+        "seniority": null,
+        "visa_status": "unknown",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "year",
+          "min": 55000,
+          "max": 70000
+        },
+        "language": "english_ok",
+        "country_iso2": "NL",
+        "experience_min_years": null
+      }
+    },
+    {
+      "id": "en-pt-devsecops-conflicting",
+      "notes": "Says sponsorship is available AND that candidates must have the right to work -> conflicting. 14 salaries.",
+      "snapshot": {
+        "title": "DevSecOps Engineer",
+        "company": "Tejo Fintech, S.A.",
+        "locationRaw": "Lisbon, Portugal",
+        "sourceKey": "workable:tejofintech",
+        "applyUrl": "https://apply.example.com/tejofintech/j/77D0",
+        "descriptionText": "Tejo Fintech builds card-issuing APIs for European banks.\n\nWhat you'll do\n- Automate security checks in our CI/CD pipelines (GitHub Actions).\n- Secure our AWS accounts and EKS clusters.\n- Respond to security alerts together with the platform team.\n\nWhat we need\n- 3+ years of experience in DevOps or security.\n- Experience with Terraform, Docker and Kubernetes.\n\nWhat we offer\n- €3,500 – €4,200 gross per month (14 salaries).\n- Hybrid work from our Lisbon office.\n- Visa sponsorship available for the right candidate.\n\nCandidates must have the right to work in Portugal."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "devsecops_engineer",
+        "seniority": null,
+        "visa_status": "conflicting",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "month",
+          "min": 3500,
+          "max": 4200
+        },
+        "language": "english_ok",
+        "country_iso2": "PT",
+        "experience_min_years": 3
+      }
+    },
+    {
+      "id": "en-gb-agency-appsec-no-sponsor",
+      "notes": "Agency posting ('our client'); agency refuses sponsorship.",
+      "snapshot": {
+        "title": "Application Security Engineer - Fintech",
+        "company": "Harbourline Recruitment Ltd",
+        "locationRaw": "London",
+        "sourceKey": "arbeitnow:all",
+        "applyUrl": "https://jobs.example.com/harbourline/appsec-fintech-2231",
+        "descriptionText": "Harbourline Recruitment is working with a fast-growing fintech client in the City of London.\n\nOur client is looking for an Application Security Engineer to embed security into their product teams.\n\nResponsibilities\n- Threat modelling and secure design reviews.\n- Manage SAST/DAST tooling and triage findings.\n- Deliver secure coding training.\n\nRequirements\n- 4+ years in application security or software development.\n- Experience with Java or Kotlin microservices.\n\nSalary: £80,000 - £95,000 + bonus. Hybrid, two days a week in the office.\n\nUnfortunately our client cannot offer sponsorship for this role."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "appsec_engineer",
+        "seniority": null,
+        "visa_status": "not_offered",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "GBP",
+          "period": "year",
+          "min": 80000,
+          "max": 95000
+        },
+        "language": "english_ok",
+        "country_iso2": "GB",
+        "experience_min_years": 4
+      }
+    },
+    {
+      "id": "en-de-agency-cloudsec-bank",
+      "notes": "Agency posting on behalf of a bank; sponsorship and relocation offered; German optional.",
+      "snapshot": {
+        "title": "Cloud Security Engineer (m/w/d)",
+        "company": "Talentbridge Personal GmbH",
+        "locationRaw": "Frankfurt am Main, Germany",
+        "sourceKey": "arbeitnow:all",
+        "applyUrl": "https://jobs.example.com/talentbridge/cloudsec-ffm-118",
+        "descriptionText": "On behalf of our client, a major bank in Frankfurt, we are looking for a Cloud Security Engineer.\n\nTasks\n- Implement and operate security controls for the bank's Google Cloud platform.\n- Automate compliance checks (BAIT, DORA) with policy as code.\n- Work closely with the cloud platform and CISO teams.\n\nProfile\n- 5 years of professional experience in IT security.\n- Hands-on experience with GCP or AWS and Terraform.\n- German is a plus but not required; the team works in English.\n\nOffer\n- EUR 80,000 - 95,000 p.a.\n- Hybrid working, 60% remote.\n- Visa sponsorship and relocation support are offered."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "cloud_security_engineer",
+        "seniority": null,
+        "visa_status": "confirmed",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "year",
+          "min": 80000,
+          "max": 95000
+        },
+        "language": "english_ok",
+        "country_iso2": "DE",
+        "experience_min_years": 5
+      }
+    },
+    {
+      "id": "en-remote-fullstack-hourly",
+      "notes": "Fallback full-stack role; hourly contract rate; fully remote anywhere.",
+      "snapshot": {
+        "title": "Full Stack Developer (React/Node.js)",
+        "company": "Tidepool Studio LLC",
+        "locationRaw": "Remote",
+        "sourceKey": "remoteok:all",
+        "applyUrl": "https://remote.example.com/tidepool/full-stack-react-node",
+        "workplaceHint": "remote",
+        "descriptionText": "Tidepool Studio is a small product studio building web apps for non-profits.\n\nWe need a Full Stack Developer for a long-term contract.\n\n- 100% remote, work from anywhere.\n- Stack: React, TypeScript, Node.js, PostgreSQL.\n- 3+ years of professional experience with React and Node.js.\n- Rate: $60 - $80 per hour, depending on experience.\n\nYou will work directly with our clients, so clear written English is important."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "fullstack_developer",
+        "seniority": null,
+        "visa_status": "unknown",
+        "remote_class": "worldwide",
+        "salary": {
+          "stated": true,
+          "currency": "USD",
+          "period": "hour",
+          "min": 60,
+          "max": 80
+        },
+        "language": "english_ok",
+        "experience_min_years": 3
+      }
+    },
+    {
+      "id": "en-de-senior-nextjs-sponsor",
+      "notes": "Fallback Next.js role with sponsorship; two experience figures (min is 5).",
+      "snapshot": {
+        "title": "Senior Next.js Developer",
+        "company": "Spreeufer Commerce GmbH",
+        "locationRaw": "Berlin, Germany",
+        "sourceKey": "greenhouse:spreeufer",
+        "applyUrl": "https://boards.example.com/spreeufer/jobs/5560",
+        "descriptionText": "Spreeufer Commerce runs online shops for 40 fashion brands.\n\nYou will build our storefront platform with Next.js and help the team move to the App Router.\n\nYou have\n- 5+ years with React and at least 2 with Next.js.\n- Experience with performance optimisation and accessibility.\n\nWe offer\n- €70,000–€85,000 per year.\n- Hybrid work: our Berlin office on Mondays and Wednesdays.\n- We sponsor visas and help with relocation to Berlin.\n- Our working language is English."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "nextjs_developer",
+        "seniority": "senior",
+        "visa_status": "confirmed",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "year",
+          "min": 70000,
+          "max": 85000
+        },
+        "language": "english_ok",
+        "country_iso2": "DE",
+        "experience_min_years": 5
+      }
+    },
+    {
+      "id": "en-ie-node-no-permits",
+      "notes": "Work permits refused; fallback Node role.",
+      "snapshot": {
+        "title": "Node.js Backend Engineer",
+        "company": "Corrib Analytics Ltd",
+        "locationRaw": "Cork, Ireland",
+        "sourceKey": "workable:corrib",
+        "applyUrl": "https://apply.example.com/corrib/j/NODE21",
+        "descriptionText": "Corrib Analytics builds dashboards for agricultural co-operatives.\n\nWe're looking for a Node.js Backend Engineer to work on our APIs and data pipelines.\n\nYou have\n- 2+ years of professional experience with Node.js and TypeScript.\n- Experience with PostgreSQL and message queues.\n\nSalary: €60,000 - €75,000 depending on experience. This role is fully on-site at our Cork office.\n\nWe are not able to sponsor work permits at this time."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "node_developer",
+        "seniority": null,
+        "visa_status": "not_offered",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "year",
+          "min": 60000,
+          "max": 75000
+        },
+        "language": "english_ok",
+        "country_iso2": "IE",
+        "experience_min_years": 2
+      }
+    },
+    {
+      "id": "en-de-sales-not-target",
+      "notes": "Non-target role; English posting that requires German.",
+      "snapshot": {
+        "title": "Enterprise Account Executive (DACH)",
+        "company": "Cobaltwave Software GmbH",
+        "locationRaw": "Munich, Germany",
+        "sourceKey": "greenhouse:cobaltwave",
+        "applyUrl": "https://boards.example.com/cobaltwave/jobs/3321",
+        "descriptionText": "Cobaltwave sells data backup software to mid-sized companies.\n\nAs Enterprise Account Executive you will own the full sales cycle for new customers in Germany, Austria and Switzerland.\n\nWhat you bring\n- A track record of closing six-figure software deals.\n- Fluent German and English are required.\n- Willingness to travel to customers across the DACH region.\n\nThis is an office-based role in Munich."
+      },
+      "labels": {
+        "role_match": false,
+        "seniority": null,
+        "visa_status": "unknown",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": false
+        },
+        "language": "local_required",
+        "country_iso2": "DE",
+        "experience_min_years": null
+      }
+    },
+    {
+      "id": "en-nl-data-scientist-relocation",
+      "notes": "Non-target role; relocation package only -> likely.",
+      "snapshot": {
+        "title": "Data Scientist",
+        "company": "Grachtenlab B.V.",
+        "locationRaw": "Amsterdam, Netherlands",
+        "sourceKey": "lever:grachtenlab",
+        "applyUrl": "https://jobs.example.com/grachtenlab/ds-2291",
+        "descriptionText": "Grachtenlab predicts demand for grocery delivery services.\n\nYou will build forecasting models in Python, work with our data engineers on features, and present results to the business.\n\nYou have\n- An MSc in a quantitative field and 2 years of experience in data science.\n- Strong Python and SQL.\n\nWe offer a relocation package, a hybrid work setup (three office days) and a yearly learning budget. Our team works in English."
+      },
+      "labels": {
+        "role_match": false,
+        "seniority": null,
+        "visa_status": "likely",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": false
+        },
+        "language": "english_ok",
+        "country_iso2": "NL",
+        "experience_min_years": 2
+      }
+    },
+    {
+      "id": "en-ie-soc-tier2",
+      "notes": "Other security role (SOC) is not a target; 'Tier 2' seniority.",
+      "snapshot": {
+        "title": "SOC Analyst (Tier 2)",
+        "company": "Liffey Secure Services Ltd",
+        "locationRaw": "Dublin, Ireland",
+        "sourceKey": "workable:liffeysecure",
+        "applyUrl": "https://apply.example.com/liffeysecure/j/SOC2",
+        "descriptionText": "Liffey Secure is a managed security service provider for Irish SMEs.\n\nAs a Tier 2 SOC Analyst you will investigate escalated alerts, perform threat hunting and write incident reports for customers.\n\nRequirements\n- 2 years of experience in a SOC or incident response role.\n- Experience with Microsoft Sentinel or Splunk.\n- Willingness to work a 24/7 shift rotation on site in Dublin."
+      },
+      "labels": {
+        "role_match": false,
+        "role_key": "other_security",
+        "seniority": "mid",
+        "visa_status": "unknown",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": false
+        },
+        "language": "english_ok",
+        "country_iso2": "IE",
+        "experience_min_years": 2
+      }
+    },
+    {
+      "id": "en-gb-pentester-uk-only",
+      "notes": "Remote but UK only; nationality / clearance requirement -> not offered.",
+      "snapshot": {
+        "title": "Penetration Tester",
+        "company": "Redgate Assurance Ltd",
+        "locationRaw": "Remote (UK)",
+        "sourceKey": "arbeitnow:all",
+        "applyUrl": "https://jobs.example.com/redgate-assurance/pentester-uk",
+        "workplaceHint": "remote",
+        "descriptionText": "Redgate Assurance performs CREST-accredited penetration tests for public sector clients.\n\nThe role is remote, but you must live in the UK and be able to travel to client sites occasionally.\n\nYou will perform web application, infrastructure and cloud penetration tests and write clear reports.\n\nRequirements\n- CREST CRT or OSCP.\n- You must be eligible for SC clearance, which requires at least five years of UK residency. We cannot sponsor visas."
+      },
+      "labels": {
+        "role_match": false,
+        "role_key": "other_security",
+        "seniority": null,
+        "visa_status": "not_offered",
+        "remote_class": "region_limited",
+        "salary": {
+          "stated": false
+        },
+        "language": "english_ok",
+        "experience_min_years": null
+      }
+    },
+    {
+      "id": "en-es-junior-cloudsec-graduate",
+      "notes": "Junior title; graduate sponsorship offered; 1 year minimum.",
+      "snapshot": {
+        "title": "Junior Cloud Security Engineer",
+        "company": "Meseta Cloud Services S.L.",
+        "locationRaw": "Madrid, Spain",
+        "sourceKey": "smartrecruiters:meseta",
+        "applyUrl": "https://careers.example.com/meseta/300177",
+        "descriptionText": "Meseta Cloud Services is a managed cloud provider for Spanish retailers.\n\nWe are looking for a Junior Cloud Security Engineer to join our security operations team.\n\nWhat you will learn and do\n- Review AWS and Azure configurations for our customers.\n- Automate security checks with Python.\n- Support the senior engineers during incidents.\n\nWhat we ask\n- 1+ year of hands-on experience with AWS or Azure (internships count).\n- A degree in computer science or similar.\n- English is our company language.\n\nWhat we offer\n- €32,000 – €38,000 gross/year.\n- Hybrid work from our Madrid office.\n- We can sponsor work visas for non-EU graduates."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "cloud_security_engineer",
+        "seniority": "junior",
+        "visa_status": "confirmed",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "year",
+          "min": 32000,
+          "max": 38000
+        },
+        "language": "english_ok",
+        "country_iso2": "ES",
+        "experience_min_years": 1
+      }
+    },
+    {
+      "id": "en-us-remote-principal-appsec",
+      "notes": "Remote US only; no sponsorship; principal.",
+      "snapshot": {
+        "title": "Principal Application Security Engineer",
+        "company": "Keystone Health Cloud Inc.",
+        "locationRaw": "Remote - US",
+        "sourceKey": "greenhouse:keystonehealth",
+        "applyUrl": "https://boards.example.com/keystonehealth/jobs/12004",
+        "workplaceHint": "remote",
+        "descriptionText": "Keystone Health Cloud provides electronic health record software to 900 clinics.\n\nAs Principal Application Security Engineer you will define our application security strategy and lead a team of four engineers.\n\nRequirements\n- 10+ years of experience in software engineering or application security.\n- Experience with HIPAA and SOC 2 environments.\n\nThis role is remote within the United States only; you must reside in the US.\n\nThe salary range for this position is $210,000 - $250,000 per year plus equity.\n\nWe do not sponsor visas for this role."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "appsec_engineer",
+        "seniority": "principal",
+        "visa_status": "not_offered",
+        "remote_class": "region_limited",
+        "salary": {
+          "stated": true,
+          "currency": "USD",
+          "period": "year",
+          "min": 210000,
+          "max": 250000
+        },
+        "language": "english_ok",
+        "experience_min_years": 10
+      }
+    },
+    {
+      "id": "en-pl-lead-devsecops-b2b",
+      "notes": "Polish B2B net monthly rate; relocation only -> likely.",
+      "snapshot": {
+        "title": "Lead DevSecOps Engineer",
+        "company": "Wawel Code Sp. z o.o.",
+        "locationRaw": "Kraków, Poland",
+        "sourceKey": "workable:wawelcode",
+        "applyUrl": "https://apply.example.com/wawelcode/j/LDSO",
+        "descriptionText": "Wawel Code builds trading platforms for brokers in Central Europe.\n\nAs Lead DevSecOps Engineer you will lead a team of three engineers securing our build and deployment pipelines.\n\nRequirements\n- 6+ years of experience in DevOps, including 2 years in a security-focused role.\n- Jenkins or GitLab CI, Kubernetes, Vault.\n- Good English; Polish is not required.\n\nWe offer\n- PLN 25 000 - 32 000 net/month on a B2B contract.\n- Hybrid work from our Kraków office.\n- A relocation package to Kraków."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "devsecops_engineer",
+        "seniority": "lead",
+        "visa_status": "likely",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "PLN",
+          "period": "month",
+          "min": 25000,
+          "max": 32000
+        },
+        "language": "english_ok",
+        "country_iso2": "PL",
+        "experience_min_years": 6
+      }
+    },
+    {
+      "id": "en-remote-productsec-unscoped",
+      "notes": "Remote with no country / region / time-zone scope -> unclear.",
+      "snapshot": {
+        "title": "Product Security Engineer",
+        "company": "Ferngrove Apps AB",
+        "locationRaw": "Remote",
+        "sourceKey": "himalayas:all",
+        "applyUrl": "https://remote.example.com/ferngrove/product-security",
+        "workplaceHint": "remote",
+        "descriptionText": "Ferngrove makes a budgeting app with two million users.\n\nThis is a remote position. We meet in person twice a year for a team week.\n\nYou will\n- Review new features for security and privacy risks.\n- Own our mobile app security (iOS and Android).\n- Improve our authentication flows.\n\nYou have\n- Experience in product or application security.\n- Knowledge of mobile platform security."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "product_security_engineer",
+        "seniority": null,
+        "visa_status": "unknown",
+        "remote_class": "unclear",
+        "salary": {
+          "stated": false
+        },
+        "language": "english_ok",
+        "experience_min_years": null
+      }
+    },
+    {
+      "id": "en-remote-us-eastern-overlap",
+      "notes": "Remote anywhere with a US Eastern overlap requirement -> timezone limited.",
+      "snapshot": {
+        "title": "Senior Cloud Security Engineer",
+        "company": "Bluejay Observability Inc.",
+        "locationRaw": "Remote",
+        "sourceKey": "remotive:all",
+        "applyUrl": "https://remote.example.com/bluejay/senior-cloud-security",
+        "workplaceHint": "remote",
+        "descriptionText": "Bluejay builds observability tooling for Kubernetes.\n\nYou can work from anywhere as long as you overlap at least 4 hours with 9am–5pm US Eastern Time.\n\nWhat you'll do\n- Secure our multi-tenant SaaS platform on AWS.\n- Build detection and response automation.\n- Lead our SOC 2 Type II controls for infrastructure.\n\nWhat you bring\n- 5+ years in cloud security or infrastructure security.\n- Deep AWS knowledge and Kubernetes experience."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "cloud_security_engineer",
+        "seniority": "senior",
+        "visa_status": "unknown",
+        "remote_class": "timezone_limited",
+        "salary": {
+          "stated": false
+        },
+        "language": "english_ok",
+        "experience_min_years": 5
+      }
+    },
+    {
+      "id": "en-anywhere-nextjs",
+      "notes": "Distributed team, any country -> worldwide; USD k range.",
+      "snapshot": {
+        "title": "Next.js Developer",
+        "company": "Paperkite Collective",
+        "locationRaw": "Anywhere",
+        "sourceKey": "remoteok:all",
+        "applyUrl": "https://remote.example.com/paperkite/nextjs-developer",
+        "workplaceHint": "remote",
+        "descriptionText": "Paperkite is a fully distributed team of 25 people across 18 countries building a newsletter platform.\n\nYou can work from any country; we pay the same salary everywhere.\n\nYou have\n- 2+ years of professional experience with Next.js and TypeScript.\n- An eye for detail in UI work.\n\nSalary: USD 70k–90k per year."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "nextjs_developer",
+        "seniority": null,
+        "visa_status": "unknown",
+        "remote_class": "worldwide",
+        "salary": {
+          "stated": true,
+          "currency": "USD",
+          "period": "year",
+          "min": 70000,
+          "max": 90000
+        },
+        "language": "english_ok",
+        "experience_min_years": 2
+      }
+    },
+    {
+      "id": "en-gb-grc-sponsorship-may",
+      "notes": "Hedged sponsorship ('may be available') -> likely.",
+      "snapshot": {
+        "title": "Cloud GRC Analyst",
+        "company": "Irwell Insurance Group plc",
+        "locationRaw": "Manchester, England, United Kingdom",
+        "sourceKey": "smartrecruiters:irwell",
+        "applyUrl": "https://careers.example.com/irwell/224410",
+        "descriptionText": "Irwell Insurance is moving its policy administration systems to Azure.\n\nAs Cloud GRC Analyst you will maintain the cloud risk register, map controls to ISO 27001 and the FCA's operational resilience rules, and prepare evidence for audits.\n\nYou have\n- 2+ years in IT risk, audit or compliance.\n- Understanding of cloud shared-responsibility models.\n\nSalary: £45,000 - £55,000 per annum. Hybrid, with two days in our Manchester office.\n\nSponsorship may be available for the right candidate."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "grc_cloud",
+        "seniority": null,
+        "visa_status": "likely",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "GBP",
+          "period": "year",
+          "min": 45000,
+          "max": 55000
+        },
+        "language": "english_ok",
+        "country_iso2": "GB",
+        "experience_min_years": 2
+      }
+    },
+    {
+      "id": "en-de-itsec-cloud-german-essential",
+      "notes": "English posting, German essential; role key left unlabelled (IT security vs cloud security engineer).",
+      "snapshot": {
+        "title": "IT Security Engineer – Cloud Infrastructure (m/f/d)",
+        "company": "Elbhafen Handelsgesellschaft mbH",
+        "locationRaw": "Hamburg, Germany",
+        "sourceKey": "personio:elbhafen",
+        "applyUrl": "https://elbhafen.jobs.example.com/job/10442",
+        "descriptionText": "Elbhafen is a wholesale trading company with 1,800 employees.\n\nYour tasks\n- Secure our hybrid cloud infrastructure (Azure and on-premise VMware).\n- Operate our firewalls, EDR and identity platform.\n- Support internal audits.\n\nYour profile\n- 3 years of experience in IT security.\n- Fluent German is essential; good English.\n\nThe position is based at our Hamburg headquarters, with one home office day per week."
+      },
+      "labels": {
+        "role_match": true,
+        "seniority": null,
+        "visa_status": "unknown",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": false
+        },
+        "language": "local_required",
+        "country_iso2": "DE",
+        "experience_min_years": 3
+      }
+    },
+    {
+      "id": "en-se-cloudsec-work-permit-help",
+      "notes": "Help with work permits = offered; SEK monthly; Swedish not required.",
+      "snapshot": {
+        "title": "Cloud Security Engineer",
+        "company": "Norrsken Mobility AB",
+        "locationRaw": "Stockholm, Sweden",
+        "sourceKey": "jobtech_se:all",
+        "applyUrl": "https://jobs.example.com/norrsken/cloud-security-engineer",
+        "descriptionText": "Norrsken Mobility runs e-scooter and e-bike sharing in 40 Nordic cities.\n\nYou will secure our AWS platform and the backend services that talk to 60,000 vehicles.\n\nWe are looking for someone with\n- 3+ years of experience in cloud or infrastructure security.\n- Experience with AWS, Terraform and Kubernetes.\n- Swedish is not required; we work in English.\n\nWe offer SEK 55 000 – 65 000 per month, a hybrid setup at our Södermalm office, and we offer relocation support and help with work permits."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "cloud_security_engineer",
+        "seniority": null,
+        "visa_status": "confirmed",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "SEK",
+          "period": "month",
+          "min": 55000,
+          "max": 65000
+        },
+        "language": "english_ok",
+        "country_iso2": "SE",
+        "experience_min_years": 3
+      }
+    },
+    {
+      "id": "en-pt-appsec-remote-portugal-14",
+      "notes": "Remote within Portugal; x14 monthly; no sponsorship.",
+      "snapshot": {
+        "title": "Senior AppSec Engineer",
+        "company": "Douro Digital, Lda.",
+        "locationRaw": "Lisbon, Portugal",
+        "sourceKey": "recruitee:dourodigital",
+        "applyUrl": "https://dourodigital.recruitee.example.com/o/senior-appsec",
+        "workplaceHint": "remote",
+        "descriptionText": "Douro Digital builds booking software for hotels in Southern Europe.\n\nThis role is remote within Portugal; we meet in Lisbon once a quarter.\n\nYou will own application security for our Python and React codebase: threat modelling, code review, security tooling and developer training.\n\nYou have\n- 5+ years of experience in application security or backend development.\n- Good English.\n\nSalary: €4,000 - €5,000 gross/month x 14.\n\nWe don't provide visa sponsorship."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "appsec_engineer",
+        "seniority": "senior",
+        "visa_status": "not_offered",
+        "remote_class": "region_limited",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "month",
+          "min": 4000,
+          "max": 5000
+        },
+        "language": "english_ok",
+        "country_iso2": "PT",
+        "experience_min_years": 5
+      }
+    },
+    {
+      "id": "en-jp-cloudsec-japanese-required",
+      "notes": "Visa sponsorship provided; JPY annual; business Japanese required.",
+      "snapshot": {
+        "title": "Cloud Security Engineer",
+        "company": "Sakura Ledger K.K.",
+        "locationRaw": "Tokyo, Japan",
+        "sourceKey": "greenhouse:sakuraledger",
+        "applyUrl": "https://boards.example.com/sakuraledger/jobs/2208",
+        "descriptionText": "Sakura Ledger provides accounting software to Japanese SMEs.\n\nResponsibilities\n- Design and operate security controls for our AWS environment.\n- Respond to security incidents.\n- Work with product teams on secure architecture.\n\nRequirements\n- 3 years of experience in cloud security or infrastructure.\n- Business-level Japanese (JLPT N2 or above) is required.\n\nSalary: ¥9,000,000 - ¥12,000,000 per year. Office-based in Shibuya with flexible hours.\n\nVisa sponsorship provided."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "cloud_security_engineer",
+        "seniority": null,
+        "visa_status": "confirmed",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "JPY",
+          "period": "year",
+          "min": 9000000,
+          "max": 12000000
+        },
+        "language": "local_required",
+        "country_iso2": "JP",
+        "experience_min_years": 3
+      }
+    },
+    {
+      "id": "en-ae-devsecops-employment-visa",
+      "notes": "Employment visa provided (Gulf wording); AED monthly.",
+      "snapshot": {
+        "title": "DevSecOps Engineer",
+        "company": "Falcon Gate Technologies FZ-LLC",
+        "locationRaw": "Dubai, United Arab Emirates",
+        "sourceKey": "workable:falcongate",
+        "applyUrl": "https://apply.example.com/falcongate/j/DSO4",
+        "descriptionText": "Falcon Gate builds payment gateways for merchants in the GCC.\n\nThe role\n- Build secure CI/CD pipelines on Azure DevOps.\n- Implement container and infrastructure scanning.\n- Support PCI DSS audits.\n\nRequirements\n- 4+ years of experience in DevOps or DevSecOps.\n- Azure and Kubernetes experience.\n\nPackage\n- AED 25,000 - 30,000 per month, tax free.\n- Employment visa, medical insurance and annual flights provided.\n- Office-based in Dubai Internet City."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "devsecops_engineer",
+        "seniority": null,
+        "visa_status": "confirmed",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "AED",
+          "period": "month",
+          "min": 25000,
+          "max": 30000
+        },
+        "language": "english_ok",
+        "country_iso2": "AE",
+        "experience_min_years": 4
+      }
+    },
+    {
+      "id": "en-ie-cloudsec-no-relocation-but-permit",
+      "notes": "Negated relocation next to an explicit sponsorship offer -> confirmed.",
+      "snapshot": {
+        "title": "Cloud Security Engineer",
+        "company": "Shannon Grid Software DAC",
+        "locationRaw": "Limerick, Ireland",
+        "sourceKey": "workable:shannongrid",
+        "applyUrl": "https://apply.example.com/shannongrid/j/CSE9",
+        "descriptionText": "Shannon Grid builds control software for wind farms.\n\nYou will secure our Azure platform and the connectivity to 300 wind farm sites.\n\nRequirements\n- 3+ years of experience in cloud or network security.\n- Azure and Terraform experience.\n\nThis role is on-site in Limerick.\n\nPlease note: we are not able to offer relocation assistance, but we do sponsor Critical Skills Employment Permits for suitable candidates."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "cloud_security_engineer",
+        "seniority": null,
+        "visa_status": "confirmed",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": false
+        },
+        "language": "english_ok",
+        "country_iso2": "IE",
+        "experience_min_years": 3
+      }
+    },
+    {
+      "id": "en-de-productsec-both-not-available",
+      "notes": "Terse 'Visa sponsorship: not available' form.",
+      "snapshot": {
+        "title": "Product Security Engineer",
+        "company": "Havelblau Health GmbH",
+        "locationRaw": "Berlin, Germany",
+        "sourceKey": "ashby:havelblau",
+        "applyUrl": "https://jobs.example.com/havelblau/ps-114",
+        "descriptionText": "Havelblau builds a telehealth app used by 300,000 patients in Germany.\n\nYou will embed security into our product teams, own threat modelling and run our vulnerability disclosure programme.\n\nRequirements\n- 4+ years in product security, application security or backend engineering.\n- Experience with GDPR-sensitive data.\n\nFacts\n- Salary: €68k - €82k per year\n- Hybrid (Berlin Mitte office, 2 days/week)\n- Visa sponsorship: not available\n- Relocation: not available\n- Language: English"
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "product_security_engineer",
+        "seniority": null,
+        "visa_status": "not_offered",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "year",
+          "min": 68000,
+          "max": 82000
+        },
+        "language": "english_ok",
+        "country_iso2": "DE",
+        "experience_min_years": 4
+      }
+    },
+    {
+      "id": "en-nl-seceng-cloud-platform-silent",
+      "notes": "No visa statement; 'plus 8% holiday allowance' after an annual range.",
+      "snapshot": {
+        "title": "Security Engineer - Cloud Platform",
+        "company": "Amstelzorg Digital B.V.",
+        "locationRaw": "Amsterdam, Netherlands",
+        "sourceKey": "recruitee:amstelzorg",
+        "applyUrl": "https://amstelzorg.recruitee.example.com/o/security-engineer-cloud",
+        "descriptionText": "Amstelzorg Digital develops software for home care organisations.\n\nYou will secure our Azure-based platform: identity, network segmentation, logging and incident response.\n\nWhat you bring\n- 3+ years of experience in security engineering.\n- Experience with Azure and infrastructure as code.\n- You speak English; Dutch is a nice-to-have.\n\nWhat we offer\n- €70,000 - €85,000 per year plus 8% holiday allowance.\n- Hybrid: two days per week at our Amsterdam office."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "security_engineer_cloud",
+        "seniority": null,
+        "visa_status": "unknown",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "year",
+          "min": 70000,
+          "max": 85000
+        },
+        "language": "english_ok",
+        "country_iso2": "NL",
+        "experience_min_years": 3
+      }
+    },
+    {
+      "id": "en-remote-worldwide-cloud-infra-security",
+      "notes": "Hires in any country via EOR -> worldwide.",
+      "snapshot": {
+        "title": "Cloud Infrastructure Engineer (Security)",
+        "company": "Orbitforge Systems Ltd",
+        "locationRaw": "Remote - Worldwide",
+        "sourceKey": "himalayas:all",
+        "applyUrl": "https://remote.example.com/orbitforge/cloud-infra-security",
+        "workplaceHint": "remote",
+        "descriptionText": "Orbitforge makes satellite ground-station software.\n\nWe hire in any country through an employer of record, and the whole team is remote.\n\nYou will build and secure our GCP and AWS infrastructure with Terraform and Kubernetes, with a strong focus on security hardening and compliance automation.\n\nYou have 4+ years of experience with cloud infrastructure.\n\nSalary: USD 90k – 120k per year."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "cloud_engineer_security",
+        "seniority": null,
+        "visa_status": "unknown",
+        "remote_class": "worldwide",
+        "salary": {
+          "stated": true,
+          "currency": "USD",
+          "period": "year",
+          "min": 90000,
+          "max": 120000
+        },
+        "language": "english_ok",
+        "experience_min_years": 4
+      }
+    },
+    {
+      "id": "en-gb-lead-fullstack-day-rate",
+      "notes": "Contract day rate; right to work required; lead.",
+      "snapshot": {
+        "title": "Lead Full Stack Engineer (Contract)",
+        "company": "Thameside Digital Ltd",
+        "locationRaw": "London, United Kingdom",
+        "sourceKey": "arbeitnow:all",
+        "applyUrl": "https://jobs.example.com/thameside/lead-fullstack-contract",
+        "descriptionText": "Thameside Digital delivers public sector digital services.\n\nWe need a Lead Full Stack Engineer for a 12-month contract on a citizen-facing service.\n\n- 8+ years of experience with React and Node.js.\n- Experience leading small teams.\n- £550 - £650 per day, outside IR35.\n- Hybrid: two days a week at the client site in London.\n\nYou must have the right to work in the UK."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "fullstack_developer",
+        "seniority": "lead",
+        "visa_status": "not_offered",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "GBP",
+          "period": "day",
+          "min": 550,
+          "max": 650
+        },
+        "language": "english_ok",
+        "country_iso2": "GB",
+        "experience_min_years": 8
+      }
+    },
+    {
+      "id": "en-us-nurse-not-target",
+      "notes": "Clearly non-target role; no role key labelled.",
+      "snapshot": {
+        "title": "Registered Nurse - ICU",
+        "company": "Lakeshore Community Hospital",
+        "locationRaw": "Chicago, IL, United States",
+        "sourceKey": "smartrecruiters:lakeshore",
+        "applyUrl": "https://careers.example.com/lakeshore/icu-rn",
+        "descriptionText": "Lakeshore Community Hospital is hiring Registered Nurses for our 24-bed intensive care unit.\n\nRequirements\n- Active Illinois RN license.\n- 2 years of ICU experience.\n- BLS and ACLS certification.\n\nPay: $42 - $55 per hour, with shift differentials. Full-time, on-site."
+      },
+      "labels": {
+        "role_match": false,
+        "seniority": null,
+        "visa_status": "unknown",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "USD",
+          "period": "hour",
+          "min": 42,
+          "max": 55
+        },
+        "language": "english_ok",
+        "country_iso2": "US",
+        "experience_min_years": 2
+      }
+    },
+    {
+      "id": "en-de-mid-level-devsecops-remote-germany",
+      "notes": "Mid-level title; remote within Germany; relocation not relevant.",
+      "snapshot": {
+        "title": "Mid-Level DevSecOps Engineer",
+        "company": "Rheinwerk Analytics GmbH",
+        "locationRaw": "Remote, Germany",
+        "sourceKey": "personio:rheinwerk",
+        "applyUrl": "https://rheinwerk.jobs.example.com/job/77120",
+        "workplaceHint": "remote",
+        "descriptionText": "Rheinwerk Analytics builds reporting software for German municipalities.\n\nThis position is fully remote, but you need to live in Germany for tax and data protection reasons.\n\nYour tasks\n- Maintain security scanning in our GitLab pipelines.\n- Harden our Kubernetes clusters on a German cloud provider.\n\nYour profile\n- 2 years of experience in DevOps or security.\n- English is enough; German is helpful but not required.\n\nSalary: €58,000 – €68,000 per year."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "devsecops_engineer",
+        "seniority": "mid",
+        "visa_status": "unknown",
+        "remote_class": "region_limited",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "year",
+          "min": 58000,
+          "max": 68000
+        },
+        "language": "english_ok",
+        "country_iso2": "DE",
+        "experience_min_years": 2
+      }
+    },
+    {
+      "id": "en-be-cloudsec-analyst-silent",
+      "notes": "Brussels; English posting; French or Dutch required.",
+      "snapshot": {
+        "title": "Cloud Security Analyst",
+        "company": "Zennebank NV",
+        "locationRaw": "Brussels, Belgium",
+        "sourceKey": "smartrecruiters:zennebank",
+        "applyUrl": "https://careers.example.com/zennebank/508812",
+        "descriptionText": "Zennebank is a Belgian retail bank serving 900,000 customers.\n\nAs Cloud Security Analyst you monitor our Microsoft 365 and Azure environment, follow up on alerts and help teams fix misconfigurations.\n\nProfile\n- 2 years of experience in security monitoring or cloud administration.\n- Fluent French or Dutch is required, along with good English.\n\nWe offer a competitive salary, meal vouchers and a hybrid working model with three office days in Brussels."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "cloud_security_analyst",
+        "seniority": null,
+        "visa_status": "unknown",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": false
+        },
+        "language": "local_required",
+        "country_iso2": "BE",
+        "experience_min_years": 2
+      }
+    },
+    {
+      "id": "en-dk-appsec-sponsor",
+      "notes": "Danish employer; Fast-track scheme wording; DKK monthly. No remote wording and a city location -> on-site.",
+      "snapshot": {
+        "title": "Application Security Engineer",
+        "company": "Øresund Robotics ApS",
+        "locationRaw": "Copenhagen, Denmark",
+        "sourceKey": "lever:oresundrobotics",
+        "applyUrl": "https://jobs.example.com/oresundrobotics/appsec",
+        "descriptionText": "Øresund Robotics makes warehouse robots.\n\nYou will secure the software that runs on our robots and the cloud services that control them.\n\nYou have\n- 3 years of experience in application or embedded security.\n- Experience with C++ or Rust is a plus.\n- English is our company language; Danish is not required.\n\nWe offer DKK 55,000 - 65,000 per month including pension, and we are certified under the Danish Fast-track scheme, so we will sponsor your work and residence permit."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "appsec_engineer",
+        "seniority": null,
+        "visa_status": "confirmed",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "DKK",
+          "period": "month",
+          "min": 55000,
+          "max": 65000
+        },
+        "language": "english_ok",
+        "country_iso2": "DK",
+        "experience_min_years": 3
+      }
+    },
+    {
+      "id": "de-cloudsec-muenchen-bluecard",
+      "notes": "German posting; visa + Blue Card support; German and English required.",
+      "snapshot": {
+        "title": "Cloud Security Engineer (m/w/d)",
+        "company": "Würmtal Datensysteme GmbH",
+        "locationRaw": "München",
+        "countryHint": "DE",
+        "sourceKey": "personio:wuermtal",
+        "applyUrl": "https://wuermtal.jobs.example.com/job/20331",
+        "descriptionText": "Würmtal Datensysteme entwickelt Software für Stadtwerke und Energieversorger.\n\nDeine Aufgaben\n- Du konzipierst und betreibst Sicherheitsmaßnahmen für unsere AWS-Umgebung.\n- Du automatisierst Security-Checks mit Terraform und Python.\n- Du begleitest ISO-27001-Audits.\n\nDein Profil\n- Mindestens 3 Jahre Berufserfahrung in der IT-Sicherheit oder im Cloud-Betrieb.\n- Erfahrung mit AWS, Kubernetes und Infrastructure as Code.\n- Sehr gute Deutsch- und Englischkenntnisse.\n\nWir bieten\n- Gehalt: 70.000 – 85.000 € brutto jährlich.\n- Hybrides Arbeiten: zwei Tage pro Woche im Büro in München.\n- Wir unterstützen dich beim Visum und bei der Blauen Karte EU."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "cloud_security_engineer",
+        "seniority": null,
+        "visa_status": "confirmed",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "year",
+          "min": 70000,
+          "max": 85000
+        },
+        "language": "local_required",
+        "country_iso2": "DE",
+        "experience_min_years": 3
+      }
+    },
+    {
+      "id": "de-devsecops-koeln-keine-visa",
+      "notes": "German negation of visa support + work permit required; vague 'mehrjährige' experience (more than one year = min 2).",
+      "snapshot": {
+        "title": "DevSecOps Engineer (w/m/d)",
+        "company": "Domblick Versicherungsdienste AG",
+        "locationRaw": "Köln, Deutschland",
+        "sourceKey": "bundesagentur:it",
+        "applyUrl": "https://jobs.example.com/domblick/devsecops-koeln",
+        "descriptionText": "Die Domblick Versicherungsdienste AG betreibt die IT für mehrere Versicherungen im Rheinland.\n\nIhre Aufgaben\n- Integration von Sicherheitsprüfungen in unsere CI/CD-Pipelines (Jenkins, GitLab).\n- Härtung unserer OpenShift-Plattform.\n- Zusammenarbeit mit dem Informationssicherheitsbeauftragten.\n\nIhr Profil\n- Mehrjährige Berufserfahrung im DevOps- oder Security-Umfeld.\n- Deutsch fließend in Wort und Schrift.\n\nDie Stelle ist in Vollzeit am Standort Köln zu besetzen.\n\nBitte beachten Sie: Eine gültige Arbeitserlaubnis für Deutschland ist Voraussetzung. Eine Unterstützung beim Visum ist leider nicht möglich."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "devsecops_engineer",
+        "seniority": null,
+        "visa_status": "not_offered",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": false
+        },
+        "language": "local_required",
+        "country_iso2": "DE",
+        "experience_min_years": 2
+      }
+    },
+    {
+      "id": "de-senior-appsec-remote-deutschland",
+      "notes": "Remote only within Germany; open-ended 'ab' salary; English working language.",
+      "snapshot": {
+        "title": "Senior Application Security Engineer (m/w/d) – Remote",
+        "company": "Lindenhof Software GmbH",
+        "locationRaw": "Deutschlandweit / Remote",
+        "countryHint": "DE",
+        "sourceKey": "personio:lindenhof",
+        "applyUrl": "https://lindenhof.jobs.example.com/job/99301",
+        "workplaceHint": "remote",
+        "descriptionText": "Lindenhof Software entwickelt eine Plattform für digitale Bauakten.\n\nDie Stelle ist zu 100 % remote innerhalb Deutschlands möglich.\n\nDeine Aufgaben\n- Du verantwortest unseren Secure Development Lifecycle.\n- Du führst Threat Modelling und Code Reviews durch.\n- Du betreust unser Bug-Bounty-Programm.\n\nDein Profil\n- 5+ Jahre Erfahrung in der Anwendungssicherheit oder Softwareentwicklung.\n- Englisch ist unsere Arbeitssprache, Deutsch ist kein Muss.\n\nGehalt: ab 75.000 € brutto/Jahr."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "appsec_engineer",
+        "seniority": "senior",
+        "visa_status": "unknown",
+        "remote_class": "region_limited",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "year",
+          "min": 75000,
+          "max": null
+        },
+        "language": "english_ok",
+        "country_iso2": "DE",
+        "experience_min_years": 5
+      }
+    },
+    {
+      "id": "de-werkstudent-softwareentwicklung",
+      "notes": "Working student (junior), non-target; hourly pay.",
+      "snapshot": {
+        "title": "Werkstudent (m/w/d) Softwareentwicklung",
+        "company": "Saaleck Medien GmbH",
+        "locationRaw": "Leipzig",
+        "countryHint": "DE",
+        "sourceKey": "bundesagentur:it",
+        "applyUrl": "https://jobs.example.com/saaleck/werkstudent-sw",
+        "descriptionText": "Saaleck Medien betreibt regionale Nachrichtenportale.\n\nDu unterstützt unser Entwicklungsteam bei der Weiterentwicklung unserer Redaktionssysteme in PHP und JavaScript.\n\nDas bringst du mit\n- Immatrikulation in einem Studiengang der Informatik oder vergleichbar.\n- Erste Erfahrungen mit Webentwicklung.\n- Sehr gute Deutschkenntnisse.\n\nWir bieten 15 € pro Stunde bei 15–20 Wochenstunden und flexible Arbeitszeiten in unserem Büro in Leipzig."
+      },
+      "labels": {
+        "role_match": false,
+        "seniority": "junior",
+        "visa_status": "unknown",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "hour",
+          "min": 15
+        },
+        "language": "local_required",
+        "country_iso2": "DE",
+        "experience_min_years": null
+      }
+    },
+    {
+      "id": "de-fullstack-umzug",
+      "notes": "Relocation help only -> likely; German B2 required.",
+      "snapshot": {
+        "title": "Full-Stack Entwickler (m/w/d) React & Node.js",
+        "company": "Pleißetal Logistik GmbH",
+        "locationRaw": "Dresden, Sachsen, Deutschland",
+        "sourceKey": "arbeitnow:all",
+        "applyUrl": "https://jobs.example.com/pleissetal/fullstack",
+        "descriptionText": "Pleißetal Logistik plant Transporte für 2.000 Speditionen.\n\nDeine Aufgaben\n- Entwicklung neuer Features in React und Node.js.\n- Pflege unserer REST- und GraphQL-APIs.\n\nDein Profil\n- 3 Jahre Berufserfahrung als Full-Stack-Entwickler.\n- Deutsch mindestens auf B2-Niveau.\n\nWir bieten\n- 55.000 – 68.000 € p. a.\n- Hybrides Arbeiten (3 Tage Büro in Dresden).\n- Unterstützung beim Umzug nach Dresden inklusive Umzugspauschale."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "fullstack_developer",
+        "seniority": null,
+        "visa_status": "likely",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "year",
+          "min": 55000,
+          "max": 68000
+        },
+        "language": "local_required",
+        "country_iso2": "DE",
+        "experience_min_years": 3
+      }
+    },
+    {
+      "id": "de-agency-it-compliance-cloud",
+      "notes": "Agency posting ('Für unseren Kunden'); open-ended 'bis zu' salary.",
+      "snapshot": {
+        "title": "IT-Compliance Manager Cloud (m/w/d)",
+        "company": "Personalwerk Nord GmbH",
+        "locationRaw": "Hannover, Deutschland",
+        "sourceKey": "bundesagentur:it",
+        "applyUrl": "https://jobs.example.com/personalwerk-nord/it-compliance-cloud",
+        "descriptionText": "Für unseren Kunden, ein etabliertes Versicherungsunternehmen in Hannover, suchen wir einen IT-Compliance Manager Cloud (m/w/d) in Festanstellung.\n\nIhre Aufgaben\n- Steuerung der Cloud-Compliance nach BAIT, VAIT und DORA.\n- Durchführung von Risikoanalysen für Cloud-Auslagerungen.\n- Koordination interner und externer Audits.\n\nIhr Profil\n- Mindestens 4 Jahre Erfahrung in IT-Compliance, IT-Revision oder Informationssicherheit.\n- Verhandlungssichere Deutschkenntnisse.\n\nUnser Kunde bietet ein Jahresgehalt von bis zu 80.000 € sowie zwei Tage Homeoffice pro Woche."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "grc_cloud",
+        "seniority": null,
+        "visa_status": "unknown",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "year",
+          "min": null,
+          "max": 80000
+        },
+        "language": "local_required",
+        "country_iso2": "DE",
+        "experience_min_years": 4
+      }
+    },
+    {
+      "id": "de-at-cloudsec-wien-14",
+      "notes": "Austrian collective-agreement minimum per month (14x); Rot-Weiß-Rot card support.",
+      "snapshot": {
+        "title": "Cloud Security Engineer (m/w/d)",
+        "company": "Donaukanal IT Services GmbH",
+        "locationRaw": "Wien, Österreich",
+        "sourceKey": "smartrecruiters:donaukanal",
+        "applyUrl": "https://careers.example.com/donaukanal/551203",
+        "descriptionText": "Die Donaukanal IT Services GmbH betreut Rechenzentren und Cloud-Plattformen für österreichische Banken.\n\nIhre Aufgaben\n- Umsetzung von Sicherheitskonzepten für Azure und AWS.\n- Betrieb von Cloud Security Posture Management.\n- Mitarbeit an Incident-Response-Prozessen.\n\nIhr Profil\n- 3 Jahre Erfahrung im Bereich Cloud oder IT-Security.\n- Deutsch und Englisch fließend.\n\nUnser Angebot\n- Das kollektivvertragliche Mindestgehalt beträgt 4.200 € brutto pro Monat (14x jährlich); eine Überzahlung je nach Qualifikation ist vorgesehen.\n- Hybrides Arbeiten in Wien.\n- Wir unterstützen Sie bei der Beantragung der Rot-Weiß-Rot-Karte."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "cloud_security_engineer",
+        "seniority": null,
+        "visa_status": "confirmed",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "month",
+          "min": 4200
+        },
+        "language": "local_required",
+        "country_iso2": "AT",
+        "experience_min_years": 3
+      }
+    },
+    {
+      "id": "de-ch-appsec-bern-bewilligung",
+      "notes": "Swiss work authorisation presupposed -> not offered; workload percentage in title.",
+      "snapshot": {
+        "title": "Application Security Engineer 80–100 % (w/m/d)",
+        "company": "Aareblick Informatik AG",
+        "locationRaw": "Bern, Schweiz",
+        "sourceKey": "smartrecruiters:aareblick",
+        "applyUrl": "https://careers.example.com/aareblick/771402",
+        "descriptionText": "Aareblick Informatik entwickelt Fachanwendungen für Kantone und Gemeinden.\n\nIhre Aufgaben\n- Sicherheitsanalysen und Code Reviews unserer Java-Anwendungen.\n- Betreuung von Penetrationstests.\n- Schulung der Entwicklungsteams.\n\nIhr Profil\n- Abgeschlossenes Informatikstudium und Erfahrung in der Anwendungssicherheit.\n- Stilsichere Deutschkenntnisse.\n\nArbeitsort: Bern, bis zu zwei Tage Homeoffice pro Woche.\n\nEine gültige Arbeitsbewilligung für die Schweiz wird vorausgesetzt."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "appsec_engineer",
+        "seniority": null,
+        "visa_status": "not_offered",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": false
+        },
+        "language": "local_required",
+        "country_iso2": "CH",
+        "experience_min_years": null
+      }
+    },
+    {
+      "id": "de-pflegefachkraft-visum",
+      "notes": "Non-target role that does offer visa support (confirmed precision must not depend on role).",
+      "snapshot": {
+        "title": "Pflegefachkraft (m/w/d)",
+        "company": "Seniorenzentrum Elbaue gGmbH",
+        "locationRaw": "Magdeburg, Deutschland",
+        "sourceKey": "bundesagentur:pflege",
+        "applyUrl": "https://jobs.example.com/elbaue/pflegefachkraft",
+        "descriptionText": "Das Seniorenzentrum Elbaue sucht Pflegefachkräfte für unsere stationäre Pflege.\n\nIhr Profil\n- Abgeschlossene Ausbildung als Pflegefachkraft oder anerkannter ausländischer Abschluss.\n- Deutschkenntnisse mindestens auf B1-Niveau.\n\nWir bieten\n- 3.600 € brutto im Monat plus Schichtzulagen.\n- Wir unterstützen internationale Pflegekräfte bei der Anerkennung und beim Visum."
+      },
+      "labels": {
+        "role_match": false,
+        "seniority": null,
+        "visa_status": "confirmed",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "month",
+          "min": 3600
+        },
+        "language": "local_required",
+        "country_iso2": "DE",
+        "experience_min_years": null
+      }
+    },
+    {
+      "id": "de-devsecops-remote-eu",
+      "notes": "German posting; remote from any EU country; English working language.",
+      "snapshot": {
+        "title": "DevSecOps Engineer (m/w/d) – Remote",
+        "company": "Mainsprung Technologies GmbH",
+        "locationRaw": "Remote (EU)",
+        "sourceKey": "arbeitnow:all",
+        "applyUrl": "https://jobs.example.com/mainsprung/devsecops-remote",
+        "workplaceHint": "remote",
+        "descriptionText": "Mainsprung entwickelt eine SaaS-Plattform für Hausverwaltungen.\n\nDie Stelle ist remote aus allen EU-Ländern möglich.\n\nDeine Aufgaben\n- Aufbau von Security-Scans in unseren GitHub-Actions-Pipelines.\n- Absicherung unserer Kubernetes-Cluster.\n- Einführung von Secrets-Management.\n\nDein Profil\n- 3 Jahre Erfahrung im DevOps-Umfeld.\n- Gute Englischkenntnisse; Deutsch ist ein Plus.\n\nGehalt: 65.000–80.000 EUR pro Jahr."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "devsecops_engineer",
+        "seniority": null,
+        "visa_status": "unknown",
+        "remote_class": "region_limited",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "year",
+          "min": 65000,
+          "max": 80000
+        },
+        "language": "english_ok",
+        "experience_min_years": 3
+      }
+    },
+    {
+      "id": "de-teamleiter-cloudsec",
+      "notes": "Team lead title in German; role key left unlabelled.",
+      "snapshot": {
+        "title": "Teamleiter Cloud Security (m/w/d)",
+        "company": "Neckarwerk Automotive Software GmbH",
+        "locationRaw": "Stuttgart, Deutschland",
+        "sourceKey": "bundesagentur:it",
+        "applyUrl": "https://jobs.example.com/neckarwerk/teamleiter-cloudsec",
+        "descriptionText": "Neckarwerk entwickelt Software für vernetzte Fahrzeuge.\n\nIhre Aufgaben\n- Fachliche und disziplinarische Führung eines Teams aus sechs Cloud-Security-Engineers.\n- Verantwortung für die Sicherheitsarchitektur unserer Azure-Plattform.\n\nIhr Profil\n- Mindestens 7 Jahre Berufserfahrung in der IT-Sicherheit, davon 2 Jahre mit Führungsverantwortung.\n- Sehr gute Deutsch- und Englischkenntnisse.\n\nWir bieten ein Jahresgehalt von 95.000 € – 110.000 € und hybrides Arbeiten am Standort Stuttgart."
+      },
+      "labels": {
+        "role_match": true,
+        "seniority": "lead",
+        "visa_status": "unknown",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "year",
+          "min": 95000,
+          "max": 110000
+        },
+        "language": "local_required",
+        "country_iso2": "DE",
+        "experience_min_years": 7
+      }
+    },
+    {
+      "id": "fr-cloudsec-paris-kEUR",
+      "notes": "French posting; 'K€ bruts annuels'; French required; hybrid via 'télétravail 2 jours'.",
+      "snapshot": {
+        "title": "Ingénieur Sécurité Cloud (H/F)",
+        "company": "Lutèce Assurances SA",
+        "locationRaw": "Paris, France",
+        "sourceKey": "smartrecruiters:lutece",
+        "applyUrl": "https://careers.example.com/lutece/880017",
+        "descriptionText": "Lutèce Assurances accompagne 2 millions d'assurés et migre ses applications vers le cloud.\n\nVos missions\n- Définir et appliquer les standards de sécurité sur AWS et Azure.\n- Automatiser les contrôles de conformité.\n- Accompagner les équipes projets sur l'architecture sécurisée.\n\nVotre profil\n- 3 ans d'expérience minimum en sécurité des systèmes d'information.\n- Français courant indispensable.\n\nCe que nous offrons\n- Salaire : 55 – 65 K€ bruts annuels.\n- Télétravail 2 jours par semaine, bureaux à Paris 9e."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "cloud_security_engineer",
+        "seniority": null,
+        "visa_status": "unknown",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "year",
+          "min": 55000,
+          "max": 65000
+        },
+        "language": "local_required",
+        "country_iso2": "FR",
+        "experience_min_years": 3
+      }
+    },
+    {
+      "id": "fr-devsecops-lyon-passeport-talent",
+      "notes": "French visa support (Passeport Talent); English working language.",
+      "snapshot": {
+        "title": "Ingénieur DevSecOps",
+        "company": "Confluence Robotique SAS",
+        "locationRaw": "Lyon, France",
+        "sourceKey": "welcometothejungle:confluence",
+        "applyUrl": "https://jobs.example.com/confluence-robotique/devsecops",
+        "descriptionText": "Confluence Robotique conçoit des robots de désherbage pour l'agriculture.\n\nVos missions\n- Intégrer la sécurité dans nos pipelines CI/CD.\n- Sécuriser notre plateforme Kubernetes et nos mises à jour logicielles embarquées.\n\nProfil recherché\n- Au moins 2 ans d'expérience en DevOps ou en sécurité.\n- L'anglais est notre langue de travail ; le français n'est pas obligatoire.\n\nNous offrons\n- 50 000 € - 60 000 € brut annuel.\n- Travail hybride depuis nos locaux de Lyon.\n- Nous accompagnons les candidats internationaux dans leurs démarches de visa (Passeport Talent)."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "devsecops_engineer",
+        "seniority": null,
+        "visa_status": "confirmed",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "year",
+          "min": 50000,
+          "max": 60000
+        },
+        "language": "english_ok",
+        "country_iso2": "FR",
+        "experience_min_years": 2
+      }
+    },
+    {
+      "id": "fr-appsec-toulouse-no-sponsor",
+      "notes": "French negation 'pas en mesure de parrainer'; senior at the end of the title.",
+      "snapshot": {
+        "title": "Ingénieur Sécurité Applicative Senior",
+        "company": "Garonne Aéro Systèmes SAS",
+        "locationRaw": "Toulouse, France",
+        "sourceKey": "smartrecruiters:garonneaero",
+        "applyUrl": "https://careers.example.com/garonneaero/301188",
+        "descriptionText": "Garonne Aéro Systèmes développe des logiciels de maintenance pour l'aéronautique.\n\nVos missions\n- Réaliser des revues de code et des analyses de risques.\n- Piloter les tests d'intrusion applicatifs.\n\nVotre profil\n- 5 ans d'expérience en sécurité applicative.\n- Maîtrise du français à l'écrit et à l'oral.\n\nPoste basé à Toulouse, sur site.\n\nNous ne sommes pas en mesure de parrainer de visa pour ce poste."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "appsec_engineer",
+        "seniority": "senior",
+        "visa_status": "not_offered",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": false
+        },
+        "language": "local_required",
+        "country_iso2": "FR",
+        "experience_min_years": 5
+      }
+    },
+    {
+      "id": "fr-be-fullstack-bruxelles-mois",
+      "notes": "Belgian French posting; monthly gross with narrow-space thousands.",
+      "snapshot": {
+        "title": "Développeur Full Stack (React / Node.js)",
+        "company": "Sablon Digital SRL",
+        "locationRaw": "Bruxelles, Belgique",
+        "sourceKey": "recruitee:sablondigital",
+        "applyUrl": "https://sablondigital.recruitee.example.com/o/fullstack",
+        "descriptionText": "Sablon Digital crée des plateformes de réservation pour les musées.\n\nVos missions\n- Développer de nouvelles fonctionnalités en React et Node.js.\n- Participer aux revues de code.\n\nVotre profil\n- 3 ans d'expérience en développement web.\n- Français ou néerlandais courant.\n\nNous offrons 3 800 € - 4 500 € brut par mois, des chèques-repas et deux jours de télétravail par semaine."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "fullstack_developer",
+        "seniority": null,
+        "visa_status": "unknown",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "month",
+          "min": 3800,
+          "max": 4500
+        },
+        "language": "local_required",
+        "country_iso2": "BE",
+        "experience_min_years": 3
+      }
+    },
+    {
+      "id": "fr-cloudsec-analyst-full-remote-france",
+      "notes": "Full remote from France only -> region limited.",
+      "snapshot": {
+        "title": "Analyste Sécurité Cloud (H/F) - Full remote",
+        "company": "Armorique Services Numériques SAS",
+        "locationRaw": "France (télétravail)",
+        "countryHint": "FR",
+        "sourceKey": "welcometothejungle:armorique",
+        "applyUrl": "https://jobs.example.com/armorique/analyste-cloud",
+        "workplaceHint": "remote",
+        "descriptionText": "Armorique Services Numériques est un hébergeur cloud souverain.\n\nLe poste est en 100 % télétravail, depuis la France uniquement.\n\nVos missions\n- Surveiller la posture de sécurité de nos clients.\n- Qualifier les alertes et accompagner la remédiation.\n\nVotre profil\n- 2 ans d'expérience en SOC ou en administration cloud.\n- Français courant exigé.\n\nRémunération : 45-52 k€ selon profil."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "cloud_security_analyst",
+        "seniority": null,
+        "visa_status": "unknown",
+        "remote_class": "region_limited",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "year",
+          "min": 45000,
+          "max": 52000
+        },
+        "language": "local_required",
+        "country_iso2": "FR",
+        "experience_min_years": 2
+      }
+    },
+    {
+      "id": "fr-lu-grc-permis-europeen",
+      "notes": "EU work permit required -> not offered; French and English required.",
+      "snapshot": {
+        "title": "Consultant GRC Cloud (H/F)",
+        "company": "Kirchberg Advisory S.à r.l.",
+        "locationRaw": "Luxembourg",
+        "sourceKey": "smartrecruiters:kirchberg",
+        "applyUrl": "https://careers.example.com/kirchberg/418822",
+        "descriptionText": "Kirchberg Advisory conseille les banques luxembourgeoises en gestion des risques informatiques.\n\nVos missions\n- Accompagner nos clients dans la conformité cloud (CSSF, DORA).\n- Réaliser des analyses de risques et des audits de fournisseurs cloud.\n\nVotre profil\n- 4 ans d'expérience en GRC ou en audit informatique.\n- Anglais et français courants exigés.\n\nUn permis de travail européen est exigé pour ce poste."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "grc_cloud",
+        "seniority": null,
+        "visa_status": "not_offered",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": false
+        },
+        "language": "local_required",
+        "country_iso2": "LU",
+        "experience_min_years": 4
+      }
+    },
+    {
+      "id": "fr-ca-node-montreal-immigration",
+      "notes": "Quebec French posting; immigration support; '$' in Canada = CAD.",
+      "snapshot": {
+        "title": "Développeur Node.js",
+        "company": "Mont-Royal Logiciels inc.",
+        "locationRaw": "Montréal, Québec, Canada",
+        "sourceKey": "lever:montroyal",
+        "applyUrl": "https://jobs.example.com/montroyal/developpeur-node",
+        "descriptionText": "Mont-Royal Logiciels développe des outils de gestion pour les cliniques dentaires.\n\nVos responsabilités\n- Développer et maintenir nos API en Node.js et TypeScript.\n- Optimiser nos requêtes PostgreSQL.\n\nVotre profil\n- 3 ans d'expérience en développement Node.js.\n- Français requis ; anglais fonctionnel.\n\nNous offrons un salaire de 85 000 $ à 100 000 $ par année, le mode hybride et un soutien pour l'immigration (permis de travail)."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "node_developer",
+        "seniority": null,
+        "visa_status": "confirmed",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "CAD",
+          "period": "year",
+          "min": 85000,
+          "max": 100000
+        },
+        "language": "local_required",
+        "country_iso2": "CA",
+        "experience_min_years": 3
+      }
+    },
+    {
+      "id": "nl-devsecops-utrecht-kennismigrant",
+      "notes": "Dutch posting; recognised sponsor arranges the knowledge migrant visa; Dutch not required.",
+      "snapshot": {
+        "title": "DevSecOps Engineer",
+        "company": "Domstad Zorgsoftware B.V.",
+        "locationRaw": "Utrecht, Nederland",
+        "sourceKey": "recruitee:domstad",
+        "applyUrl": "https://domstad.recruitee.example.com/o/devsecops",
+        "descriptionText": "Domstad Zorgsoftware bouwt software voor huisartsenpraktijken.\n\nWat ga je doen?\n- Je integreert security-scans in onze Azure DevOps-pipelines.\n- Je beheert onze Kubernetes-omgeving en secrets.\n\nWat vragen wij?\n- Minimaal 3 jaar ervaring als DevOps- of security engineer.\n- Nederlands is geen vereiste; je werkt in het Engels.\n\nWat bieden wij?\n- €4.500 - €6.000 bruto per maand.\n- Hybride werken: twee dagen per week op kantoor in Utrecht.\n- Wij zijn erkend referent bij de IND en regelen je kennismigrantenvisum."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "devsecops_engineer",
+        "seniority": null,
+        "visa_status": "confirmed",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "month",
+          "min": 4500,
+          "max": 6000
+        },
+        "language": "english_ok",
+        "country_iso2": "NL",
+        "experience_min_years": 3
+      }
+    },
+    {
+      "id": "nl-cloudsec-denhaag-geen-sponsoring",
+      "notes": "Dutch negation 'geen visumsponsoring'; fluent Dutch required.",
+      "snapshot": {
+        "title": "Cloud Security Engineer",
+        "company": "Hofvijver ICT Diensten B.V.",
+        "locationRaw": "Den Haag, Zuid-Holland",
+        "countryHint": "NL",
+        "sourceKey": "recruitee:hofvijver",
+        "applyUrl": "https://hofvijver.recruitee.example.com/o/cloud-security-engineer",
+        "descriptionText": "Hofvijver ICT Diensten beheert de cloudomgevingen van gemeenten en waterschappen.\n\nJouw taken\n- Je ontwerpt beveiligingsmaatregelen voor onze Azure-omgevingen.\n- Je adviseert klanten over de BIO en NIS2.\n\nJouw profiel\n- 5 jaar ervaring in informatiebeveiliging.\n- Vloeiend Nederlands is een vereiste.\n\nJe werkt hybride vanuit ons kantoor in Den Haag.\n\nLet op: wij bieden geen visumsponsoring aan."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "cloud_security_engineer",
+        "seniority": null,
+        "visa_status": "not_offered",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": false
+        },
+        "language": "local_required",
+        "country_iso2": "NL",
+        "experience_min_years": 5
+      }
+    },
+    {
+      "id": "nl-medior-fullstack-eindhoven",
+      "notes": "Dutch 'medior' (mid); monthly gross + holiday allowance.",
+      "snapshot": {
+        "title": "Medior Full Stack Developer",
+        "company": "Lichtstad Tech B.V.",
+        "locationRaw": "Eindhoven, Noord-Brabant, Nederland",
+        "sourceKey": "recruitee:lichtstad",
+        "applyUrl": "https://lichtstad.recruitee.example.com/o/medior-fullstack",
+        "descriptionText": "Lichtstad Tech maakt software voor slimme straatverlichting.\n\nWat ga je doen?\n- Je bouwt nieuwe features in React en Node.js.\n- Je werkt samen met onze hardware-engineers.\n\nWie ben jij?\n- Je hebt 2 jaar ervaring als full stack developer.\n- Je spreekt vloeiend Nederlands en Engels.\n\nWat bieden wij?\n- €3.800 – €5.200 bruto per maand + 8% vakantiegeld.\n- Drie dagen per week op kantoor in Eindhoven."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "fullstack_developer",
+        "seniority": "mid",
+        "visa_status": "unknown",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "month",
+          "min": 3800,
+          "max": 5200
+        },
+        "language": "local_required",
+        "country_iso2": "NL",
+        "experience_min_years": 2
+      }
+    },
+    {
+      "id": "nl-node-remote-nederland",
+      "notes": "Fully remote as long as you live in the Netherlands -> region limited.",
+      "snapshot": {
+        "title": "Node.js Developer",
+        "company": "Polderpad Software B.V.",
+        "locationRaw": "Remote (Nederland)",
+        "countryHint": "NL",
+        "sourceKey": "recruitee:polderpad",
+        "applyUrl": "https://polderpad.recruitee.example.com/o/nodejs-developer",
+        "workplaceHint": "remote",
+        "descriptionText": "Polderpad bouwt een platform voor fietsenmakers.\n\nDeze functie is volledig remote, zolang je in Nederland woont.\n\nWat ga je doen?\n- Je ontwikkelt onze API's in Node.js en TypeScript.\n- Je koppelt ons platform aan leveranciers.\n\nWie ben jij?\n- Je hebt minimaal 2 jaar ervaring met Node.js.\n- Je beheerst de Nederlandse taal goed."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "node_developer",
+        "seniority": null,
+        "visa_status": "unknown",
+        "remote_class": "region_limited",
+        "salary": {
+          "stated": false
+        },
+        "language": "local_required",
+        "country_iso2": "NL",
+        "experience_min_years": 2
+      }
+    },
+    {
+      "id": "nl-be-appsec-antwerpen-silent",
+      "notes": "Dutch posting, no language statement -> unclear; no visa wording.",
+      "snapshot": {
+        "title": "Application Security Engineer",
+        "company": "Scheldekaai Software NV",
+        "locationRaw": "Antwerpen, België",
+        "sourceKey": "recruitee:scheldekaai",
+        "applyUrl": "https://scheldekaai.recruitee.example.com/o/application-security",
+        "descriptionText": "Scheldekaai Software ontwikkelt planningssoftware voor de haven van Antwerpen.\n\nJouw taken\n- Je voert security reviews uit op onze webapplicaties.\n- Je beheert onze SAST- en DAST-tools.\n- Je begeleidt ontwikkelaars bij het oplossen van kwetsbaarheden.\n\nJouw profiel\n- 3 jaar ervaring in applicatiebeveiliging of softwareontwikkeling.\n- Kennis van de OWASP Top 10.\n\nWij bieden een hybride werkregeling met twee thuiswerkdagen per week."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "appsec_engineer",
+        "seniority": null,
+        "visa_status": "unknown",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": false
+        },
+        "language": "unclear",
+        "country_iso2": "BE",
+        "experience_min_years": 3
+      }
+    },
+    {
+      "id": "es-cloudsec-madrid-ingles",
+      "notes": "Spanish posting requiring English, Spanish only valued -> english_ok.",
+      "snapshot": {
+        "title": "Ingeniero/a de Seguridad Cloud",
+        "company": "Retiro Pagos S.L.",
+        "locationRaw": "Madrid, España",
+        "sourceKey": "smartrecruiters:retiropagos",
+        "applyUrl": "https://careers.example.com/retiropagos/610045",
+        "descriptionText": "Retiro Pagos procesa pagos con tarjeta para comercios en España y Portugal.\n\nFunciones\n- Diseñar e implantar controles de seguridad en AWS.\n- Automatizar la revisión de configuraciones con Terraform.\n- Colaborar con el equipo de respuesta a incidentes.\n\nRequisitos\n- Al menos 3 años de experiencia en seguridad cloud o infraestructura.\n- Imprescindible inglés alto (C1); se valorará el español.\n\nOfrecemos\n- Salario: 45.000 - 55.000 € brutos anuales.\n- Modelo híbrido con dos días de oficina en Madrid."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "cloud_security_engineer",
+        "seniority": null,
+        "visa_status": "unknown",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "year",
+          "min": 45000,
+          "max": 55000
+        },
+        "language": "english_ok",
+        "country_iso2": "ES",
+        "experience_min_years": 3
+      }
+    },
+    {
+      "id": "es-devsecops-barcelona-14-pagas",
+      "notes": "Spanish visa sponsorship offered; monthly in 14 payments; fluent Spanish required.",
+      "snapshot": {
+        "title": "DevSecOps Engineer",
+        "company": "Rambla Mobility S.L.",
+        "locationRaw": "Barcelona, Cataluña, España",
+        "sourceKey": "workable:ramblamobility",
+        "applyUrl": "https://apply.example.com/ramblamobility/j/DSO7",
+        "descriptionText": "Rambla Mobility gestiona flotas de motos eléctricas compartidas.\n\nFunciones\n- Integrar controles de seguridad en nuestras pipelines de CI/CD.\n- Securizar nuestros clústeres de Kubernetes en GCP.\n\nRequisitos\n- 4 años de experiencia en DevOps o seguridad.\n- Español fluido.\n\nOfrecemos\n- 3.500 € brutos al mes en 14 pagas.\n- Trabajo híbrido en Barcelona.\n- Ofrecemos patrocinio de visado y ayuda con la reubicación."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "devsecops_engineer",
+        "seniority": null,
+        "visa_status": "confirmed",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "month",
+          "min": 3500
+        },
+        "language": "local_required",
+        "country_iso2": "ES",
+        "experience_min_years": 4
+      }
+    },
+    {
+      "id": "es-appsec-valencia-sin-patrocinio",
+      "notes": "Spanish negation plus work permit requirement.",
+      "snapshot": {
+        "title": "Ingeniero de Seguridad de Aplicaciones Senior",
+        "company": "Turia Software S.A.",
+        "locationRaw": "Valencia, España",
+        "sourceKey": "smartrecruiters:turia",
+        "applyUrl": "https://careers.example.com/turia/620991",
+        "descriptionText": "Turia Software desarrolla software de gestión para cooperativas agrícolas.\n\nFunciones\n- Revisiones de código seguro y modelado de amenazas.\n- Gestión del programa de pruebas de penetración.\n\nRequisitos\n- 5 años de experiencia en seguridad de aplicaciones.\n- Español nativo o bilingüe.\n\nPuesto presencial en Valencia.\n\nNo ofrecemos patrocinio de visado; es necesario contar con permiso de trabajo en España."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "appsec_engineer",
+        "seniority": "senior",
+        "visa_status": "not_offered",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": false
+        },
+        "language": "local_required",
+        "country_iso2": "ES",
+        "experience_min_years": 5
+      }
+    },
+    {
+      "id": "es-latam-fullstack-nextjs-remoto",
+      "notes": "Remote from Latin America only; USD monthly; role key left unlabelled (full stack vs Next.js).",
+      "snapshot": {
+        "title": "Desarrollador Full Stack (Next.js)",
+        "company": "Cóndor Apps S.A. de C.V.",
+        "locationRaw": "Remoto - LATAM",
+        "sourceKey": "himalayas:all",
+        "applyUrl": "https://remote.example.com/condor-apps/fullstack-nextjs",
+        "workplaceHint": "remote",
+        "descriptionText": "Cóndor Apps desarrolla aplicaciones de comercio electrónico para marcas latinoamericanas.\n\nPuesto 100 % remoto desde cualquier país de Latinoamérica.\n\nRequisitos\n- 3 años de experiencia con React y Next.js.\n- Experiencia con Node.js y PostgreSQL.\n\nOfrecemos USD 3,000 - 4,000 mensuales como contratista."
+      },
+      "labels": {
+        "role_match": true,
+        "seniority": null,
+        "visa_status": "unknown",
+        "remote_class": "region_limited",
+        "salary": {
+          "stated": true,
+          "currency": "USD",
+          "period": "month",
+          "min": 3000,
+          "max": 4000
+        },
+        "experience_min_years": 3
+      }
+    },
+    {
+      "id": "it-cloudsec-milano-ral",
+      "notes": "Italian posting; RAL (annual gross); Italian required.",
+      "snapshot": {
+        "title": "Cloud Security Engineer",
+        "company": "Navigli Servizi Digitali S.r.l.",
+        "locationRaw": "Milano, Italia",
+        "sourceKey": "smartrecruiters:navigli",
+        "applyUrl": "https://careers.example.com/navigli/705512",
+        "descriptionText": "Navigli Servizi Digitali gestisce infrastrutture cloud per aziende della moda.\n\nResponsabilità\n- Progettare e gestire i controlli di sicurezza su AWS e Azure.\n- Supportare gli audit ISO 27001.\n\nRequisiti\n- Almeno 3 anni di esperienza nella sicurezza informatica.\n- Conoscenza fluente della lingua italiana.\n\nOffriamo una RAL di 45.000 - 55.000 € e lavoro ibrido a Milano."
+      },
+      "labels": {
+        "role_match": true,
+        "role_key": "cloud_security_engineer",
+        "seniority": null,
+        "visa_status": "unknown",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": true,
+          "currency": "EUR",
+          "period": "year",
+          "min": 45000,
+          "max": 55000
+        },
+        "language": "local_required",
+        "country_iso2": "IT",
+        "experience_min_years": 3
+      }
+    },
+    {
+      "id": "de-security-analyst-kein-ziel",
+      "notes": "German posting for a network security admin (other security, not a target).",
+      "snapshot": {
+        "title": "Netzwerk- und Firewall-Administrator (m/w/d)",
+        "company": "Fuldatal Stadtwerke GmbH",
+        "locationRaw": "Kassel, Deutschland",
+        "sourceKey": "bundesagentur:it",
+        "applyUrl": "https://jobs.example.com/fuldatal/netzwerk-firewall",
+        "descriptionText": "Die Fuldatal Stadtwerke versorgen 200.000 Menschen mit Strom, Gas und Wasser.\n\nIhre Aufgaben\n- Betrieb und Weiterentwicklung unserer Firewalls und VPN-Zugänge.\n- Administration der LAN- und WLAN-Infrastruktur.\n\nIhr Profil\n- Abgeschlossene Ausbildung als Fachinformatiker oder vergleichbar.\n- Gute Deutschkenntnisse.\n\nWir bieten eine Vergütung nach TV-V und einen sicheren Arbeitsplatz in Kassel."
+      },
+      "labels": {
+        "role_match": false,
+        "seniority": null,
+        "visa_status": "unknown",
+        "remote_class": "not_remote",
+        "salary": {
+          "stated": false
+        },
+        "language": "local_required",
+        "country_iso2": "DE",
+        "experience_min_years": null
+      }
+    }
+  ]
+}
