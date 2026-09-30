@@ -26,7 +26,9 @@ export interface StatBlockProps {
 /** Big number tile. Counts, rates, budgets. */
 export function StatBlock({ label, value, unit, detail, tone = "card", href, caveat, children, size = "md", className }: StatBlockProps) {
   const caveatText = caveat ? (typeof caveat === "string" ? caveat : "Too few to conclude") : null;
-  const num = size === "lg" ? "text-6xl md:text-7xl" : size === "sm" ? "text-3xl" : "text-5xl";
+  // Words ("PARTIAL", "RUNNING") are much wider than numbers: step the type down so they stay inside the tile.
+  const word = typeof value === "string" && value.length > 5;
+  const num = size === "lg" ? (word ? "text-4xl md:text-5xl" : "text-6xl md:text-7xl") : size === "sm" ? "text-3xl" : word ? "text-3xl md:text-4xl" : "text-5xl";
   const body = (
     <>
       {caveatText ? <span aria-hidden="true" className="hatch-soft pointer-events-none absolute inset-0" /> : null}

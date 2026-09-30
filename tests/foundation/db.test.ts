@@ -5,7 +5,7 @@
 import { readFileSync } from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
-import { asc, eq } from 'drizzle-orm';
+import { asc, eq, sql } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   alerts,
@@ -21,7 +21,8 @@ import {
 import { audit } from '../../src/lib/audit';
 import { raiseAlert } from '../../src/lib/alerts';
 import { DEFAULTED_SETTING_KEYS, defaultSetting } from '../../src/lib/contracts/settings';
-import { withTransaction } from '../../src/lib/db';
+import { connect, withTransaction } from '../../src/lib/db';
+import { isRetryableTxError } from '../../src/lib/pipeline/stages/dbutil';
 import { resolveMigrationsDir, runMigrations, waitForDb } from '../../src/lib/db/migrations';
 import { enqueueRun, EnqueueRunError } from '../../src/lib/pipeline/queue';
 import { addFact } from '../../src/lib/provenance/store';
@@ -42,6 +43,49 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await t.truncateAll();
+});
+
+describe('connections', () => {
+  it('run at READ COMMITTED (row locks only)', async () => {
+    const [rows] = (await t.db.execute(sql`select @@session.transaction_isolation as level`)) as unknown as [{ level: string }[]];
+    expect(rows[0].level).toBe('READ-COMMITTED');
+  });
+
+  // Regression: under REPEATABLE READ the pipeline's concurrent writers deadlocked on job_facts
+  // (gap locks: "deactivate the old fact, insert the new one" for brand-new jobs at the end of the
+  // index) and 3.5% of the first production run ended up in dead_letters.
+  it('concurrent first-fact writes for new jobs do not deadlock', async () => {
+    const jobIds: number[] = [];
+    for (let i = 0; i < 160; i++) jobIds.push((await seedJob(t.db, { title: `Deadlock probe ${i}`, applyUrl: `https://example.com/probe/${i}` })).jobId);
+    const handle = connect(t.url);
+    try {
+      const conns = await Promise.all(Array.from({ length: 8 }, () => handle.pool.getConnection()));
+      let deadlocks = 0;
+      await Promise.all(
+        conns.map(async (c, w) => {
+          for (let i = w; i < jobIds.length; i += 8) {
+            try {
+              await c.beginTransaction();
+              await c.query("update job_facts set is_active = 0 where job_id = ? and fact_key = 'role' and is_active = 1", [jobIds[i]]);
+              await c.query(
+                "insert into job_facts (job_id, fact_key, value_json, value_hash, source, method, confidence, logic_version, is_active) values (?, 'role', '{}', sha2(?, 256), 'test', 'rule', 'high', 't', 1)",
+                [jobIds[i], String(jobIds[i])],
+              );
+              await c.commit();
+            } catch (err) {
+              await c.rollback().catch(() => undefined);
+              if (isRetryableTxError(err)) deadlocks++;
+              else throw err;
+            }
+          }
+        }),
+      );
+      conns.forEach((c) => c.release());
+      expect(deadlocks).toBe(0);
+    } finally {
+      await handle.pool.end();
+    }
+  });
 });
 
 describe('migrations', () => {

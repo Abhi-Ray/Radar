@@ -58,6 +58,11 @@ export function createPool(url: string, overrides: Partial<PoolOptions> = {}): P
   // connection, before the connection is handed out, so this command is queued ahead of any query.
   pool.pool.on('connection', (conn) => {
     conn.query("SET time_zone = '+00:00'");
+    // READ COMMITTED: row locks only, no next-key/gap locks. Under the default REPEATABLE READ the
+    // pipeline's concurrent writers deadlocked on job_facts (deactivate-then-insert on adjacent
+    // job ids) and 3.5% of the first run's jobs ended up in dead_letters. Nothing here relies on
+    // repeatable reads (mysqldump --single-transaction sets its own level).
+    conn.query("SET SESSION transaction_isolation = 'READ-COMMITTED'");
   });
   return pool;
 }
