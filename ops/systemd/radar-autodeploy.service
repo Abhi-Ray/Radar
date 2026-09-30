@@ -1,0 +1,22 @@
+# Installed by ops/install.sh (with @RADAR_DIR@ replaced) as
+# /etc/systemd/system/radar-autodeploy.service. Started every 5 min by radar-autodeploy.timer.
+#   journalctl -u radar-autodeploy          what it did
+#   systemctl start radar-autodeploy        run it now
+#   systemctl stop radar-autodeploy.timer   pause auto-deploy (start it again to resume)
+[Unit]
+Description=RADAR auto-deploy (rebuild and restart when origin/main moves)
+Documentation=file://@RADAR_DIR@/docs/DEPLOY.md
+Wants=network-online.target
+After=network-online.target docker.service
+ConditionPathExists=@RADAR_DIR@/.env
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash @RADAR_DIR@/ops/autodeploy.sh --dir @RADAR_DIR@
+# Stay out of the way of the other services on this box. (The image build itself runs inside
+# dockerd; its heap is capped in the Dockerfile.)
+Nice=10
+IOSchedulingClass=idle
+CPUWeight=20
+TimeoutStartSec=30min
+SyslogIdentifier=radar-autodeploy

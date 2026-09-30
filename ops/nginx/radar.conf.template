@@ -1,0 +1,121 @@
+# RADAR — host nginx vhost for ${DOMAIN}
+#
+# Rendered by ops/install.sh into /etc/nginx/sites-available/radar (+ symlink in sites-enabled).
+# Placeholders (dollar + braces): DOMAIN, LISTEN_HTTP2, HTTP2_DIRECTIVE. HTTP/2 is only enabled
+# when it cannot change the behaviour of the other sites on this server (see ops/install.sh).
+#
+# Shared-server rules: this file is included inside the host's `http {}` block next to other
+# sites, so every http-level name below is prefixed `radar_` (zones, maps, upstreams). It never
+# claims default_server, never touches other server_names, and listens on IPv4 only (the sslip.io
+# name has no AAAA record).
+
+# Login brute-force brake (the app also locks out per IP in the database).
+limit_req_zone $binary_remote_addr zone=radar_login:10m rate=12r/m;
+
+# WebSocket/upgrade support; an empty Connection header keeps upstream keep-alive working.
+map $http_upgrade $radar_connection_upgrade {
+    default upgrade;
+    ''      '';
+}
+
+upstream radar_app {
+    # docker compose publishes the app ONLY on loopback.
+    server 127.0.0.1:3100;
+    keepalive 16;
+}
+
+server {
+    listen 80;
+    server_name ${DOMAIN};
+
+    access_log /var/log/nginx/radar.access.log;
+    error_log  /var/log/nginx/radar.error.log warn;
+    server_tokens off;
+
+    # Let's Encrypt HTTP-01 (certbot certonly --webroot -w /var/www/radar-acme).
+    location ^~ /.well-known/acme-challenge/ {
+        root /var/www/radar-acme;
+        default_type text/plain;
+        try_files $uri =404;
+    }
+
+    location / {
+        return 301 https://${DOMAIN}$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl${LISTEN_HTTP2};
+    ${HTTP2_DIRECTIVE}
+    server_name ${DOMAIN};
+
+    access_log /var/log/nginx/radar.access.log;
+    error_log  /var/log/nginx/radar.error.log warn;
+    server_tokens off;
+
+    ssl_certificate     /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305;
+    ssl_prefer_server_ciphers off;
+    ssl_session_timeout 1d;
+    ssl_session_cache shared:radar_tls:10m;
+    ssl_session_tickets off;
+
+    # One HSTS header, from here (the app's own copy is hidden to avoid duplicates).
+    proxy_hide_header Strict-Transport-Security;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+    client_max_body_size 5m;
+
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 5;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css text/javascript application/javascript application/json
+               application/manifest+json application/xml text/xml image/svg+xml;
+
+    proxy_http_version 1.1;
+    proxy_set_header Host              $host;
+    proxy_set_header X-Real-IP         $remote_addr;
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-Host  $host;
+    proxy_set_header Upgrade           $http_upgrade;
+    proxy_set_header Connection        $radar_connection_upgrade;
+    proxy_connect_timeout 5s;
+    proxy_send_timeout    120s;
+    proxy_read_timeout    120s;
+
+    location = /login {
+        limit_req zone=radar_login burst=20 nodelay;
+        limit_req_status 429;
+        proxy_buffering off;
+        proxy_pass http://radar_app;
+    }
+
+    location = /api/auth/login {
+        limit_req zone=radar_login burst=20 nodelay;
+        limit_req_status 429;
+        proxy_buffering off;
+        proxy_pass http://radar_app;
+    }
+
+    # Immutable, hashed build assets: buffer them.
+    location ^~ /_next/static/ {
+        proxy_buffering on;
+        proxy_pass http://radar_app;
+    }
+
+    location = /api/health {
+        access_log off;
+        proxy_pass http://radar_app;
+    }
+
+    location / {
+        # Server components stream: do not hold responses back.
+        proxy_buffering off;
+        proxy_pass http://radar_app;
+    }
+}

@@ -1,0 +1,28 @@
+# RADAR — bootstrap vhost for ${DOMAIN} (plain HTTP, before the certificate exists).
+#
+# Rendered by ops/install.sh into /etc/nginx/sites-available/radar ONLY until
+# `certbot certonly --webroot` has issued the certificate; then it is replaced by
+# radar.conf.template. It serves the ACME HTTP-01 challenge and nothing else: the app (and its
+# login form) is never exposed over plain HTTP.
+#
+# Shared-server rules: no default_server, IPv4 only, no http-level names at all.
+
+server {
+    listen 80;
+    server_name ${DOMAIN};
+
+    access_log /var/log/nginx/radar.access.log;
+    error_log  /var/log/nginx/radar.error.log warn;
+    server_tokens off;
+
+    location ^~ /.well-known/acme-challenge/ {
+        root /var/www/radar-acme;
+        default_type text/plain;
+        try_files $uri =404;
+    }
+
+    location / {
+        default_type text/plain;
+        return 503 "RADAR is being set up (waiting for its TLS certificate).\n";
+    }
+}

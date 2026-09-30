@@ -1,0 +1,187 @@
+# RADAR production stack — Docker Compose project `radar` (docs/DEPLOY.md).
+#
+# Isolation from everything else on the VPS: own project name, own networks and volumes, MySQL is
+# never published, and the app is reachable only on 127.0.0.1:3100 (host nginx proxies the
+# domain to it). Nothing here binds 80/443/3000/3001/3306.
+#
+#   docker compose up -d --build        build + (re)start everything
+#   docker compose logs -f app worker   follow logs
+#   docker compose exec backup radar-backup-scheduler run-now backup
+#
+# Values come from ./.env (never committed; see .env.example). Compose interpolates `$` inside
+# .env values: keep secrets to [A-Za-z0-9_-] (ops/install.sh generates them that way).
+name: radar
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-hardening: &hardening
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+
+x-app-env: &app-env
+  NODE_ENV: production
+  # Built from the MYSQL_* values so the app and the database can never disagree.
+  DATABASE_URL: mysql://${MYSQL_USER:-radar}:${MYSQL_PASSWORD:?MYSQL_PASSWORD must be set in .env}@mysql:3306/${MYSQL_DATABASE:-radar}
+  MIGRATIONS_DIR: /app/drizzle
+  # The internet-facing processes never hold the database root password or the backup key.
+  MYSQL_ROOT_PASSWORD: ""
+  BACKUP_PASSPHRASE: ""
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        GIT_SHA: ${GIT_SHA:-}
+    image: radar-app:latest
+    command: ["web"]
+    env_file: .env
+    environment:
+      <<: *app-env
+      NODE_OPTIONS: --max-old-space-size=640
+    ports:
+      - "127.0.0.1:3100:3000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+    mem_limit: 900m
+    memswap_limit: 900m
+    cpus: 1.0
+    pids_limit: 256
+    stop_grace_period: 20s
+    <<: *hardening
+    networks: [internal, egress]
+    logging: *logging
+
+  worker:
+    # Same image as `app` (built once by the app service).
+    image: radar-app:latest
+    pull_policy: never
+    command: ["worker"]
+    env_file: .env
+    environment:
+      <<: *app-env
+      NODE_OPTIONS: --max-old-space-size=512
+      WAIT_FOR_MIGRATIONS_TIMEOUT_SEC: "900"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      app:
+        condition: service_started
+    # The image's HEALTHCHECK probes the web server, which the worker does not run.
+    healthcheck:
+      disable: true
+    restart: unless-stopped
+    mem_limit: 700m
+    memswap_limit: 700m
+    cpus: 1.0
+    pids_limit: 256
+    stop_grace_period: 30s
+    <<: *hardening
+    networks: [internal, egress]
+    logging: *logging
+
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD must be set in .env}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-radar}
+      MYSQL_USER: ${MYSQL_USER:-radar}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD must be set in .env}
+      TZ: UTC
+    command:
+      - --innodb-buffer-pool-size=256M
+      - --max-connections=60
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      - --skip-name-resolve
+      - --default-time-zone=+00:00
+      # Single server, no replicas: binary logs would only eat disk (backups are logical dumps).
+      - --disable-log-bin
+      # ~150 MB less RAM on a small shared VPS.
+      - --performance-schema=OFF
+    volumes:
+      - radar_mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_PASSWORD\" mysqladmin ping -h 127.0.0.1 --protocol=TCP -u \"$$MYSQL_USER\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 90s
+    # No `ports:` — MySQL is reachable only from the internal network.
+    restart: unless-stopped
+    mem_limit: 800m
+    memswap_limit: 800m
+    cpus: 1.0
+    stop_grace_period: 60s
+    security_opt:
+      - no-new-privileges:true
+    networks: [internal]
+    logging: *logging
+
+  backup:
+    build:
+      context: ./ops/backup
+      dockerfile: Dockerfile
+    image: radar-backup:latest
+    env_file: .env
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: "3306"
+      BACKUP_WORK_DIR: /work
+      BACKUP_DEPLOY_KEY: /run/secrets/deploy_key
+      RADAR_MIGRATIONS_DIR: /opt/radar-drizzle
+      TMPDIR: /work/tmp
+      TZ: UTC
+      # Not needed for backups: keep them out of this container.
+      SESSION_SECRET: ""
+      ADMIN_PASSWORD_HASH: ""
+      OPENROUTER_API_KEY: ""
+    init: true
+    volumes:
+      - type: bind
+        source: ./secrets/backup_deploy_key
+        target: /run/secrets/deploy_key
+        read_only: true
+        bind:
+          create_host_path: false
+      - radar_backup_work:/work
+      - ./drizzle:/opt/radar-drizzle:ro
+    # The mysql base image declares VOLUME /var/lib/mysql; a tiny tmpfs stops Docker from
+    # creating an anonymous volume there (this container never runs mysqld).
+    tmpfs:
+      - /var/lib/mysql:size=1m,mode=0700
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+    mem_limit: 512m
+    memswap_limit: 512m
+    cpus: 1.0
+    pids_limit: 128
+    # Let an in-flight backup finish its cleanup + bookkeeping on `docker compose down`.
+    stop_grace_period: 2m
+    <<: *hardening
+    networks: [internal, egress]
+    logging: *logging
+
+volumes:
+  radar_mysql:
+    name: radar_mysql
+  radar_backup_work:
+    name: radar_backup_work
+
+networks:
+  # No route to the outside world: only app, worker and backup can reach MySQL.
+  internal:
+    internal: true
+  # Outbound internet (job sources, OpenRouter, GitHub) + the 127.0.0.1:3100 publish.
+  egress: {}
