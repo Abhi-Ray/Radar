@@ -33,8 +33,8 @@ export const DEFAULT_TARGET_COUNTRIES: readonly string[] = [
 
 /** Canonical role keys (spec §3). The title mapper (NORMALIZE) emits these keys. */
 export const DEFAULT_TARGET_ROLES = {
-  primary: ['cloud_security_engineer', 'devsecops_engineer', 'application_security_engineer'],
-  secondary: ['cloud_security_analyst', 'security_engineer', 'grc_compliance', 'cloud_engineer_security'],
+  primary: ['cloud_security_engineer', 'devsecops_engineer', 'appsec_engineer', 'product_security_engineer'],
+  secondary: ['cloud_security_analyst', 'security_engineer_cloud', 'grc_cloud', 'cloud_engineer_security'],
   fallback: ['fullstack_developer', 'nextjs_developer', 'node_developer'],
 } as const;
 
