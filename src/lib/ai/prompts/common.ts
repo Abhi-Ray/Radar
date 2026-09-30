@@ -27,7 +27,6 @@ export const POSTING_OPEN = '<<<POSTING';
 export const POSTING_CLOSE = '<<<END POSTING';
 
 /** Control characters except tab/newline. */
-// eslint-disable-next-line no-control-regex
 const CONTROL_RE = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/g;
 
 /**

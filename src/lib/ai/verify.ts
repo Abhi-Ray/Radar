@@ -13,16 +13,29 @@ export const MIN_QUOTE_LENGTH = 8;
 /** A quote longer than this proves nothing (the model could quote the whole posting). */
 export const MAX_QUOTE_LENGTH = 320;
 
-/** The normal form both sides are compared in. */
-export function normalizeQuoteText(s: string): string {
+function mapChars(s: string): string {
   return s
     .normalize('NFKC')
     .toLowerCase()
     .replace(/[\u2018\u2019\u201a\u201b\u2032`\u00b4]/g, "'")
     .replace(/[\u201c\u201d\u201e\u201f\u2033\u00ab\u00bb]/g, '"')
     .replace(/[\u2010-\u2015\u2212\u2e3a\u2e3b]/g, '-')
-    .replace(/[\u00a0\u2007\u202f\u200b-\u200d\u2060\ufeff]/g, ' ')
-    .replace(/\s+/g, ' ')
+    .replace(/[\u00a0\u2007\u202f\u200b-\u200d\u2060\ufeff]/g, ' ');
+}
+
+/** The normal form both sides are compared in. */
+export function normalizeQuoteText(s: string): string {
+  return mapChars(s).replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Same as normalizeQuoteText but line breaks survive (as single '\n'), so replacing '\n' by ' '
+ * gives exactly normalizeQuoteText(s) — the indexes of both forms line up.
+ */
+function normalizeKeepLines(s: string): string {
+  return mapChars(s)
+    .replace(/\s*\n\s*/g, '\n')
+    .replace(/[^\S\n]+/g, ' ')
     .trim();
 }
 
@@ -50,9 +63,36 @@ export function checkEvidence(quote: unknown, text: string): QuoteRejection | nu
   const q = trimQuote(normalizeQuoteText(quote));
   if (q.length < MIN_QUOTE_LENGTH) return 'too_short';
   if (q.length > MAX_QUOTE_LENGTH) return 'too_long';
-  if (!normalizeQuoteText(text).includes(q)) return 'not_found';
+  const lined = normalizeKeepLines(text);
+  const flat = lined.replace(/\n/g, ' ');
+  let idx = flat.indexOf(q);
+  if (idx < 0) return 'not_found';
   if (looksLikeInjection(q)) return 'injection';
-  return null;
+  // The sentence around the quote must not be an instruction either: a posting can plant a
+  // harmless-looking sentence inside an injected one and ask the model to quote it.
+  for (let n = 0; idx >= 0 && n < 20; idx = flat.indexOf(q, idx + 1), n++) {
+    if (!looksLikeInjection(sentenceAround(lined, idx, q.length))) return null;
+  }
+  return 'injection';
+}
+
+const SENTENCE_END_RE = /[.!?](?=\s)|\n/g;
+
+/** The sentence(s) of `lined` that contain [start, start+len). */
+function sentenceAround(lined: string, start: number, len: number): string {
+  let from = 0;
+  let to = lined.length;
+  SENTENCE_END_RE.lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while ((m = SENTENCE_END_RE.exec(lined))) {
+    const end = m.index + 1;
+    if (end <= start) from = end;
+    else if (m.index >= start + len) {
+      to = end;
+      break;
+    }
+  }
+  return lined.slice(from, to);
 }
 
 /** Clean display form of a quote (whitespace collapsed, capped). */
@@ -66,11 +106,15 @@ export function displayQuote(quote: string, max = MAX_QUOTE_LENGTH): string {
 const INJECTION_RES: readonly RegExp[] = [
   /\b(?:ignore|disregard|forget|override|bypass)\b[^.\n]{0,60}\b(?:instructions?|prompts?|rules|guidelines|above|previous|prior|earlier|system)\b/i,
   /\b(?:system prompt|developer message|jailbreak|prompt injection)\b/i,
-  /\byou are (?:now )?(?:an? |the )?(?:ai|assistant|language model|llm|chat ?gpt|model)\b/i,
+  /\byou are now\b[^.\n]{0,40}\b(?:ai|assistant|model|bot|gpt)\b/i,
+  /\byou are (?:an? |the )?(?:\w+ ){0,2}(?:ai|language model|llm|chat ?gpt)\b/i,
+  /\bfrom now on\b[^.\n]{0,40}\b(?:respond|answer|reply|output|say)\b/i,
   /\b(?:as an ai|ai assistant|language model)\b/i,
   /<\/?\s*(?:system|assistant|user|tool|posting)\b/i,
   /\[\/?inst\]|<<<|>>>|<\|im_(?:start|end)\|>/i,
   /\b(?:call|use|invoke)\s+the\s+(?:function|tool)\b/i,
+  /\b(?:visa_signals|red_flags|summary_quotes|min_years|max_years|tool_choice|tool_calls|function_call)\b/i,
+  /\b(?:report|return|output|answer|mark)\b[^.\n]{0,80}\bwith (?:the )?quote\b/i,
   /\b(?:ignorier\w*|missachte\w*)\b[^.\n]{0,60}\b(?:anweisung\w*|vorgaben|regeln)\b/i,
   /\b(?:ignorez|ignorer|oubliez)\b[^.\n]{0,60}\b(?:instructions?|consignes|règles)\b/i,
   /\b(?:negeer|vergeet)\b[^.\n]{0,60}\b(?:instructies|opdrachten|regels)\b/i,
@@ -108,6 +152,11 @@ function escapeRe(s: string): string {
 export function quoteMentionsNumber(quote: string, n: number): boolean {
   if (!Number.isFinite(n)) return false;
   const q = normalizeQuoteText(quote);
+  if (!Number.isInteger(n)) {
+    // "1.5 years" / "1,5 Jahre"
+    const [i, f] = String(n).split('.');
+    return new RegExp(`(?<![\\d.,])${i}[.,]${f}(?![\\d])`).test(q);
+  }
   const int = Math.round(n);
   if (new RegExp(`(?<![\\d.,])${int}(?![\\d])`).test(q)) return true;
   const words = NUMBER_WORDS[int] ?? [];
