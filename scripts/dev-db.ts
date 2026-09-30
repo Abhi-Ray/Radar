@@ -15,6 +15,8 @@
  *   Delete `.data/mysql` (while stopped) to start from scratch.
  * - Listens on 127.0.0.1:3399 (socket /tmp/radar-dev-mysql.sock, X protocol off), UTC server time
  *   zone, utf8mb4, small buffer pool, performance_schema off, no binlog — laptop friendly.
+ *   The port can be changed with DEV_DB_PORT or by the port in .env.local's DATABASE_URL, so each
+ *   git worktree can run its own dev DB (non-default ports use /tmp/radar-dev-mysql-<port>.sock).
  * - Creates database `radar` if needed and applies pending migrations from ./drizzle.
  * - Prints the DATABASE_URL to use (matches .env.local: mysql://root@127.0.0.1:3399/radar).
  * - Files: .data/mysql.pid (pid), .data/mysql-error.log (server log).
@@ -30,16 +32,17 @@ import mysql from 'mysql2/promise';
 import { resolveMigrationsDir, runMigrations } from '../src/lib/db/migrations';
 
 const MYSQL_VERSION = '8.4.2';
-const PORT = 3399;
+const DEFAULT_PORT = 3399;
 const HOST = '127.0.0.1';
 const DB_NAME = 'radar';
 const ROOT = path.resolve(__dirname, '..');
+const PORT = resolvePort();
 const DATA_ROOT = path.join(ROOT, '.data');
 const DATADIR = path.join(DATA_ROOT, 'mysql');
 const PID_FILE = path.join(DATA_ROOT, 'mysql.pid');
 const ERROR_LOG = path.join(DATA_ROOT, 'mysql-error.log');
 const INIT_LOG = path.join(DATA_ROOT, 'mysql-init.log');
-const SOCKET = '/tmp/radar-dev-mysql.sock';
+const SOCKET = PORT === DEFAULT_PORT ? '/tmp/radar-dev-mysql.sock' : `/tmp/radar-dev-mysql-${PORT}.sock`;
 const ADMIN_URL = `mysql://root@${HOST}:${PORT}/`;
 const APP_URL = `mysql://root@${HOST}:${PORT}/${DB_NAME}`;
 
@@ -49,6 +52,24 @@ const fail = (msg: string): never => {
   process.exit(1);
 };
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** DEV_DB_PORT, else the port of DATABASE_URL in .env.local, else 3399. */
+function resolvePort(): number {
+  let raw = process.env.DEV_DB_PORT?.trim();
+  if (!raw) {
+    const envFile = path.join(ROOT, '.env.local');
+    if (existsSync(envFile)) {
+      const m = /^DATABASE_URL=["']?mysql:\/\/[^\s"'/]*:(\d+)\//m.exec(readFileSync(envFile, 'utf8'));
+      raw = m?.[1];
+    }
+  }
+  const port = raw ? Number(raw) : DEFAULT_PORT;
+  if (!Number.isInteger(port) || port < 1024 || port > 65535 || port === 3306) {
+    process.stderr.write(`[db:dev] ERROR: invalid dev DB port ${raw}\n`);
+    process.exit(1);
+  }
+  return port;
+}
 
 function mysqlBaseDir(): string {
   return path.join(os.tmpdir(), 'mysqlmsn', 'binaries', MYSQL_VERSION, 'mysql');
