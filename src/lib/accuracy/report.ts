@@ -159,11 +159,23 @@ export function formatEvalReport(i: FormatInput): string {
   lines.push(`role-match precision: ${pct(rp)}`);
   const sources = Object.keys(r.bySource);
   if (sources.length > 1) {
-    lines.push('');
-    lines.push('by source (accuracy of visa / remote / role match):');
-    for (const s of sources) {
+    // Only sources with at least one wrong visa / remote / role-match answer, worst first.
+    const worst = (s: string) => {
       const b = r.bySource[s];
-      lines.push(`  ${pad(s, 28)} visa ${pad(pct(b.visa_status?.accuracy), 7, true)}  remote ${pad(pct(b.remote_class?.accuracy), 7, true)}  role ${pad(pct(b.role_match?.accuracy), 7, true)}`);
+      return Math.min(b.visa_status?.accuracy ?? 1, b.remote_class?.accuracy ?? 1, b.role_match?.accuracy ?? 1);
+    };
+    const weak = sources.filter((s) => worst(s) < 1).sort((a, b) => worst(a) - worst(b) || a.localeCompare(b));
+    lines.push('');
+    if (!weak.length) {
+      lines.push(`by source: visa / remote / role match all correct in ${sources.length} sources`);
+    } else {
+      lines.push('by source (accuracy of visa / remote / role match; sources with mistakes only):');
+      for (const s of weak.slice(0, 15)) {
+        const b = r.bySource[s];
+        lines.push(`  ${pad(s, 28)} visa ${pad(pct(b.visa_status?.accuracy), 7, true)}  remote ${pad(pct(b.remote_class?.accuracy), 7, true)}  role ${pad(pct(b.role_match?.accuracy), 7, true)}`);
+      }
+      if (weak.length > 15) lines.push(`  … ${weak.length - 15} more source(s) with mistakes`);
+      lines.push(`  ${sources.length - weak.length} other source(s): all correct`);
     }
   }
   if (r.errors.length) {
