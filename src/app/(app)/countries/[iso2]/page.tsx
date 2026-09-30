@@ -119,9 +119,9 @@ export default async function CountryPage({ params, searchParams }: PageProps<"/
               tone={c.isLive ? "radar" : "concrete"}
               size="lg"
               dashed={!c.isLive}
-              kicker="Scope"
-              sub={c.isLive ? "jobs in scope" : "jobs not in scope"}
-              srLabel={c.isLive ? "Live: its jobs are in scope" : "Off: its jobs are not in scope"}
+              kicker="Your switch"
+              sub={c.isLive ? "switched on" : "not switched on"}
+              srLabel={c.isLive ? "Live: you switched this country on" : "Off: not switched on yet"}
             />
             <LiveToggle iso2={c.iso2} name={c.name} isLive={c.isLive} blocked={g.goLive.ok ? null : g.goLive.reason} />
           </div>
@@ -130,7 +130,7 @@ export default async function CountryPage({ params, searchParams }: PageProps<"/
 
       {c.isLive && !g.goLive.ok ? (
         <Notice kind="warn" title="Live on a rule that needs checking">
-          {g.goLive.reason} Jobs stay in scope, but re-verify the rule against the official page.
+          {g.goLive.reason} Re-verify the rule against the official page.
         </Notice>
       ) : g.marker === "stale" || g.marker === "unverified" ? (
         <Notice kind="warn" title={g.marker === "stale" ? "A rule is stale" : "A rule is not verified"}>

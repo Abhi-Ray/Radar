@@ -1,6 +1,8 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   EMPTY_FILTERS,
+  SHOW_FLAGS,
   activeDefaultRules,
   activeFilterCount,
   activeRules,
@@ -286,5 +288,12 @@ describe('canonical /jobs URLs', () => {
       const target = canonicalJobsRedirect(sp) ?? canonicalJobsHref(parseJobFilters(sp));
       expect(canonicalJobsRedirect(new URLSearchParams(target.split('?')[1] ?? ''))).toBeNull();
     }
+  });
+});
+
+describe('the filter form', () => {
+  it('has a "Default view" checkbox for every show flag, so applying it never re-hides a revealed group', () => {
+    const src = readFileSync(new URL('../../src/components/jobs/FilterForm.tsx', import.meta.url), 'utf8');
+    for (const flag of SHOW_FLAGS) expect(src, `checkbox for show=${flag}`).toContain(`name="show" value="${flag}"`);
   });
 });

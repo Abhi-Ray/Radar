@@ -1,6 +1,6 @@
 # RADAR — what is live, and what is left
 
-Updated 2026-09-30, end of day. How to use it: [USER_GUIDE.md](USER_GUIDE.md). How to run it:
+Updated 2026-09-30, end of day. The full tour of the site (every screen, button and address): [USER_GUIDE.md](USER_GUIDE.md). How to run it:
 [OPERATIONS.md](OPERATIONS.md).
 
 ## Live
@@ -23,16 +23,23 @@ Updated 2026-09-30, end of day. How to use it: [USER_GUIDE.md](USER_GUIDE.md). H
 
 1. **Check the German Blue Card rule in a browser** (the official site blocks automated readers) and
    work through the other 26 unverified rules — 5 minutes each, steps in RULE_VERIFICATION.md.
-2. **An undo for job merges.** Exact twins are merged automatically; `splitJobs` (src/lib/dedup/manual.ts)
+2. **Decide what the Live switch on Countries should do.** Today it only records that you trust a
+   country's rules; the Jobs list and Desk ignore it (the wording now says so, USER_GUIDE.md §7). Either
+   make it real (only live countries in the default view) or rename it *Rules verified*.
+3. **A sessions panel in Settings** — list the signed-in browsers, sign one or all the others out. The
+   functions exist (`listSessions`, `revokeSession`, `revokeOtherSessions` in src/lib/auth/session.ts);
+   only the screen is missing, and a one-year cookie makes it worth having. Until then, rotating
+   `SESSION_SECRET` ends every session.
+4. **An undo for job merges.** Exact twins are merged automatically; `splitJobs` (src/lib/dedup/manual.ts)
    can undo it, but no screen calls it yet (company merges do have *Undo the merge*).
-3. **Phone alerts and an outside monitor.** Telegram or e-mail keys in `/opt/radar/.env`
+5. **Phone alerts and an outside monitor.** Telegram or e-mail keys in `/opt/radar/.env`
    (OPERATIONS.md) for the morning digest and failure alerts; a free ping monitor
    (`HEALTHCHECK_PING_URL`) so you hear about it if the whole server is down.
-4. **Independent review and browser tests.** Nobody but the builder has read the tracker, ops and
+6. **Independent review and browser tests.** Nobody but the builder has read the tracker, ops and
    review code, and there are no Playwright tests for the new screens. Include a second security review of the server actions.
-5. **Your data:** write your profile on Settings, label ten jobs a week on Accuracy (30 make the
+7. **Your data:** write your profile on Settings, label ten jobs a week on Accuracy (30 make the
    numbers meaningful), and decide the 780 technical-looking unknown titles on Review.
-6. **Ideas, not promised:** group the same role posted in several cities into one card; more sources
+8. **Ideas, not promised:** save/hide buttons on job cards; group the same role posted in several cities into one card; more sources
    (France Travail, Adzuna, EURES); an ICS calendar feed for follow-ups.
 
 ## Owner tasks (outside the code)

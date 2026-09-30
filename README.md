@@ -8,7 +8,7 @@ conservatively, scores fit, and tracks applications.
 - Product rules: [docs/SPEC.md](docs/SPEC.md)
 - Build contracts, file ownership, design language: [docs/BUILD_BRIEF.md](docs/BUILD_BRIEF.md)
 - Architecture, data flow, trust order, visa decision, schedules: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
-- Using the site (screens, words, weekly routine): [docs/USER_GUIDE.md](docs/USER_GUIDE.md)
+- Using the site (navigation, every screen and button, recipes, words, what is only a label): [docs/USER_GUIDE.md](docs/USER_GUIDE.md)
 - Running it on the VPS: [docs/DEPLOY.md](docs/DEPLOY.md) (install, secrets, nginx) and the day-to-day
   runbook [docs/OPERATIONS.md](docs/OPERATIONS.md) (schedules, safe deploys, CLI, troubleshooting)
 - When something breaks, or the server is gone: [docs/RECOVERY.md](docs/RECOVERY.md)

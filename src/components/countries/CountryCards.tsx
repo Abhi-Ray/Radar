@@ -47,7 +47,7 @@ function CountryCard({ c, tz }: { c: CountryListItem; tz: string }) {
           dashed={!c.isLive}
           inked={false}
           tilt={c.isLive ? "auto" : "none"}
-          srLabel={c.isLive ? "Live: jobs are in scope" : "Off: jobs are not in scope"}
+          srLabel={c.isLive ? "Live: you switched this country on" : "Off: not switched on yet"}
         />
       </div>
       <div className="flex flex-wrap items-center gap-1.5">

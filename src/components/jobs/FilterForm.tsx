@@ -148,7 +148,8 @@ export function FilterForm({ filters: f, facets, idPrefix, className }: FilterFo
 
       <Section title="Default view">
         <p className="text-xs text-muted">RADAR leaves these out unless you ask. Each one is counted in the hidden panel.</p>
-        <Checkbox id={id("show-all")} name="show" value="all" defaultChecked={f.show.includes("all")} label="Show everything" description="Region-limited remote, out-of-band and closed jobs." />
+        <Checkbox id={id("show-all")} name="show" value="all" defaultChecked={f.show.includes("all")} label="Show everything" description="Other roles, region-limited remote, out-of-band and closed jobs." />
+        <Checkbox id={id("show-roles")} name="show" value="roles" defaultChecked={f.show.includes("roles")} label="Not one of my target roles" />
         <Checkbox id={id("show-remote")} name="show" value="remote" defaultChecked={f.show.includes("remote")} label="Region / time-zone-limited remote" />
         <Checkbox id={id("show-experience")} name="show" value="experience" defaultChecked={f.show.includes("experience")} label="Outside my experience band" />
         <Checkbox id={id("show-closed")} name="show" value="closed" defaultChecked={f.show.includes("closed")} label="Closed or expired" />

@@ -231,7 +231,7 @@ export function LiveToggle({ iso2, name, isLive, blocked }: { iso2: string; name
         <Modal
           open={m.open}
           onClose={m.hide}
-          title={isLive ? `Take ${name} out of scope` : `Put ${name} in scope`}
+          title={isLive ? `Switch ${name} off` : `Switch ${name} on`}
           kicker="Country · Live"
           size="sm"
           tone={isLive ? "concrete" : "radar"}
@@ -241,8 +241,8 @@ export function LiveToggle({ iso2, name, isLive, blocked }: { iso2: string; name
             <input type="hidden" name="live" value={isLive ? "0" : "1"} />
             <p className="text-sm text-ink-soft">
               {isLive
-                ? "Its jobs leave the scope and the desk. Nothing is deleted."
-                : "Its jobs join the scope. The verified rule in effect is recorded with the switch."}
+                ? "Records that you no longer rely on its rules. The Jobs list does not change and nothing is deleted."
+                : "Records that you checked its visa rules and rely on them; the verified rule in effect is written down with the switch. The Jobs list does not change."}
             </p>
             <Field label="Reason" optional>
               {(p) => <Input {...p} name="reason" maxLength={500} autoComplete="off" data-autofocus />}

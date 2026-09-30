@@ -242,10 +242,11 @@ export interface Onboarding {
   targetCountries: number;
   verifiedTargetCountries: number;
   liveSources: number;
+  trialSources: number;
 }
 
 async function onboarding(db: DbOrTx): Promise<Onboarding> {
-  const [profile, profileRaw, [audited], [golden], [live]] = await Promise.all([
+  const [profile, profileRaw, [audited], [golden], [live], [trial]] = await Promise.all([
     getSetting(db, 'profile'),
     getSettingRaw(db, 'profile'),
     db
@@ -255,6 +256,7 @@ async function onboarding(db: DbOrTx): Promise<Onboarding> {
       .limit(1),
     db.select({ n: count() }).from(goldenSamples),
     db.select({ n: count() }).from(sources).where(eq(sources.status, 'live')),
+    db.select({ n: count() }).from(sources).where(eq(sources.status, 'trial')),
   ]);
   // XW is the "worldwide remote" pseudo-country: there is no visa rule to verify for it.
   const targets = [...new Set(profile.targetCountries.map((c) => c.toUpperCase()))].filter((c) => c !== 'XW');
@@ -271,6 +273,7 @@ async function onboarding(db: DbOrTx): Promise<Onboarding> {
     targetCountries: targets.length,
     verifiedTargetCountries: verified.length,
     liveSources: live?.n ?? 0,
+    trialSources: trial?.n ?? 0,
   };
 }
 

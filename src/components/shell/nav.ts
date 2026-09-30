@@ -26,7 +26,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { href: "/sources", label: "Sources", code: "07", icon: "sources", group: "ops", blurb: "Feeds & connectors" },
   { href: "/accuracy", label: "Accuracy", code: "08", icon: "accuracy", group: "ops", blurb: "Golden sample & spot-checks" },
   { href: "/system", label: "System", code: "09", icon: "system", group: "ops", count: "alerts", blurb: "Runs, alerts, backups, AI" },
-  { href: "/settings", label: "Settings", code: "10", icon: "settings", group: "ops", blurb: "Profile, rules, sessions" },
+  { href: "/settings", label: "Settings", code: "10", icon: "settings", group: "ops", blurb: "Profile, scoring, alerts, AI" },
 ];
 
 export const NAV_GROUPS: readonly { key: NavItem["group"]; label: string }[] = [

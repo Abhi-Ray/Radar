@@ -155,6 +155,8 @@ export interface OnboardingInput {
   targetCountries: number;
   verifiedTargetCountries: number;
   liveSources: number;
+  /** Trial sources already join every daily run; only "live" is the owner's sign-off. */
+  trialSources?: number;
 }
 
 export interface OnboardingItem {
@@ -200,7 +202,12 @@ export function onboardingItems(i: OnboardingInput): OnboardingItem[] {
     {
       key: "sources",
       label: "Put a source live",
-      detail: i.liveSources > 0 ? `${i.liveSources} live.` : "Nothing is feeding the scope yet.",
+      detail:
+        i.liveSources > 0
+          ? `${i.liveSources} live.`
+          : (i.trialSources ?? 0) > 0
+            ? `${i.trialSources} on trial already feed the scope; promote one when its checklist is done.`
+            : "Nothing is feeding the scope yet.",
       done: i.liveSources > 0,
       href: "/sources",
       cta: "Open sources",

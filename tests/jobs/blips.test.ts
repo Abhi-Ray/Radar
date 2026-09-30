@@ -124,6 +124,15 @@ describe('onboardingItems', () => {
     expect(items.every((i) => i.done)).toBe(true);
   });
 
+  it('does not say nothing feeds the scope while sources are on trial', () => {
+    const base = { settingsWritten: true, goldenSamples: 0, targetCountries: 1, verifiedTargetCountries: 0, liveSources: 0 };
+    const trial = onboardingItems({ ...base, trialSources: 207 }).find((i) => i.key === 'sources');
+    expect(trial?.done).toBe(false);
+    expect(trial?.detail).toContain('207 on trial already feed the scope');
+    expect(onboardingItems({ ...base, trialSources: 0 }).find((i) => i.key === 'sources')?.detail).toBe('Nothing is feeding the scope yet.');
+    expect(onboardingItems({ ...base, liveSources: 2, trialSources: 5 }).find((i) => i.key === 'sources')?.detail).toBe('2 live.');
+  });
+
   it('does not count zero target countries as verified', () => {
     const items = onboardingItems({ settingsWritten: true, goldenSamples: 30, targetCountries: 0, verifiedTargetCountries: 0, liveSources: 1 });
     expect(items.find((i) => i.key === 'countries')?.done).toBe(false);

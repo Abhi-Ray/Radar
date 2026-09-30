@@ -137,7 +137,7 @@ export function LoginForm({ next }: { next: string }) {
           <Icon name="shield" size={18} className="mt-0.5 shrink-0" />
           <span>
             Stays signed in on this device for 1 year.
-            <span className="block text-xs font-normal text-muted">Sign out or revoke the session from Settings on any device.</span>
+            <span className="block text-xs font-normal text-muted">Sign out ends the session, and it stops working even if the cookie was copied.</span>
           </span>
         </p>
       </form>

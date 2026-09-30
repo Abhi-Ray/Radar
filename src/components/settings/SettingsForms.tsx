@@ -53,7 +53,7 @@ export function ProfileForm({ profile, version, countryNames }: { profile: Profi
     <Shell section="profile" version={version} submit="Save profile">
       {() => (
         <>
-          <Group legend="You" hint="Visa rules are evaluated for this passport and degree level; the salary floor hides jobs that state less.">
+          <Group legend="You" hint="Visa rules are evaluated for this passport and degree level; the salary floor lowers the score of jobs that state less.">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Field label="Passport (ISO)" required>{(p) => <Input {...p} name="passport" defaultValue={profile.passport} maxLength={2} className="uppercase" autoComplete="off" />}</Field>
               <Field label="Degree" required>{(p) => <Input {...p} name="degree" defaultValue={profile.degree} maxLength={120} autoComplete="off" />}</Field>
@@ -88,7 +88,7 @@ export function ProfileForm({ profile, version, countryNames }: { profile: Profi
             </div>
           </Group>
 
-          <Group legend="Target countries" hint="Only these countries (and remote) are searched and scored.">
+          <Group legend="Target countries" hint="The Desk checklist asks you to verify a visa rule for each of these. They do not filter or re-rank jobs.">
             {COUNTRY_TIERS.map((tier) => (
               <div key={tier.key} className="flex flex-col gap-2">
                 <p className="micro">{tier.label}</p>

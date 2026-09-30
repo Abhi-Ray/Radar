@@ -223,7 +223,7 @@ export async function setCountryLiveAction(_prev: ActionState | undefined, formD
     return oops(d.live ? 'switch the country live' : 'switch the country off', err);
   }
   refresh();
-  return done(d.live ? `${name} is live — its jobs are in scope.` : `${name} is off — its jobs leave the scope.`);
+  return done(d.live ? `${name} is switched on.` : `${name} is switched off.`);
 }
 
 // ---- official page reviewed ------------------------------------------------------------------
