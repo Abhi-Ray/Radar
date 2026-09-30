@@ -17,13 +17,14 @@ vi.mock('@/lib/ai/queue', async (orig) => (await import('./_mocks')).aiQueueModu
 import { alerts, deadLetters, jobChanges, jobFacts, jobScores, jobs, jobSources, pipelineLock, pipelineRuns, rawSnapshots, sourceRuns, sources } from '../../src/db/schema';
 import { OPEN_STATES } from '../../src/lib/lifecycle';
 import { processQueuedRuns, reprocessFromRaw, runPipeline, type PipelineRunResult } from '../../src/lib/pipeline';
+import { readChecklist } from '../../src/lib/pipeline/health';
 import { acquireLock, PIPELINE_LOCK } from '../../src/lib/pipeline/lock';
 import { enqueueRun } from '../../src/lib/pipeline/queue';
 import type { CompactSourceReport, RunReport } from '../../src/lib/pipeline/report';
 import { HOUR_MS } from '../../src/lib/time';
 import { startTestDb, type TestDb } from '../helpers/db';
 import { seedCountry } from '../helpers/fixtures';
-import { Clock, FakeFeed, items, rowCounts, seedFakeSource, testDeps } from './_harness';
+import { Clock, FakeFeed, items, rowCounts, seedFakeSource, seedPlatform, testDeps } from './_harness';
 import { mockState } from './_mocks';
 
 let t: TestDb;
@@ -88,14 +89,39 @@ async function missingCounts(sourceId: number): Promise<number[]> {
   return rows.map((r) => r.n);
 }
 
+describe('checklist auto-tick', () => {
+  it('ticks samples, parser and rate limit on the first run and the baseline only after 5 healthy runs', async () => {
+    const sid = await seedFakeSource(t.db, 'alpha');
+    feed.set('alpha', items(12));
+    const ticks: string[][] = [];
+    for (let i = 1; i <= 5; i++) {
+      if (i > 1) clock.advance(24 * HOUR_MS);
+      const r = await run();
+      expect(src(r, sid).healthy).toBe(true);
+      const c = readChecklist((await sourceRow(sid)).checklistJson);
+      ticks.push((Object.keys(c) as (keyof typeof c)[]).filter((k) => c[k].done).sort());
+      if (i === 3) expect((await sourceRow(sid)).baselineJson).not.toBeNull();
+    }
+    expect(ticks[0]).toEqual(['parser_handles_samples', 'rate_limit_set', 'samples_saved']);
+    expect(ticks[3]).toEqual(ticks[0]);
+    expect(ticks[4]).toEqual(['baseline_recorded', 'parser_handles_samples', 'rate_limit_set', 'samples_saved']);
+    const c = readChecklist((await sourceRow(sid)).checklistJson);
+    expect(c.baseline_recorded.note).toBe('auto: baseline 12–12 postings from 5 healthy runs');
+  });
+});
+
 describe('idempotency', () => {
   it('re-running the same listing stores nothing new and only confirms what is listed', async () => {
     const sid = await seedFakeSource(t.db, 'alpha');
     feed.set('alpha', items(6));
 
+    const t1 = clock.now();
     const r1 = await run();
     expect(r1.status).toBe('ok');
     expect(src(r1, sid).counts).toMatchObject({ fetched: 6, listed: 6, attempted: 6, parsed: 6, created: 6, snapshotsCreated: 6 });
+    // A grade-A (first-party ATS) listing confirms the posting is live.
+    const live1 = await t.db.select({ at: jobs.lastConfirmedLiveAt }).from(jobs);
+    expect(live1.map((j) => j.at?.getTime())).toEqual(Array(6).fill(t1.getTime()));
     const after1 = await rowCounts(t.db);
     expect(after1).toMatchObject({ jobs: 6, jobSources: 6, rawSnapshots: 6, sourceRuns: 1, pipelineRuns: 1 });
     const aiCallsAfter1 = mockState.aiCalls.length;
@@ -112,6 +138,8 @@ describe('idempotency', () => {
     expect(mockState.aiCalls.length).toBe(aiCallsAfter1);
     const seen = await t.db.select({ at: jobSources.lastSeenAt }).from(jobSources);
     expect(seen.every((s) => s.at.getTime() === t2.getTime())).toBe(true);
+    const live2 = await t.db.select({ at: jobs.lastConfirmedLiveAt }).from(jobs);
+    expect(live2.map((j) => j.at?.getTime())).toEqual(Array(6).fill(t2.getTime()));
 
     // A changed payload is an update with a change record; nothing else moves.
     clock.advance(HOUR_MS);
@@ -130,6 +158,19 @@ describe('idempotency', () => {
     const j1 = await jobOf(sid, 'j1');
     const descChanges = await t.db.select().from(jobChanges).where(and(eq(jobChanges.jobId, j1.job.id), eq(jobChanges.field, 'description')));
     expect(descChanges).toHaveLength(1);
+    expect(j1.job.lastConfirmedLiveAt?.getTime()).toBe(clock.now().getTime());
+  });
+
+  it('an aggregator (grade B) listing does not confirm postings as live', async () => {
+    await seedPlatform(t.db, 'fakeinc', { grade: 'B' });
+    const sid = await seedFakeSource(t.db, 'agg', { platformKey: 'fakeinc' });
+    feed.set('agg', items(3));
+    expect(src(await run(), sid).counts).toMatchObject({ created: 3 });
+    clock.advance(HOUR_MS);
+    expect(src(await run(), sid).counts).toMatchObject({ confirmed: 3 });
+    const live = await t.db.select({ at: jobs.lastConfirmedLiveAt }).from(jobs);
+    expect(live).toHaveLength(3);
+    expect(live.every((j) => j.at === null)).toBe(true);
   });
 });
 
@@ -251,9 +292,59 @@ describe('never mass-close', () => {
     feed.set('alpha', items(6));
     const r4 = await run();
     expect(src(r4, sid).counts.reopened).toBe(1);
+    expect(src(r4, sid).counts.reposts).toBe(1);
     const back = await jobOf(sid, 'j6');
     expect(back.job.state).toBe('active');
     expect(back.job.missingRunCount).toBe(0);
+    // Re-listed after closing = a repost (ghost-risk input); not a content change.
+    expect(back.job.repostCount).toBe(1);
+    expect(back.job.contentVersion).toBe(closed.job.contentVersion);
+    const reposts = await t.db.select().from(jobChanges).where(and(eq(jobChanges.jobId, back.job.id), eq(jobChanges.field, 'repost_count')));
+    expect(reposts.map((r) => [r.oldValue, r.newValue])).toEqual([['0', '1']]);
+    // Only once: listed again the next day is just "seen".
+    clock.advance(24 * HOUR_MS);
+    const r5 = await run();
+    expect(src(r5, sid).counts.reposts ?? 0).toBe(0);
+    expect((await jobOf(sid, 'j6')).job.repostCount).toBe(1);
+  });
+
+  it('counts a re-post under a new id as a repost and flags ghost risk after three', async () => {
+    const sid = await seedFakeSource(t.db, 'alpha');
+    const same = { title: 'Detection Engineer', company: 'Kestrel Security', desc: 'Detection engineering for cloud workloads, incident response and threat models in a hybrid Berlin office.' };
+    feed.set('alpha', [...items(5), { id: 'j20', ...same }]);
+    await run();
+    let prev = 'j20';
+    for (const [i, id] of ['j21', 'j22', 'j23'].entries()) {
+      clock.advance(24 * HOUR_MS);
+      feed.set('alpha', [...items(5), { id, ...same }]);
+      const r = await run();
+      expect(src(r, sid).counts).toMatchObject({ created: 1, reposts: 1 });
+      const now = await jobOf(sid, id);
+      const before = await jobOf(sid, prev);
+      expect(now.job.id).not.toBe(before.job.id);
+      expect(now.job.repostCount).toBe(i + 1);
+      const from = await t.db.select().from(jobChanges).where(and(eq(jobChanges.jobId, now.job.id), eq(jobChanges.field, 'reposted_from')));
+      expect(from.map((c) => c.newValue)).toEqual([String(before.job.id)]);
+      prev = id;
+    }
+    const last = await jobOf(sid, 'j23');
+    expect(last.job.repostCount).toBe(3);
+    expect(last.job.ghostRisk).toBe(true);
+    expect((await jobOf(sid, 'j22')).job.ghostRisk).toBe(false);
+  });
+
+  it('a second opening with the same title while the first is still listed is not a repost', async () => {
+    const sid = await seedFakeSource(t.db, 'alpha');
+    const same = { title: 'Detection Engineer', company: 'Kestrel Security', desc: 'Detection engineering for cloud workloads, incident response and threat models in a hybrid Berlin office.' };
+    feed.set('alpha', [...items(5), { id: 'j20', ...same }]);
+    await run();
+    clock.advance(24 * HOUR_MS);
+    feed.set('alpha', [...items(5), { id: 'j20', ...same }, { id: 'j21', ...same }]);
+    const r = await run();
+    expect(src(r, sid).counts).toMatchObject({ created: 1 });
+    expect(src(r, sid).counts.reposts ?? 0).toBe(0);
+    expect((await jobOf(sid, 'j21')).job.repostCount).toBe(0);
+    expect((await jobOf(sid, 'j20')).job.repostCount).toBe(0);
   });
 
   it('long-lived canary postings all vanishing blocks absence counting and alerts', async () => {

@@ -20,6 +20,7 @@ import { log } from '../lib/log';
 import { processQueuedRuns, reprocessFromRaw, runPipeline } from '../lib/pipeline';
 import type { RunRequester } from '../lib/pipeline/queue';
 import { getSetting } from '../lib/settings';
+import { aiBatchCalls } from './ai-batch';
 
 export type TaskResult = Record<string, unknown>;
 
@@ -132,12 +133,14 @@ export async function officialPagesTask(ctx: TaskContext): Promise<TaskResult> {
   return optionalTask('official pages', () => import('../lib/visa/rules'), 'checkOfficialPages', ctx.db);
 }
 
-export async function aiQueueTask(ctx: TaskContext, opts: { maxCalls?: number } = {}): Promise<TaskResult> {
-  const budget = await getAiBudget(ctx.db);
+export async function aiQueueTask(ctx: TaskContext, opts: { maxCalls?: number; now?: Date } = {}): Promise<TaskResult> {
+  const now = opts.now ?? new Date();
+  const budget = await getAiBudget(ctx.db, now);
   if (!budget.enabled) return { skipped: 'ai_disabled' };
-  // Scheduled batches leave the manual reserve untouched; half of what is left per batch (2/day).
+  // Scheduled batches leave the manual reserve untouched: the morning batch takes half of what is
+  // left, the afternoon batch the rest of the day's budget.
   const available = Math.max(0, budget.remaining - budget.reserveForManual);
-  const maxCalls = Math.min(available, opts.maxCalls ?? Math.ceil(available / 2));
+  const maxCalls = aiBatchCalls(available, now, opts.maxCalls);
   if (maxCalls <= 0) return { skipped: 'budget_exhausted', remaining: budget.remaining };
   const res = await runAiQueue(ctx.db, { maxCalls });
   return { maxCalls, ...res };

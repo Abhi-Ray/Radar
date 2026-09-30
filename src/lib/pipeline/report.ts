@@ -45,6 +45,8 @@ export interface SourceCounts {
   /** Re-processed postings without any stored change. */
   same: number;
   reopened: number;
+  /** Re-listed after closing, or re-posted under a new id (repost_count +1; ghost-risk input). */
+  reposts: number;
   /** Listed postings confirmed without re-processing (unchanged / seen-only / filtered). */
   confirmed: number;
   missing: number;
@@ -86,6 +88,7 @@ export function emptyCounts(): SourceCounts {
     updated: 0,
     same: 0,
     reopened: 0,
+    reposts: 0,
     confirmed: 0,
     missing: 0,
     missingIncremented: 0,
@@ -284,6 +287,7 @@ export function formatRunSummary(r: Pick<RunReport, 'kind' | 'dryRun' | 'status'
     `unchanged ${t.unchanged}`,
     `closed ${t.closedMissing + t.closedBySource}`,
     `reopened ${t.reopened}`,
+    ...(t.reposts ? [`reposts ${t.reposts}`] : []),
     `dead letters ${t.deadLetters}`,
   ];
   return parts.join(' · ');

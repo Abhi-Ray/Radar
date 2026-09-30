@@ -8,7 +8,7 @@
  * best source not seen for 3 days hands over). Other sources still add their fact candidates and
  * confirm the job as listed. Fields with an active manual column override are never rewritten.
  */
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, ne, sql } from 'drizzle-orm';
 import type { MySqlUpdateSetSource } from 'drizzle-orm/mysql-core';
 import { jobChanges, jobOverrides, jobs, jobSources, type SourceRow } from '../../../db/schema';
 import type { GRADES } from '../../../db/schema/_enums';
@@ -16,7 +16,7 @@ import type { RoleFamily, SalaryValue } from '../../contracts/jobs';
 import { resolveCompany } from '../../company/resolve';
 import type { Tx } from '../../db';
 import { canonicalJobId, findDuplicate, recordPossibleDuplicates } from '../../dedup';
-import { reopenDecision } from '../../lifecycle';
+import { isRelisting, isRepostOf, lastCloseReason, reopenDecision } from '../../lifecycle';
 import { formatSalary } from '../../normalize/salary';
 import { loadResolvedFacts, reapplyColumnOverrides, syncResolvedJobColumns, type ResolvedFacts } from '../../provenance/store';
 import { DAY_MS } from '../../time';
@@ -54,6 +54,11 @@ export interface PersistInput {
   known: KnownItem | undefined;
   /** When the item was seen (run start; the snapshot's fetch time in reprocess mode). */
   seenAt: Date;
+  /**
+   * Every external id of this source's current listing when it is complete (full listing, not
+   * partial); null otherwise. Lets a new posting tell a repost (old one gone) from a second opening.
+   */
+  listedExternalIds?: ReadonlySet<string> | null;
 }
 
 export interface PersistResult {
@@ -69,6 +74,8 @@ export interface PersistResult {
   titleUnknown: boolean;
   score: number | null;
   possibleDuplicates: number;
+  /** repost_count went up: re-listed after closing, or re-posted under a new id. */
+  reposted: boolean;
 }
 
 interface Change {
@@ -100,14 +107,43 @@ async function activeColumnOverrides(tx: Tx, jobId: number): Promise<Set<string>
   return new Set(rows.map((r) => r.field));
 }
 
-async function lastCloseReason(tx: Tx, jobId: number): Promise<string | null> {
-  const [row] = await tx
-    .select({ v: jobChanges.newValue })
-    .from(jobChanges)
-    .where(and(eq(jobChanges.jobId, jobId), eq(jobChanges.field, 'close_reason')))
-    .orderBy(desc(jobChanges.changedAt), desc(jobChanges.id))
-    .limit(1);
-  return row?.v ?? null;
+/** Changes that describe the lifecycle, not the posting's content (no content version bump). */
+const LIFECYCLE_FIELDS = new Set(['state', 'reopen_reason', 'repost_count', 'reposted_from']);
+
+/** First-party / official sources: their listing confirms the posting is live. */
+export function listingConfirmsLive(grade: string): boolean {
+  return grade === 'A';
+}
+
+const sameTitle = (a: string | null | undefined, b: string | null | undefined) => !!a && !!b && a.trim().toLowerCase() === b.trim().toLowerCase();
+
+/**
+ * Older jobs of the same source that this new posting re-posts (see `isRepostOf`), among the
+ * dedup's "possible" matches. Returns the highest repost count found, or null for no repost.
+ */
+async function repostPredecessor(
+  tx: Tx,
+  input: PersistInput,
+  companyId: number,
+  candidateIds: readonly number[],
+): Promise<{ jobId: number; repostCount: number } | null> {
+  if (!candidateIds.length) return null;
+  const rows = await tx
+    .select({ jobId: jobs.id, companyId: jobs.companyId, canonicalTitle: jobs.canonicalTitle, state: jobs.state, repostCount: jobs.repostCount, externalId: jobSources.externalId })
+    .from(jobSources)
+    .innerJoin(jobs, eq(jobs.id, jobSources.jobId))
+    .where(and(eq(jobSources.sourceId, input.source.id), inArray(jobSources.jobId, [...candidateIds]), ne(jobSources.externalId, input.externalId)));
+  let best: { jobId: number; repostCount: number } | null = null;
+  for (const r of rows) {
+    const repost = isRepostOf({
+      sameCompany: r.companyId === companyId,
+      sameTitle: sameTitle(r.canonicalTitle, input.prepared.canonicalTitle),
+      state: r.state,
+      stillListed: input.listedExternalIds ? input.listedExternalIds.has(r.externalId) : null,
+    });
+    if (repost && (!best || r.repostCount > best.repostCount)) best = { jobId: r.jobId, repostCount: r.repostCount };
+  }
+  return best;
 }
 
 /** Whether this source should own the job's content fields. */
@@ -128,7 +164,7 @@ async function ownsContent(tx: Tx, job: { id: number; bestSourceId: number | nul
 type JobInsert = typeof jobs.$inferInsert;
 type JobSet = MySqlUpdateSetSource<typeof jobs>;
 
-function newJobValues(p: PreparedJob, companyId: number, sourceId: number, seenAt: Date): JobInsert {
+function newJobValues(p: PreparedJob, companyId: number, sourceId: number, seenAt: Date, confirmsLive: boolean): JobInsert {
   return {
     companyId,
     canonicalTitle: p.canonicalTitle,
@@ -151,6 +187,7 @@ function newJobValues(p: PreparedJob, companyId: number, sourceId: number, seenA
     closingAt: p.closingAt,
     firstSeenAt: seenAt,
     lastSeenAt: seenAt,
+    ...(confirmsLive ? { lastConfirmedLiveAt: seenAt } : {}),
     state: 'new',
     lang: p.lang,
   };
@@ -278,17 +315,28 @@ async function persistInTx(tx: Tx, ctx: RunContext, input: PersistInput): Promis
 
   const changes: Change[] = [];
   let reopened = false;
+  let reposted = false;
   let isNew = false;
   let descriptionChanged = false;
   let titleChanged = false;
+  const confirmsLive = !forced && listingConfirmsLive(input.grade);
 
   if (jobId === null) {
-    // ---- new job
-    const [res] = await tx.insert(jobs).values(newJobValues(p, companyId, input.source.id, input.seenAt));
+    // ---- new job (a re-post of a gone posting of this source carries its repost count on;
+    // lifecycle counters never move in reprocess mode)
+    const predecessor = possible && !forced ? await repostPredecessor(tx, input, companyId, possible.jobIds) : null;
+    const values = newJobValues(p, companyId, input.source.id, input.seenAt, confirmsLive);
+    if (predecessor) values.repostCount = predecessor.repostCount + 1;
+    const [res] = await tx.insert(jobs).values(values);
     jobId = Number(res.insertId);
     action = 'created';
     isNew = true;
     descriptionChanged = true;
+    if (predecessor) {
+      reposted = true;
+      changes.push({ field: 'repost_count', oldValue: String(predecessor.repostCount), newValue: String(predecessor.repostCount + 1) });
+      changes.push({ field: 'reposted_from', oldValue: null, newValue: String(predecessor.jobId) });
+    }
   }
 
   const [job] = await tx.select().from(jobs).where(eq(jobs.id, jobId)).limit(1).for('update');
@@ -342,14 +390,23 @@ async function persistInTx(tx: Tx, ctx: RunContext, input: PersistInput): Promis
   if (!forced && !isNew) {
     set.missingRunCount = 0;
     set.lastSeenAt = sql`GREATEST(${jobs.lastSeenAt}, ${input.seenAt})`;
+    if (confirmsLive && job.linkStatus !== 'dead') {
+      set.lastConfirmedLiveAt = sql`GREATEST(COALESCE(${jobs.lastConfirmedLiveAt}, ${input.seenAt}), ${input.seenAt})`;
+    }
     const closingAt = p.closingAt !== undefined && set.closingAt !== undefined ? p.closingAt : job.closingAt;
     const decision = reopenDecision({ state: job.state, linkStatus: job.linkStatus, closingAt: closingAt ?? null, now });
-    if (decision.reopen && decision.reason && (await lastCloseReason(tx, jobId)) !== 'manual') {
+    const why = decision.reopen && decision.reason && job.state !== 'stale' ? await lastCloseReason(tx, jobId) : null;
+    if (decision.reopen && decision.reason && why !== 'manual') {
       changes.push({ field: 'state', oldValue: job.state, newValue: 'active' });
       changes.push({ field: 'reopen_reason', oldValue: null, newValue: decision.reason });
       state = 'active';
       set.state = 'active';
       reopened = true;
+      if (isRelisting(job.state, why)) {
+        reposted = true;
+        set.repostCount = job.repostCount + 1;
+        changes.push({ field: 'repost_count', oldValue: String(job.repostCount), newValue: String(job.repostCount + 1) });
+      }
     }
   }
 
@@ -373,7 +430,7 @@ async function persistInTx(tx: Tx, ctx: RunContext, input: PersistInput): Promis
     if (a !== b) changes.push({ field: 'salary', oldValue: a, newValue: b });
   }
 
-  const contentChanges = changes.filter((c) => c.field !== 'state' && c.field !== 'reopen_reason');
+  const contentChanges = changes.filter((c) => !LIFECYCLE_FIELDS.has(c.field));
   if (!isNew && contentChanges.length) {
     const bump: JobSet = { contentVersion: sql`${jobs.contentVersion} + 1` };
     if (!forced && (state === 'active' || state === 'updated')) bump.state = 'updated';
@@ -408,5 +465,6 @@ async function persistInTx(tx: Tx, ctx: RunContext, input: PersistInput): Promis
     titleUnknown: p.title.unknown,
     score: scored?.score ?? null,
     possibleDuplicates,
+    reposted,
   };
 }

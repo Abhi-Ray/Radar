@@ -38,7 +38,7 @@ import { recordDeadLetter, type DeadLetterStage } from './deadletters';
 import { runFollowups } from './followups';
 import { applySourceClosed, canariesMissing, confirmSeen, countMissing } from './listing';
 import { prepareJob } from './normalise';
-import { persistItem, type Grade } from './persist';
+import { listingConfirmsLive, persistItem, type Grade } from './persist';
 import { loadSourceState, saveSnapshot, type KnownItem } from './snapshot';
 
 export interface SourceRuntime {
@@ -51,6 +51,8 @@ export interface SourceRuntime {
 
 /** Parsed items needed before "parser handles samples" is ticked automatically. */
 export const CHECKLIST_MIN_PARSED = 10;
+/** Healthy runs behind the baseline before the checklist ticks "baseline recorded". */
+export const CHECKLIST_BASELINE_RUNS = 5;
 
 /** ATS board slug from a connector config (company identity hint for the resolver). */
 export function atsSlugFor(config: unknown): string | null {
@@ -278,6 +280,11 @@ async function fetchAndProcess(
 
   const grade: Grade = platform?.grade ?? connector.platform.grade;
   const atsSlug = connector.kind === 'ats' ? atsSlugFor(config) : null;
+  // A complete listing tells a re-post (the old posting is gone) from a second opening.
+  const listedExternalIds: ReadonlySet<string> | null =
+    connector.listing === 'full' && partialReason === null
+      ? new Set(items.filter((i) => !isSourceClosed(i) && typeof i.externalId === 'string').map((i) => (i.externalId as string).trim()).filter(Boolean))
+      : null;
   const listedIds = new Set<string>();
   const closedIds: string[] = [];
   const toConfirm: KnownItem[] = [];
@@ -420,6 +427,7 @@ async function fetchAndProcess(
         rawSnapshotId: snapshotId,
         known: k,
         seenAt: now,
+        listedExternalIds,
       });
     } catch (err) {
       c.failedPersist++;
@@ -434,6 +442,7 @@ async function fetchAndProcess(
     else if (result.action === 'updated') c.updated++;
     else c.same++;
     if (result.reopened) c.reopened++;
+    if (result.reposted) c.reposts++;
     c.possibleDuplicates += result.possibleDuplicates;
     known.set(externalId, {
       jobSourceId: result.jobSourceId,
@@ -465,9 +474,10 @@ async function fetchAndProcess(
 
   // ---- listing analysis (a failure here leaves the stored items intact → 'partial')
   try {
-    const confirmed = await confirmSeen(ctx, [...toConfirm, ...dryListed]);
+    const confirmed = await confirmSeen(ctx, [...toConfirm, ...dryListed], { confirmsLive: listingConfirmsLive(grade) });
     c.confirmed = toConfirm.length;
     c.reopened += confirmed.reopened;
+    c.reposts += confirmed.reposts;
     const seenJobIds = new Set<number>([...confirmed.jobIds, ...persistedJobIds]);
 
     if (r.completeListing && r.status === 'ok') {
@@ -695,8 +705,8 @@ async function finishSource(rt: SourceRuntime, source: SourceRow, platform: Sour
     if (!current.parser_handles_samples.done && r.status === 'ok' && r.counts.parsed >= CHECKLIST_MIN_PARSED && r.flags.parse_fail_pct === undefined) {
       evidence.parser_handles_samples = `parsed ${r.counts.parsed} of ${r.counts.attempted} items without a parse-failure alert`;
     }
-    if (!current.baseline_recorded.done && baseline) {
-      evidence.baseline_recorded = `baseline ${baseline.volume_min}–${baseline.volume_max} postings from ${baselineRuns || 'earlier'} healthy runs`;
+    if (!current.baseline_recorded.done && baseline && baselineRuns >= CHECKLIST_BASELINE_RUNS) {
+      evidence.baseline_recorded = `baseline ${baseline.volume_min}–${baseline.volume_max} postings from ${baselineRuns} healthy runs`;
     }
     if (!current.rate_limit_set.done && platform && platform.rateLimitPerMin > 0 && platform.dailyCap > 0) {
       evidence.rate_limit_set = `${platform.rateLimitPerMin}/min, ${platform.dailyCap}/day`;

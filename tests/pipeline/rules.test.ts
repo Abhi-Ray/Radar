@@ -1,6 +1,6 @@
 /** Pure pipeline rules: lifecycle decisions, absence guards, source status, run report, helpers. */
 import { describe, expect, it } from 'vitest';
-import { computeGhostRisk, isOpenState, reopenDecision } from '../../src/lib/lifecycle';
+import { computeGhostRisk, isOpenState, isRelisting, isRepostOf, reopenDecision } from '../../src/lib/lifecycle';
 import { sumHttpUsage } from '../../src/lib/pipeline/run';
 import { queuedRunParams } from '../../src/lib/pipeline/queue';
 import { buildRunReport, emptyCounts, formatRunSummary, runStatusFor, sumCounts, type SourceReport } from '../../src/lib/pipeline/report';
@@ -8,7 +8,7 @@ import { reprocessStatus } from '../../src/lib/pipeline/reprocess';
 import { mapLimit } from '../../src/lib/pipeline/runtime';
 import { chunks, errorText, isDuplicateEntry, isRetryableTxError, mysqlErrno } from '../../src/lib/pipeline/stages/dbutil';
 import { massMissingGuard } from '../../src/lib/pipeline/stages/listing';
-import { gradeRank } from '../../src/lib/pipeline/stages/persist';
+import { gradeRank, listingConfirmsLive } from '../../src/lib/pipeline/stages/persist';
 import { atsSlugFor, itemStatus } from '../../src/lib/pipeline/stages/source';
 import { logicVersions } from '../../src/lib/pipeline/versions';
 import { DAY_MS } from '../../src/lib/time';
@@ -24,6 +24,31 @@ describe('lifecycle rules', () => {
     expect(computeGhostRisk({ repostCount: 0, postedAt: daysAgo(70), firstSeenAt: daysAgo(2), now }).ghostRisk).toBe(true);
     // A posted date after first-seen (a repost refresh) does not reset the age.
     expect(computeGhostRisk({ repostCount: 0, postedAt: daysAgo(1), firstSeenAt: daysAgo(65), now }).ghostRisk).toBe(true);
+  });
+
+  it('reposts: re-listed after the source dropped it, or a new id replacing a gone posting', () => {
+    expect(isRelisting('closed', 'missing_from_source')).toBe(true);
+    expect(isRelisting('closed', 'source_closed')).toBe(true);
+    // A dead link coming back or a stale job seen again is not a repost; manual closes never reopen.
+    expect(isRelisting('closed', 'link_dead')).toBe(false);
+    expect(isRelisting('closed', 'manual')).toBe(false);
+    expect(isRelisting('closed', null)).toBe(false);
+    expect(isRelisting('stale', 'missing_from_source')).toBe(false);
+    const p = { sameCompany: true, sameTitle: true, state: 'active', stillListed: false };
+    expect(isRepostOf(p)).toBe(true);
+    expect(isRepostOf({ ...p, state: 'closed', stillListed: null })).toBe(true);
+    expect(isRepostOf({ ...p, state: 'expired', stillListed: true })).toBe(true);
+    // Still listed (a second opening) or unknown (partial listing): not a repost.
+    expect(isRepostOf({ ...p, stillListed: true })).toBe(false);
+    expect(isRepostOf({ ...p, stillListed: null })).toBe(false);
+    expect(isRepostOf({ ...p, sameTitle: false })).toBe(false);
+    expect(isRepostOf({ ...p, sameCompany: false, state: 'closed' })).toBe(false);
+  });
+
+  it('only first-party / official (grade A) listings confirm a posting as live', () => {
+    expect(listingConfirmsLive('A')).toBe(true);
+    expect(listingConfirmsLive('B')).toBe(false);
+    expect(listingConfirmsLive('C')).toBe(false);
   });
 
   it('reopen decisions', () => {
@@ -200,7 +225,13 @@ describe('helpers', () => {
 
   it('records every logic version of a run', () => {
     const v = logicVersions();
-    for (const key of ['pipeline', 'lifecycle', 'linkcheck', 'quality', 'health']) expect(Object.keys(v).join(',')).toContain(key);
+    for (const key of ['pipeline', 'lifecycle', 'linkcheck', 'quality', 'health', 'source_data', 'skills', 'dedup', 'score', 'polite_http', 'relevance']) {
+      expect(Object.keys(v)).toContain(key);
+    }
+    // Every connector parser version is recorded too.
+    for (const key of ['greenhouse', 'lever', 'ashby', 'smartrecruiters', 'workable', 'recruitee', 'personio', 'bundesagentur', 'jobtech_se', 'nav_no', 'arbeitnow', 'remotive', 'remoteok', 'himalayas', 'jobicy']) {
+      expect(v[`connector:${key}`]).toMatch(new RegExp(`^${key}@`));
+    }
     for (const value of Object.values(v)) expect(typeof value).toBe('string');
   });
 });

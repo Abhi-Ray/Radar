@@ -21,11 +21,12 @@ import { ELIGIBILITY_LOGIC_VERSION } from '../visa/eligibility';
 import { VISA_SIGNALS_LOGIC_VERSION } from '../visa/signals';
 import { HEALTH_LOGIC_VERSION } from './health';
 import { QUALITY_LOGIC_VERSION } from './quality';
+import { SOURCE_DATA_LOGIC_VERSION } from './stages/normalise';
 import { SKILLS_LOGIC_VERSION } from './stages/skills';
 
 /** Orchestration logic (stage order, change tracking, lifecycle rules). */
-export const PIPELINE_LOGIC_VERSION = 'pipeline@2026-09-30.1';
-export const LIFECYCLE_LOGIC_VERSION = 'lifecycle@2026-09-30.1';
+export const PIPELINE_LOGIC_VERSION = 'pipeline@2026-09-30.2';
+export const LIFECYCLE_LOGIC_VERSION = 'lifecycle@2026-09-30.2';
 export const LINKCHECK_LOGIC_VERSION = 'linkcheck@2026-09-30.1';
 
 export function logicVersions(): Record<string, string> {
@@ -36,6 +37,7 @@ export function logicVersions(): Record<string, string> {
     health: HEALTH_LOGIC_VERSION,
     quality: QUALITY_LOGIC_VERSION,
     skills: SKILLS_LOGIC_VERSION,
+    source_data: SOURCE_DATA_LOGIC_VERSION,
     location: LOCATION_LOGIC_VERSION,
     title: TITLE_LOGIC_VERSION,
     experience: EXPERIENCE_LOGIC_VERSION,

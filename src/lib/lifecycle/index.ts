@@ -6,7 +6,7 @@
  * Nothing here ever closes jobs in bulk because of absence: that decision is per source, per job,
  * after two healthy runs (src/lib/pipeline/stages/listing.ts).
  */
-import { and, asc, eq, gte, inArray, isNotNull, isNull, lt, ne, notExists, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, lt, ne, notExists, or, sql } from 'drizzle-orm';
 import { jobChanges, jobScores, jobs } from '../../db/schema';
 import type { JOB_STATES } from '../../db/schema/_enums';
 import type { Profile, ScoreWeights } from '../contracts/settings';
@@ -79,9 +79,55 @@ export function reopenDecision(j: ReopenInput): { reopen: boolean; reason: strin
   return { reopen: false, reason: null };
 }
 
-// ---- single-job transitions ---------------------------------------------------------------------
+// ---- reposts -----------------------------------------------------------------------------------
 
 export type CloseReason = 'missing_from_source' | 'source_closed' | 'link_dead' | 'manual';
+
+/** Close reasons after which "listed again" means the employer re-listed the posting. */
+export const RELIST_CLOSE_REASONS: readonly CloseReason[] = ['missing_from_source', 'source_closed'];
+
+/**
+ * Whether reopening a job counts as a repost (repost_count + 1): it had been closed because its
+ * source stopped listing it (or said it closed) and now lists it again. A dead-link or manual close
+ * reopening, a deadline moved (expired) or a stale job seen again are not reposts.
+ */
+export function isRelisting(state: string, lastCloseReason: string | null | undefined): boolean {
+  return state === 'closed' && !!lastCloseReason && (RELIST_CLOSE_REASONS as readonly string[]).includes(lastCloseReason);
+}
+
+export interface RepostPredecessor {
+  /** Same employer and the same normalised title as the new posting. */
+  sameCompany: boolean;
+  sameTitle: boolean;
+  /** The older posting's state. */
+  state: string;
+  /** Whether the source's current (full) listing still includes the older posting; null = unknown. */
+  stillListed: boolean | null;
+}
+
+/**
+ * Whether a new posting from a source re-posts an older job of the SAME source under a new id: same
+ * employer, same title, and the older posting is gone (closed / expired, or absent from this
+ * complete listing). Two postings listed side by side are two openings, not a repost.
+ */
+export function isRepostOf(p: RepostPredecessor): boolean {
+  if (!p.sameCompany || !p.sameTitle) return false;
+  if ((CLOSED_STATES as readonly string[]).includes(p.state)) return true;
+  return p.stillListed === false;
+}
+
+/** Latest close reason recorded for a job (job_changes 'close_reason'), null when never closed. */
+export async function lastCloseReason(db: DbOrTx, jobId: number): Promise<string | null> {
+  const [row] = await db
+    .select({ v: jobChanges.newValue })
+    .from(jobChanges)
+    .where(and(eq(jobChanges.jobId, jobId), eq(jobChanges.field, 'close_reason')))
+    .orderBy(desc(jobChanges.changedAt), desc(jobChanges.id))
+    .limit(1);
+  return row?.v ?? null;
+}
+
+// ---- single-job transitions ---------------------------------------------------------------------
 
 export interface TransitionOptions {
   now: Date;
@@ -123,23 +169,29 @@ export async function closeJob(db: DbOrTx, jobId: number, reason: CloseReason, o
 /**
  * Returns a closed / expired / stale job to 'active' (seen again). The caller decides with
  * `reopenDecision`; this re-checks the state under a row lock. Resets the missing count.
+ * `repost: true` (see `isRelisting`) also counts the re-listing: repost_count + 1.
  */
-export async function reopenJob(db: DbOrTx, jobId: number, reason: string, opts: TransitionOptions): Promise<boolean> {
+export async function reopenJob(db: DbOrTx, jobId: number, reason: string, opts: TransitionOptions & { repost?: boolean }): Promise<boolean> {
   return withTransaction(db, async (tx) => {
     const [row] = await tx
-      .select({ state: jobs.state, mergedIntoJobId: jobs.mergedIntoJobId })
+      .select({ state: jobs.state, mergedIntoJobId: jobs.mergedIntoJobId, repostCount: jobs.repostCount })
       .from(jobs)
       .where(eq(jobs.id, jobId))
       .limit(1)
       .for('update');
     if (!row || row.mergedIntoJobId !== null || !['closed', 'expired', 'stale'].includes(row.state)) return false;
-    await tx.update(jobs).set({ state: 'active', missingRunCount: 0 }).where(eq(jobs.id, jobId));
+    const repost = opts.repost === true && row.state === 'closed';
+    await tx
+      .update(jobs)
+      .set({ state: 'active', missingRunCount: 0, ...(repost ? { repostCount: row.repostCount + 1 } : {}) })
+      .where(eq(jobs.id, jobId));
     await recordChanges(
       tx,
       jobId,
       [
         { field: 'state', oldValue: row.state, newValue: 'active' },
         { field: 'reopen_reason', oldValue: null, newValue: reason.slice(0, 500) },
+        ...(repost ? [{ field: 'repost_count', oldValue: String(row.repostCount), newValue: String(row.repostCount + 1) }] : []),
       ],
       opts,
     );

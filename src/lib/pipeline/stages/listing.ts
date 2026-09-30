@@ -9,8 +9,8 @@
  * Dry run: counts only.
  */
 import { and, asc, desc, eq, gte, inArray, isNull, ne, sql } from 'drizzle-orm';
-import { jobChanges, jobs, jobSources, pipelineRuns, sourceRuns } from '../../../db/schema';
-import { closeJob, OPEN_STATES, reopenDecision, reopenJob } from '../../lifecycle';
+import { jobs, jobSources, pipelineRuns, sourceRuns } from '../../../db/schema';
+import { closeJob, isRelisting, lastCloseReason, OPEN_STATES, reopenDecision, reopenJob } from '../../lifecycle';
 import { canonicalJobId } from '../../dedup';
 import { HOUR_MS } from '../../time';
 import { runAlert } from './alerting';
@@ -31,6 +31,8 @@ export const MASS_MISSING_SHARE = 0.5;
 export interface ConfirmResult {
   confirmed: number;
   reopened: number;
+  /** Reopened jobs that had closed because the source stopped listing them (repost_count + 1). */
+  reposts: number;
   /** Canonical job ids confirmed as listed by this source in this run. */
   jobIds: Set<number>;
 }
@@ -47,19 +49,17 @@ async function canonicalIds(ctx: RunContext, jobIds: number[]): Promise<Map<numb
   return out;
 }
 
-async function closedManually(ctx: RunContext, jobId: number): Promise<boolean> {
-  const [row] = await ctx.db
-    .select({ v: jobChanges.newValue })
-    .from(jobChanges)
-    .where(and(eq(jobChanges.jobId, jobId), eq(jobChanges.field, 'close_reason')))
-    .orderBy(desc(jobChanges.changedAt), desc(jobChanges.id))
-    .limit(1);
-  return row?.v === 'manual';
+export interface ConfirmOptions {
+  /**
+   * The source is first-party / official (grade A): its listing confirms the posting is live, so
+   * last_confirmed_live_at moves too (never for a job whose apply link is known dead).
+   */
+  confirmsLive?: boolean;
 }
 
 /** Confirms listed items that were not re-processed (unchanged content, seen-only markers). */
-export async function confirmSeen(ctx: RunContext, items: KnownItem[]): Promise<ConfirmResult> {
-  const out: ConfirmResult = { confirmed: 0, reopened: 0, jobIds: new Set() };
+export async function confirmSeen(ctx: RunContext, items: KnownItem[], opts: ConfirmOptions = {}): Promise<ConfirmResult> {
+  const out: ConfirmResult = { confirmed: 0, reopened: 0, reposts: 0, jobIds: new Set() };
   if (!items.length) return out;
   const canon = await canonicalIds(ctx, items.map((i) => i.jobId));
   for (const i of items) out.jobIds.add(canon.get(i.jobId) ?? i.jobId);
@@ -78,6 +78,12 @@ export async function confirmSeen(ctx: RunContext, items: KnownItem[]): Promise<
       .update(jobs)
       .set({ lastSeenAt: sql`GREATEST(${jobs.lastSeenAt}, ${now})`, missingRunCount: 0 })
       .where(inArray(jobs.id, part));
+    if (opts.confirmsLive) {
+      await ctx.db
+        .update(jobs)
+        .set({ lastConfirmedLiveAt: sql`GREATEST(COALESCE(${jobs.lastConfirmedLiveAt}, ${now}), ${now})` })
+        .where(and(inArray(jobs.id, part), ne(jobs.linkStatus, 'dead')));
+    }
     const closed = await ctx.db
       .select({ id: jobs.id, state: jobs.state, linkStatus: jobs.linkStatus, closingAt: jobs.closingAt })
       .from(jobs)
@@ -85,8 +91,13 @@ export async function confirmSeen(ctx: RunContext, items: KnownItem[]): Promise<
     for (const j of closed) {
       const d = reopenDecision({ state: j.state, linkStatus: j.linkStatus, closingAt: j.closingAt, now });
       if (!d.reopen || !d.reason) continue;
-      if (j.state !== 'stale' && (await closedManually(ctx, j.id))) continue;
-      if (await reopenJob(ctx.db, j.id, d.reason, { now, runId: ctx.runId })) out.reopened++;
+      const why = j.state === 'stale' ? null : await lastCloseReason(ctx.db, j.id);
+      if (why === 'manual') continue;
+      const repost = isRelisting(j.state, why);
+      if (await reopenJob(ctx.db, j.id, d.reason, { now, runId: ctx.runId, repost })) {
+        out.reopened++;
+        if (repost) out.reposts++;
+      }
     }
   }
   return out;
