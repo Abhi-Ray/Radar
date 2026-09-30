@@ -1,0 +1,80 @@
+{
+ "apiVersion": "2.2.16",
+ "documentationUrl": "https://jobi.cy/apidocs",
+ "friendlyNotice": "Thanks for using Jobicy API! Please ensure Jobicy is clearly credited with a direct link to the source, and all application buttons redirect to the original job URL provided in this feed. That’s all! You might be building something amazing, we wish you the best of luck!",
+ "jobCount": 3,
+ "lastUpdate": "2026-09-29T15:31:05+00:00",
+ "appliedFilters": {
+  "count": 20,
+  "tag": "security"
+ },
+ "statusCode": 200,
+ "success": true,
+ "jobs": [
+  {
+   "id": 154209,
+   "url": "https://jobicy.com/jobs/154209-senior-software-engineer-infrastructure-security",
+   "jobSlug": "154209-senior-software-engineer-infrastructure-security",
+   "jobTitle": "Senior Software Engineer - Infrastructure Security",
+   "companyName": "Quora",
+   "companyLogo": "https://jobicy.com/data/server-nyc0409/galaxy/mercury/2020/09/WRILS-200916172339-629302.jpg",
+   "jobIndustry": [
+    "Cybersecurity"
+   ],
+   "jobType": [
+    "Full-Time"
+   ],
+   "jobGeo": "Canada,  USA",
+   "jobLevel": "Senior",
+   "jobExcerpt": "[Quora is a privately held, \"remote-first\" company. This position can be performed remotely from anywhere in Canada or the United States. Please visit careers.quora.com/eligible-countries for details regarding employment eligibility by country.] About Quora: Quora’s mission is to grow the world's collective intelligence. To do so, we have two platforms: Quora: a global knowledge sharing platform&hellip;",
+   "jobDescription": "<p><em>[</em><a href=\"https://www.quora.com/q/quora/Remote-First-at-Quora\" rel=\"nofollow ugc noopener\" target=\"_blank\"><em><strong>Quora is a privately held, \"remote-first\" company</strong></em></a><em><strong>. </strong>This position can be performed remotely from anywhere in Canada or the United States. Please visit </em><a href=\"http://careers.quora.com/eligible-countries\" rel=\"nofollow ugc noopener\" target=\"_blank\"><em>careers.quora.com/eligible-countries</em></a><em> for details regarding employment eligibility by country.]</em></p>\r\n\r\n<h3><strong>About <a href=\"https://jobicy.com/company/quora\" target=\"_blank\" rel=\"noopener\">Quora</a>:</strong></h3>\r\n<p>Quora’s mission is to grow the world's collective intelligence. To do so, we have two platforms:</p>\r\n<ul>\r\n<li>\r\n<p><a href=\"http://quora.com\" rel=\"nofollow ugc noopener\" target=\"_blank\">Quora</a>: a global knowledge sharing platform with millions of monthly unique visitors, bringing people together to share insights on various topics and providing a unique platform to learn and connect with others.</p>\r\n</li>\r\n<li>\r\n<p><a href=\"https://poe.com/\" rel=\"nofollow ugc noopener\" target=\"_blank\"><u>Poe</u></a>: a cloud workspace where millions of users run multiple AI agents on shared context and tools. One subscription, every frontier model, and the collaboration layer that makes them work together.</p>\r\n</li>\r\n</ul>\r\n<p>Behind these products are passionate, collaborative, and high-performing global teams. We have a culture ",
+   "pubDate": "2026-09-29T15:31:05+00:00",
+   "salaryMin": 172279,
+   "salaryMax": 249640,
+   "salaryCurrency": "USD",
+   "salaryPeriod": "yearly"
+  },
+  {
+   "id": 154158,
+   "url": "https://jobicy.com/jobs/154158-senior-security-engineer-remote-eu-cet",
+   "jobSlug": "154158-senior-security-engineer-remote-eu-cet",
+   "jobTitle": "Senior Security Engineer (Remote, EU/CET)",
+   "companyName": "Maze",
+   "companyLogo": "https://jobicy.com/data/server-nyc0409/galaxy/mercury/2025/06/f53dfbf3-221.png",
+   "jobIndustry": [
+    "Cybersecurity"
+   ],
+   "jobType": [
+    "Full-Time"
+   ],
+   "jobGeo": "Europe",
+   "jobLevel": "Senior",
+   "jobExcerpt": "About Maze Maze is the user research platform that helps companies build the right products faster by making user insights available at the speed of product development. In most companies, research demand far exceeds supply. Time, cost, and lack of access to expertise hold teams back. In today’s AI-powered world, anyone can build a product&hellip;",
+   "jobDescription": "<h3>About <a href=\"https://jobicy.com/company/maze\" target=\"_blank\" rel=\"noopener\">Maze</a></h3>\r\n<p><strong>Maze is the user research platform that helps companies build the right products faster by making user insights available at the speed of product development.</strong></p>\r\n<p>In most companies, research demand far exceeds supply. Time, cost, and lack of access to expertise hold teams back. In today’s AI-powered world, anyone can build a product fast. The real challenge? Deeply understanding user needs and building the <em>right</em> product. That’s where Maze comes in.</p>\r\n<p>We believe companies shouldn’t have to choose between building fast and building right. Maze makes research accessible, intuitive, and fast so product teams can put user insights at the center of every decision.</p>\r\n<p>Our platform enables researchers, designers, and product managers to quickly recruit participants, run studies autonomously, and surface insights that actually drive product decisions. Our AI capabilities automate the busywork and add depth and direction to the insights themselves.</p>\r\n<p>That’s why Maze was recently named the <strong>#1 user research platform</strong> in <a href=\"https://www.uxtools.co/survey/user-research/user-testing-overview\" rel=\"nofollow ugc noopener\" target=\"_blank\">UX Tools’ Design Tools Survey</a>—and why we’re scaling fast across industries like B2B SaaS, e-Commerce, Financial Services, Retail, and Automotive, supporting world class customers such as U",
+   "pubDate": "2026-09-28T18:09:07+00:00",
+   "salaryMin": 110000,
+   "salaryMax": 130000,
+   "salaryCurrency": "EUR",
+   "salaryPeriod": "yearly"
+  },
+  {
+   "id": 154125,
+   "url": "https://jobicy.com/jobs/154125-sr-security-engineer-detection",
+   "jobSlug": "154125-sr-security-engineer-detection",
+   "jobTitle": "Sr. Security Engineer (Detection)",
+   "companyName": "Solace",
+   "companyLogo": "https://jobicy.com/data/server-nyc0409/galaxy/mercury/2025/06/4e37a66b-221.png",
+   "jobIndustry": [
+    "Cybersecurity"
+   ],
+   "jobType": [
+    "Full-Time"
+   ],
+   "jobGeo": "USA",
+   "jobLevel": "Senior",
+   "jobExcerpt": "About Solace Healthcare in the U.S. is fundamentally broken. The system is so complex that 88% of U.S. adults do not have the health literacy necessary to navigate it without help. Solace cuts through the red tape of healthcare by pairing patients with expert advocates and giving them the tools to make better decisions—and get&hellip;",
+   "jobDescription": "<h3><strong>About <a href=\"https://jobicy.com/company/solace\" target=\"_blank\" rel=\"noopener\">Solace</a></strong></h3>\n<p>Healthcare in the U.S. is fundamentally broken. The system is so complex that 88% of U.S. adults do not have the health literacy necessary to navigate it without help. Solace cuts through the red tape of healthcare by pairing patients with expert advocates and giving them the tools to make better decisions—and get better outcomes.</p>\n<p>We're a Series C startup, founded in 2022 and backed by Inspired Capital, Craft Ventures, Torch Capital, Menlo Ventures, Signalfire, and IVP. Our U.S. based team is lean, mission-driven, and growing quickly.</p>\n<p>Solace isn't a place to coast. We're here to redefine healthcare—and that demands urgency, precision, and heart. If you're looking to stretch yourself, sharpen your edge, and do the best work of your life alongside a team that cares deeply, you're in the right place. We’re intense, and we like it that way.</p>\n<p><em><strong>Read more in our Bloomberg funding announcement </strong></em><a href=\"https://www.bloomberg.com/news/articles/2026-02-10/vcs-give-solace-health-1-billion-valuation-for-patient-advocacy-tech?accessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzb3VyY2UiOiJTdWJzY3JpYmVyR2lmdGVkQXJ0aWNsZSIsImlhdCI6MTc3MDczMDg4MywiZXhwIjoxNzcxMzM1NjgzLCJhcnRpY2xlSWQiOiJUQThVUzhLR0NURzEwMCIsImJjb25uZWN0SWQiOiJBRDYxODI0MTc0ODM0MTk0QTRENUZFNzkwMzNGMDJGNSJ9.TE2pFUAOQAPMUXFlzoQ7zeJvctq7cSibbZqtIwhW-2U&amp;leadSource=u",
+   "pubDate": "2026-09-28T08:52:06+00:00"
+  }
+ ]
+}

@@ -1,0 +1,55 @@
+{
+ "absolute_url": "https://job-boards.greenhouse.io/gitlab/jobs/8770747002",
+ "data_compliance": [
+  {
+   "type": "gdpr",
+   "requires_consent": false,
+   "requires_processing_consent": false,
+   "requires_retention_consent": false,
+   "retention_period": null,
+   "demographic_data_consent_applies": false
+  }
+ ],
+ "internal_job_id": 6509112002,
+ "location": {
+  "name": "Remote, United States"
+ },
+ "metadata": [
+  {
+   "id": 4595831002,
+   "name": "Quota Coverage Type",
+   "value": "n/a",
+   "value_type": "single_select"
+  }
+ ],
+ "id": 8770747002,
+ "updated_at": "2026-09-29T10:38:50-04:00",
+ "requisition_id": "6917",
+ "title": "Senior Security Compliance Engineer, Public Sector",
+ "pay_input_ranges": [
+  {
+   "min_cents": 13920000,
+   "max_cents": 19600000,
+   "currency_type": "USD",
+   "title": "United States Salary Range",
+   "blurb": "<p><em>The base salary range for this role’s listed level is currently for residents of the&nbsp;United States only. This range is intended to reflect the role's base salary rate in locations throughout the US.&nbsp;Grade level and salary ranges are determined through interviews and a review of educ"
+  }
+ ],
+ "company_name": "GitLab",
+ "first_published": "2026-09-04T16:24:07-04:00",
+ "language": "en",
+ "application_deadline": null,
+ "content": "&lt;div class=&quot;content-intro&quot;&gt;&lt;p&gt;GitLab is the intelligent orchestration platform for DevSecOps. GitLab enables organizations to increase developer productivity, improve operational efficiency, reduce security and compliance risk, and accelerate digital transformation. More than 50 million registered users and more than 50% of the Fortune 100* trust GitLab to ship better, more secure software faster.&lt;/p&gt;\n&lt;p&gt;The same principles built into our products are reflected in how our team works: we embrace AI as a core productivity multiplier, with all team members expected to incorporate AI into their daily workflows to drive efficiency, innovation, and impact. GitLab is where careers accelerate, innovation flourishes, and every voice is valued. Our high-performance culture is driven by our values&amp;nbsp;and continuous knowledge exchange, enabling our team members to reach their full potential while collaborating with industry leaders to solve complex problems. &lt;a href=&quot;https://www.youtube.com/watch?v=OuZIb5zszQI&quot;&gt;Co-create the future with us&lt;/a&gt; as we build technology that transforms how the world develops software.&lt;/p&gt;\n&lt;p&gt;*&lt;em&gt;Fortune 500® is a registered trademark of Fortune Media IP Limited, used under license. Claim based on GitLab data. Fortune 100 refers to the top 20% ranked companies in the 2025 Fortune 500 list, published in June 2025. Fortune and Fortune Media IP Limited are not affiliated with, and d",
+ "departments": [
+  {
+   "id": 4099705002,
+   "name": "Security Assurance",
+   "child_ids": [],
+   "parent_id": 4011054002
+  }
+ ],
+ "offices": [],
+ "ai_disclaimer": null,
+ "include_ai_disclaimer": null,
+ "ai_opt_out_request_url": null
+}

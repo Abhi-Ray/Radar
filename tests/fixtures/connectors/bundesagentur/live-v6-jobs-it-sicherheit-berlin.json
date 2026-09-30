@@ -1,0 +1,197 @@
+{
+  "_note": "Live capture 2026-09-30: GET /pc/v6/jobs?was=IT-Sicherheit&wo=Berlin&umkreis=25&angebotsart=1&veroeffentlichtseit=7&zeitarbeit=false&size=10&page=1 (first 4 of 10 results kept; facetten dropped). The v4 listing endpoint answers 403 since 2026.",
+  "ergebnisliste": [
+    {
+      "stellenangebotsart": "ARBEIT",
+      "stellenangebotsTitel": "Projektmanagerin / Projektmanager IT-Sicherheit – Kritische Infrastruktur U-Bahn (w/m/d)",
+      "quereinstiegGeeignet": false,
+      "arbeitszeitSchichtNachtWochenende": false,
+      "arbeitszeitTeilzeitAbend": false,
+      "arbeitszeitTeilzeitNachmittag": false,
+      "arbeitszeitTeilzeitVormittag": false,
+      "arbeitszeitTeilzeitFlexibel": false,
+      "arbeitszeitVollzeit": true,
+      "eintrittszeitraum": {
+        "von": "2026-09-28"
+      },
+      "verguetungsangabe": "KEINE_ANGABEN",
+      "vertragsdauer": "KEINE_ANGABE",
+      "istGeringfuegigeBeschaeftigung": false,
+      "stellenlokationen": [
+        {
+          "adresse": {
+            "strasse": "Bundesstraße 5 7",
+            "plz": "10178",
+            "ort": "Berlin",
+            "region": "BERLIN",
+            "land": "DEUTSCHLAND"
+          },
+          "breite": 52.5210906,
+          "laenge": 13.4099785
+        }
+      ],
+      "homeofficemoeglich": false,
+      "veroeffentlichungszeitraum": {
+        "von": "2026-09-28"
+      },
+      "datumErsteVeroeffentlichung": "2026-09-28",
+      "aenderungsdatum": "2026-09-28T07:29:49.511",
+      "externeURL": "https://www.heyjobs.co/de-de/jobs/03e8c7a2-5eeb-4241-b119-ec816cb8faeb?utm_content=ad_link&utm_medium=sjm-pr&utm_source=jobboerse",
+      "hauptberuf": "Informationssicherheitsbeauftragte/r",
+      "firma": "Berliner Verkehrsbetriebe (BVG) - AöR -",
+      "referenznummer": "12951-03e8c7a2-5eeb-4241--S",
+      "entfernung": 2,
+      "alleBerufe": [
+        "Informationssicherheitsbeauftragte/r"
+      ]
+    },
+    {
+      "stellenangebotsart": "ARBEIT",
+      "stellenangebotsTitel": "Referent:in IT-Sicherheit Datenanalyse und Betrieb",
+      "quereinstiegGeeignet": false,
+      "arbeitszeitSchichtNachtWochenende": false,
+      "arbeitszeitTeilzeitAbend": true,
+      "arbeitszeitTeilzeitNachmittag": true,
+      "arbeitszeitTeilzeitVormittag": true,
+      "arbeitszeitTeilzeitFlexibel": false,
+      "arbeitszeitVollzeit": true,
+      "eintrittszeitraum": {
+        "von": "2026-09-25"
+      },
+      "verguetungsangabe": "KEINE_ANGABEN",
+      "vertragsdauer": "KEINE_ANGABE",
+      "istGeringfuegigeBeschaeftigung": false,
+      "stellenlokationen": [
+        {
+          "adresse": {
+            "plz": "10789",
+            "ort": "Berlin",
+            "region": "BERLIN",
+            "land": "DEUTSCHLAND"
+          },
+          "breite": 52.5015865,
+          "laenge": 13.3374446
+        }
+      ],
+      "homeofficemoeglich": false,
+      "chiffrenummer": "582588",
+      "veroeffentlichungszeitraum": {
+        "von": "2026-09-24"
+      },
+      "datumErsteVeroeffentlichung": "2026-09-24",
+      "aenderungsdatum": "2026-09-25T06:59:34.767",
+      "hauptberuf": "Informatiker/in",
+      "firma": "Deutsche Bahn AG",
+      "arbeitgeberKundennummerHash": "yjIOvgjf5Crlw0chSxcAnUCWkGmLYyoftEbH3IL5NMc=",
+      "referenznummer": "12456-1636264-1-S",
+      "entfernung": 6,
+      "alleBerufe": [
+        "Informatiker/in"
+      ]
+    },
+    {
+      "stellenangebotsart": "ARBEIT",
+      "stellenangebotsTitel": "IT Systemelektroniker (m/w/d)",
+      "quereinstiegGeeignet": false,
+      "arbeitszeitVollzeit": true,
+      "eintrittszeitraum": {
+        "von": "2026-09-25"
+      },
+      "verguetungsangabe": "JAHRESGEHALT",
+      "artDerVerguetung": "GEHALTSSPANNE",
+      "gehaltsspanneVon": 45000,
+      "gehaltsspanneBis": 60000,
+      "vertragsdauer": "KEINE_ANGABE",
+      "istGeringfuegigeBeschaeftigung": false,
+      "stellenlokationen": [
+        {
+          "adresse": {
+            "plz": "10115",
+            "ort": "Berlin",
+            "region": "BERLIN",
+            "land": "DEUTSCHLAND"
+          },
+          "breite": 52.531976082,
+          "laenge": 13.38673791
+        }
+      ],
+      "veroeffentlichungszeitraum": {
+        "von": "2026-09-25"
+      },
+      "datumErsteVeroeffentlichung": "2026-09-25",
+      "aenderungsdatum": "2026-09-25T17:03:59.706",
+      "hauptberuf": "IT-System-Elektroniker/in",
+      "alternativBeruf1": "Fachinformatiker/in - Systemintegration",
+      "alternativBeruf2": "Elektroniker/in - Informations- und Systemtechnik",
+      "firma": "TEMPTON Next Level Experts GmbH",
+      "arbeitgeberKundennummerHash": "mACriamrR9_l6A4mLI3gzyPaMJVG1qZDmyKrQ7uO5pI=",
+      "referenznummer": "12098-13876732-S",
+      "entfernung": 3,
+      "alleBerufe": [
+        "IT-System-Elektroniker/in",
+        "Fachinformatiker/in - Systemintegration",
+        "Elektroniker/in - Informations- und Systemtechnik"
+      ]
+    },
+    {
+      "stellenangebotsart": "ARBEIT",
+      "stellenangebotsTitel": "IT Support Expert (m/w/d)",
+      "quereinstiegGeeignet": true,
+      "arbeitszeitSchichtNachtWochenende": false,
+      "arbeitszeitTeilzeitAbend": false,
+      "arbeitszeitTeilzeitNachmittag": false,
+      "arbeitszeitTeilzeitVormittag": false,
+      "arbeitszeitTeilzeitFlexibel": false,
+      "arbeitszeitVollzeit": true,
+      "eintrittszeitraum": {
+        "von": "2026-09-30"
+      },
+      "verguetungsangabe": "KEINE_ANGABEN",
+      "vertragsdauer": "UNBEFRISTET",
+      "stellenlokationen": [
+        {
+          "adresse": {
+            "strasse": "Kurfürstendamm",
+            "hausnummer": "33",
+            "plz": "10719",
+            "ort": "Berlin",
+            "region": "BERLIN",
+            "land": "DEUTSCHLAND"
+          },
+          "breite": 52.502643,
+          "laenge": 13.324482
+        }
+      ],
+      "veroeffentlichungszeitraum": {
+        "von": "2026-09-29"
+      },
+      "datumErsteVeroeffentlichung": "2026-09-29",
+      "aenderungsdatum": "2026-09-30T09:58:21.769",
+      "hauptberuf": "First-Level-Supporter/in",
+      "alternativBeruf1": "Second-Level-Supporter/in",
+      "alternativBeruf2": "IT-Systemadministrator/in",
+      "firma": "GWAdriga GmbH & Co. KG",
+      "arbeitgeberKundennummerHash": "FhXzVb0hVSX7icMIi8oeQ7q72ECLMCA0NwZszYheNXQ=",
+      "referenznummer": "10001-1003779377-S",
+      "entfernung": 7,
+      "alleBerufe": [
+        "First-Level-Supporter/in",
+        "Second-Level-Supporter/in",
+        "IT-Systemadministrator/in"
+      ]
+    }
+  ],
+  "maxErgebnisse": 65,
+  "page": 1,
+  "size": 10,
+  "woOutput": {
+    "bereinigterOrt": "Berlin",
+    "suchmodus": "UMKREISSUCHE",
+    "koordinaten": [
+      {
+        "lat": 52.5112613,
+        "lon": 13.4255145
+      }
+    ]
+  }
+}

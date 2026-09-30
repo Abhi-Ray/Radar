@@ -1,0 +1,76 @@
+{
+  "_note": "Live capture 2026-09-30: GET /pc/v4/jobdetails/{base64(referenznummer)}",
+  "stellenangebotsart": "ARBEIT",
+  "stellenangebotsTitel": "IT Systemelektroniker (m/w/d)",
+  "quereinstiegGeeignet": false,
+  "stellenangebotsBeschreibung": "Unser Auftraggeber ist ein international erfolgreicher Anbieter von Kommunikations- und Kollaborationslösungen für die Healthcare-Branche. Damit die ITK-Lösungen reibungslos laufen, suchen wir Dich als IT Systemelektroniker (m/w/d).\n\nDie Position kann deutschlandweit zu 100% remote ausgeübt werden und ist unbefristet und direkt beim Kunden zu besetzen.\n\nDeine zukünftigen Aufgaben:\n\n   - Du integrierst die Lösungen unseres Auftraggebers in bestehende IT-Landschaften und setzt Projekte in den Bereichen Telekommunikation, Netzwerke und Prozesssysteme um\n   - Du planst, betreibst und betreust Plattformen in unterschiedlichen IT-Umgebungen\n   - Du berätst Kunden bei der Anbindung von Anwendungen und Prozessen und leistest technische Unterstützung\n   - Du arbeitest eng mit Sales, Solution Design, Projektmanagement und weiteren Teams zusammen, um Projekte erfolgreich umzusetzen\n\n\nDas bringst Du mit:\n\n   - Abgeschlossene Ausbildung im IT-/ITK-Bereich (z. B. IT Systemelektroniker:in, Techniker:in) oder eine vergleichbare Qualifikation\n   - Erste Erfahrung in IT- oder Telekommunikationsprojekten, vor allem mit Schwerpunkt Virtualisierung (z. B. VMware)\n   - Kenntnisse im Umgang mit Windows-Umgebungen und Applikationen sowie Netzwerk-Kenntnisse\n   - Bereitschaft zu regelmäßigen Dienstreisen\n   - Fließende Deutschkenntnisse (mind. C1-Niveau) sind zwingend erforderlich\n\n\nDas wird Dir geboten:\n\n   - Ein sehr spannendes, sinnvolles und dynamisches Arbeitsumfeld im Schnittfeld zwischen ICT, Medizintechnik und der Optimierung von Arbeitsabläufen\n   - Die Sicherheit eines unbefristeten Arbeitsvertrages in einem international erfolgreichen ICT / MedTech Unternehmen mit langer Tradition\n   - Eine attraktive Vergütung, einen Firmenwagen, Weiterbildungsangebote und diverse Benefits wie JobRad, betriebliche Altersvorsorge, Firmenevents sowie Homeoffice-Regelung oder mobiles Arbeiten\n   - Autonomes Arbeiten mit Wachstums- und Entwicklungsmöglichkeiten\n\n\nDu hast noch Fragen?\nDiese beantwortet Dir unser Recruiting-Team gerne.\nDu erreichst ihn unter der Nummer +49 000 0000000 oder bewerbung@example.invalid\n\nStarte gemeinsam mit uns in Deine neue Herausforderung und bewirb Dich jetzt!\n\n",
+  "arbeitszeitVollzeit": true,
+  "eintrittszeitraum": {
+    "von": "2026-09-25"
+  },
+  "verguetungsangabe": "JAHRESGEHALT",
+  "artDerVerguetung": "GEHALTSSPANNE",
+  "gehaltsspanneVon": 45000,
+  "gehaltsspanneBis": 60000,
+  "vertragsdauer": "KEINE_ANGABE",
+  "istGeringfuegigeBeschaeftigung": false,
+  "istBehinderungGefordert": false,
+  "stellenlokationen": [
+    {
+      "adresse": {
+        "plz": "80331",
+        "ort": "München",
+        "region": "BAYERN",
+        "land": "DEUTSCHLAND"
+      },
+      "breite": 48.135582739,
+      "laenge": 11.573975803
+    },
+    {
+      "adresse": {
+        "plz": "20097",
+        "ort": "Hamburg",
+        "region": "HAMBURG",
+        "land": "DEUTSCHLAND"
+      },
+      "breite": 53.547504435,
+      "laenge": 10.019652976
+    },
+    {
+      "adresse": {
+        "plz": "10115",
+        "ort": "Berlin",
+        "region": "BERLIN",
+        "land": "DEUTSCHLAND"
+      },
+      "breite": 52.531976082,
+      "laenge": 13.38673791
+    },
+    {
+      "adresse": {
+        "plz": "50670",
+        "ort": "Köln",
+        "region": "NORDRHEIN_WESTFALEN",
+        "land": "DEUTSCHLAND"
+      },
+      "breite": 50.949384048,
+      "laenge": 6.950542643
+    }
+  ],
+  "istPrivateArbeitsvermittlung": true,
+  "istArbeitnehmerUeberlassung": false,
+  "veroeffentlichungszeitraum": {
+    "von": "2026-09-25"
+  },
+  "datumErsteVeroeffentlichung": "2026-09-25",
+  "aenderungsdatum": "2026-09-25T17:03:59.706",
+  "istBetreut": false,
+  "hauptberuf": "IT-System-Elektroniker/in",
+  "alternativBeruf1": "Fachinformatiker/in - Systemintegration",
+  "alternativBeruf2": "Elektroniker/in - Informations- und Systemtechnik",
+  "firma": "TEMPTON Next Level Experts GmbH",
+  "arbeitgeberKundennummerHash": "mACriamrR9_l6A4mLI3gzyPaMJVG1qZDmyKrQ7uO5pI=",
+  "allianzpartnerUrl": "www.TEMPTON-Engineering.de",
+  "allianzpartnerName": "TEMPTON Holding GmbH",
+  "referenznummer": "12098-13876732-S"
+}

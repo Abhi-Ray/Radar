@@ -1,0 +1,140 @@
+{
+ "id": "744000152587869",
+ "name": "Sr Dir, GTM Enablement",
+ "uuid": "8f43423d-215c-4940-be89-a2c22da0c223",
+ "jobId": "bc20be26-d235-407c-ad40-128d07abd16d",
+ "jobAdId": "12092ad8-e9c0-45aa-aa4b-057b670827c0",
+ "defaultJobAd": true,
+ "refNumber": "JB0075755",
+ "company": {
+  "name": "ServiceNow",
+  "identifier": "ServiceNow"
+ },
+ "location": {
+  "city": "Santa Clara",
+  "region": "CALIFORNIA",
+  "country": "us",
+  "address": "2225 Lawson Lane",
+  "postalCode": "95054",
+  "remote": true,
+  "hybrid": false,
+  "fullLocation": "Santa Clara, CALIFORNIA, United States"
+ },
+ "customField": [
+  {
+   "fieldId": "60345fa28b4ba8595bef1863",
+   "fieldLabel": "Recruiting Team",
+   "valueId": "executives",
+   "valueLabel": "Executives"
+  },
+  {
+   "fieldId": "60345e1a0b24a127cbdfa148",
+   "fieldLabel": "Employee Type",
+   "valueId": "0082f6cbe6154da19322cbab1f6aa5af",
+   "valueLabel": "Regular"
+  },
+  {
+   "fieldId": "5f63a78f1dae5c5c4e54ba2b",
+   "fieldLabel": "Department",
+   "valueId": "2294208",
+   "valueLabel": "Sales"
+  },
+  {
+   "fieldId": "COUNTRY",
+   "fieldLabel": "Country/Region",
+   "valueId": "us",
+   "valueLabel": "United States"
+  },
+  {
+   "fieldId": "5f63a78f1dae5c5c4e54ba2a",
+   "fieldLabel": "Brands",
+   "valueId": "default",
+   "valueLabel": "ServiceNow"
+  },
+  {
+   "fieldId": "60345d5c5165a31b17288279",
+   "fieldLabel": "Region",
+   "valueId": "722a833b93e4437798309f43c0d25990",
+   "valueLabel": "AMS - North America and Canada"
+  },
+  {
+   "fieldId": "603462175165a31b1728827d",
+   "fieldLabel": "Cost Center",
+   "valueId": "CC6754",
+   "valueLabel": "6754 MVW Admin"
+  },
+  {
+   "fieldId": "6034601b43915a29a4b3389b",
+   "fieldLabel": "Job Location",
+   "valueId": "L_RMTE_BAY",
+   "valueLabel": "Remote Bay Area, CA, USA(L_RMTE_BAY)"
+  },
+  {
+   "fieldId": "618ed92b8f5e5f110e5bfb95",
+   "fieldLabel": "Work Persona",
+   "valueId": "5530c877-6b63-4bf5-bde8-215ef35bf172",
+   "valueLabel": "Flexible or Remote"
+  },
+  {
+   "fieldId": "690cc0e8c682c3dbadaa7d73",
+   "fieldLabel": "Job Posting Type",
+   "valueId": "professional",
+   "valueLabel": "Professional"
+  }
+ ],
+ "releasedDate": "2026-09-30T04:26:49.554Z",
+ "creator": {
+  "name": "",
+  "avatarUrl": ""
+ },
+ "postingUrl": "https://jobs.smartrecruiters.com/ServiceNow/744000152587869-sr-dir-gtm-enablement",
+ "applyUrl": "https://jobs.smartrecruiters.com/ServiceNow/744000152587869-sr-dir-gtm-enablement?oga=true",
+ "referralUrl": "https://jobs.smartrecruiters.com/external-referrals/company/ServiceNow/publication/8f43423d-215c-4940-be89-a2c22da0c223?dcr_ci=ServiceNow",
+ "jobAd": {
+  "sections": {
+   "companyDescription": {
+    "title": "Company Description",
+    "text": "<p>It all started when engineer Fred Luddy wrote code that automated a tedious task for his coworker, Phyllis. She cried tears of joy. That moment inspired Fred to build a company that could do that for everyone—freeing people from busywork so they could focus on meaningful work. Today, ServiceNow is the AI control tower for business reinvention. Our ServiceNow AI platform brings together any AI, any data, and any workflow— helping 85% of the Fortune 500® work smarter, faster, and better. We're building an AI-native culture where technology and talent are unstoppable together. And we're just getting started.</p><p>Join us to put AI to work for people.</p><p>&#xa0;</p>"
+   },
+   "jobDescription": {
+    "title": "Job Description",
+    "text": "<p><strong>What you get to do in this role:</strong></p><p>ServiceNow's Employee Experience Business Unit transforms how employees get work done in the agentic era — with a world-class, employee-centric harness that resolves IT and HR requests, enables frontier AI capabilities within enterprise governance guardrails, and is bringing to market the next-generation of AI productivity assistants. The EX BU is the result of ServiceNow’s acquisition of Moveworks in late 2025 and its unification with the HR Service Delivery portfolio. The business is now in hypergrowth and represents one of the most exciting growth environments in enterprise AI.</p><p>The GVP of Moveworks Sales owns delivery of the Employee Experience revenue target – and is seeking a Sr. Director, Sales Enablement to act as a critical strategy partner, senior operator, and right hand. This role comes with a mandate to define a"
+   },
+   "qualifications": {
+    "title": "Qualifications",
+    "text": "<p><strong>To be successful in this role you have:</strong></p><ul><li>10-15 years' experience in building global enablement programs and managing global sales enablement teams, including enterprise field enablement across all sellers.</li><li>Proven ability to scope, design, deliver, and measure effectiveness of strategic enablement programs.</li><li>Strong facilitation and presentation skills for all audience levels, including executives; demonstrated ability to garner support for new ideas and initiatives.</li><li>Expertise in creating intuitive, memorable, and visually appealing assets.</li><li>Exceptional attention to detail, organization, and ability to manage multiple projects and resolve roadblocks.</li><li>Strong written and oral communication skills—you can distill complex information into clear, compelling, and easy-to-follow content. Strong critical thinking and interpersonal"
+   },
+   "additionalInformation": {
+    "title": "Additional Information",
+    "text": "<p><strong>Work Personas</strong></p><p>We approach our distributed world of work with flexibility and trust. Work personas (flexible, remote, or required in office) are categories that are assigned to ServiceNow employees depending on the nature of their work and their assigned work location. <a href=\"https://careers.servicenow.com/life-at-servicenow#workpersonas\" rel=\"noopener noreferrer\"><u>Learn more here</u></a>. To determine eligibility for a work persona, ServiceNow may confirm the distance between your primary residence and the closest ServiceNow office using a third-party service.</p><p><strong>Equal Opportunity Employer</strong></p><p>ServiceNow is an equal opportunity employer. All qualified applicants will receive consideration for employment without regard to race, color, religion, sex, sexual orientation, national origin, age, disability, gender identity,&#xa0; veteran stat"
+   }
+  }
+ },
+ "active": true,
+ "visibility": "PUBLIC",
+ "industry": {
+  "id": "it_and_services",
+  "label": "Information Technology And Services"
+ },
+ "function": {
+  "id": "sales",
+  "label": "Sales"
+ },
+ "department": {
+  "id": 2294208,
+  "label": "Sales"
+ },
+ "experienceLevel": {
+  "id": "not_applicable",
+  "label": "Not Applicable"
+ },
+ "typeOfEmployment": {
+  "id": "permanent",
+  "label": "Full-time"
+ },
+ "language": {
+  "code": "en",
+  "label": "English",
+  "labelNative": "English (US)"
+ }
+}

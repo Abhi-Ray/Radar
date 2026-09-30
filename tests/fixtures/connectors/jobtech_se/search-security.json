@@ -1,0 +1,447 @@
+{
+ "total": {
+  "value": 658
+ },
+ "positions": 1466,
+ "hits": [
+  {
+   "relevance": 1.0,
+   "id": "31533439",
+   "external_id": null,
+   "original_id": null,
+   "label": [],
+   "webpage_url": "https://arbetsformedlingen.se/platsbanken/annonser/31533439",
+   "logo_url": null,
+   "headline": "Security Engineer / Security Operations Consultant",
+   "application_deadline": "2026-10-22T23:59:59",
+   "number_of_vacancies": 1,
+   "description": {
+    "text": "Plats: Stockholm (hybrid, 2-3 dagar per vecka på kontoret)\nOmfattning: Heltid\nStart: Omgående\nAnställningsform: Tillsvidareanställning\nOm rollen\nVi söker en driven och tekniskt skicklig Security Engineer / Security Operations Consultant som vill vara med och stärka säkerhetsarbetet i en modern och molnbaserad verksamhet.\nI rollen kommer du att arbeta nära IT- och säkerhetsorganisationen med fokus på incidenthantering, säkerhetsövervakning, sårbarhetshantering och vidareutveckling av företagets säkerhetsplattformar. Du kommer att få stort eget ansvar och möjlighet att påverka både operativa och strategiska säkerhetsinitiativ.\nVi söker en person som trivs med att arbeta hands-on, tar ägarskap och kan driva säkerhetsarbetet framåt självständigt.\nArbetsuppgifter\nSom Security Engineer kommer du bland annat att:\nÖvervaka och hantera säkerhetslarm och incidenter\nGenomföra incidentutredningar och koordinera åtgärder\nIdentifiera rotorsaker och implementera långsiktiga lösningar\nArbeta med sårbarhetshantering och riskreducerande aktiviteter\nVidareutveckla och förvalta säkerhetsverktyg och plattformar\nStödja säkerhetsarbetet i molnmiljöer\nSamarbeta med interna intressenter kring säkerhetsförbättringar\nBidra till utvecklingen av processer och arbetssätt inom Security Operations\nDelta i säkerhetsrelaterade projekt och förbättringsinitiativ\n\nVi söker dig som\nHar erfarenhet från Security Operations, Security Engineering eller Cloud Security\nHar arbetat med incident response och operativt sä",
+    "text_formatted": "<p><strong>Plats:</strong> Stockholm (hybrid, 2-3 dagar per vecka på kontoret)</p><p><strong>Omfattning:</strong> Heltid</p><p><strong>Start:</strong> Omgående</p><p><strong>Anställningsform:</strong> Tillsvidareanställning</p><p>Om rollen</p><p>Vi söker en driven och tekniskt skicklig <strong>Security Engineer / Security Operations Consultant</strong> som vill vara med och stärka säkerhetsarbetet i en modern och molnbaserad verksamhet.</p><p>I rollen kommer du att arbeta nära IT- och säkerhetsorganisationen med fokus på incidenthantering, säkerhetsövervakning, sårbarhetshantering och vidareutveckling av företagets säkerhetsplattformar. Du kommer att få stort eget ansvar och möjlighet att påverka både operativa och strategiska säkerhetsinitiativ.</p><p>Vi söker en person som trivs med att arbeta hands-on, tar ägarskap och kan driva säkerhetsarbetet framåt självständigt.</p><p>Arbetsuppgifter</p><p>Som Security Engineer kommer du bland annat att:</p><ul><li>Övervaka och hantera säkerhetslarm och incidenter</li><li>Genomföra incidentutredningar och koordinera åtgärder</li><li>Identifiera rotorsaker och implementera långsiktiga lösningar</li><li>Arbeta med sårbarhetshantering och riskreducerande aktiviteter</li><li>Vidareutveckla och förvalta säkerhetsverktyg och plattformar</li><li>Stödja säkerhetsarbetet i molnmiljöer</li><li>Samarbeta med interna intressenter kring säkerhetsförbättringar</li><li>Bidra till utvecklingen av processer och arbetssätt inom Security Operations</li>",
+    "company_information": null,
+    "needs": null,
+    "requirements": null,
+    "conditions": null
+   },
+   "employment_type": {
+    "concept_id": "kpPX_CNN_gDU",
+    "label": "Tillsvidareanställning (inkl. eventuell provanställning)",
+    "legacy_ams_taxonomy_id": null
+   },
+   "salary_type": {
+    "concept_id": "oG8G_9cW_nRf",
+    "label": "Fast månads- vecko- eller timlön",
+    "legacy_ams_taxonomy_id": "1"
+   },
+   "salary_description": null,
+   "duration": {
+    "concept_id": "a7uU_j21_mkL",
+    "label": "Tills vidare",
+    "legacy_ams_taxonomy_id": "1"
+   },
+   "working_hours_type": {
+    "concept_id": "6YE1_gAC_R2G",
+    "label": "Heltid",
+    "legacy_ams_taxonomy_id": "1"
+   },
+   "scope_of_work": {
+    "min": 100,
+    "max": 100
+   },
+   "access": null,
+   "employer": {
+    "phone_number": null,
+    "email": null,
+    "url": null,
+    "organization_number": "5569088320",
+    "name": "Integrity360 AB",
+    "workplace": "Netsecure Sweden AB"
+   },
+   "application_details": {
+    "information": null,
+    "reference": null,
+    "email": "recruiting@example.com",
+    "via_af": false,
+    "url": null,
+    "other": null
+   },
+   "experience_required": true,
+   "access_to_own_car": false,
+   "driving_license_required": false,
+   "driving_license": null,
+   "occupation": {
+    "concept_id": "9yMK_8ep_D1K",
+    "label": "IT-säkerhetstekniker",
+    "legacy_ams_taxonomy_id": null
+   },
+   "occupation_group": {
+    "concept_id": "BAeH_eg8_T2d",
+    "label": "IT-säkerhetsspecialister",
+    "legacy_ams_taxonomy_id": "2516"
+   },
+   "occupation_field": {
+    "concept_id": "apaJ_2ja_LuF",
+    "label": "Data/IT",
+    "legacy_ams_taxonomy_id": "3"
+   },
+   "workplace_model": {
+    "concept_id": null,
+    "label": null
+   },
+   "workplace_address": {
+    "municipality": "Stockholm",
+    "municipality_code": "0180",
+    "municipality_concept_id": "AvNB_uwa_6n6",
+    "region": "Stockholms län",
+    "region_code": "01",
+    "region_concept_id": "CifL_Rzy_Mku",
+    "country": "Sverige",
+    "country_code": "199",
+    "country_concept_id": "i46j_HmG_v64",
+    "street_address": "Finlandsgatan 40",
+    "postcode": "16474",
+    "city": "Kista",
+    "coordinates": [
+     17.9208508573167,
+     59.4167225755912
+    ]
+   },
+   "workplace_addresses": [
+    {
+     "municipality": "Stockholm",
+     "municipality_code": "0180",
+     "municipality_concept_id": "AvNB_uwa_6n6",
+     "region": "Stockholms län",
+     "region_code": "01",
+     "region_concept_id": "CifL_Rzy_Mku",
+     "country": "Sverige",
+     "country_code": "199",
+     "country_concept_id": "i46j_HmG_v64",
+     "street_address": "Finlandsgatan 40",
+     "postcode": "16474",
+     "city": "Kista",
+     "coordinates": [
+      17.9208508573167,
+      59.4167225755912
+     ]
+    }
+   ],
+   "must_have": {
+    "skills": [],
+    "languages": [],
+    "work_experiences": [
+     {
+      "weight": 10,
+      "concept_id": "9yMK_8ep_D1K",
+      "label": "IT-säkerhetstekniker",
+      "legacy_ams_taxonomy_id": null
+     }
+    ],
+    "education": [],
+    "education_level": []
+   },
+   "nice_to_have": {
+    "skills": [],
+    "languages": [],
+    "work_experiences": [],
+    "education": [],
+    "education_level": []
+   },
+   "application_contacts": [],
+   "publication_date": "2026-09-29T15:47:55",
+   "last_publication_date": "2026-10-22T23:59:59",
+   "removed": false,
+   "removed_date": null,
+   "source_type": "VIA_ANNONSERA",
+   "timestamp": 1790689675666
+  },
+  {
+   "relevance": 1.0,
+   "id": "31520004",
+   "external_id": null,
+   "original_id": null,
+   "label": [],
+   "webpage_url": "https://arbetsformedlingen.se/platsbanken/annonser/31520004",
+   "logo_url": "https://arbetsformedlingen.se/rest/employer-logo-api/api/v1/organisation/5560360793/logotyper/logo.png",
+   "headline": "Information Security Manager - Protective Security",
+   "application_deadline": "2026-10-16T23:59:59",
+   "number_of_vacancies": 1,
+   "description": {
+    "text": "Want to influence the bigger picture? At Saab, you can realise amazing innovations that keep people and societies safe. Together, we can truly make an impact - and your part matters.\n \n\n\nYour role\n\nWe are expanding our Information & Cyber Security Organization within Business Area Surveillance and are looking for a strategic leader to head our Protective Security team. This role is key to bridging security governance and operational excellence, ensuring security remains both a requirement and a competitive advantage for Saab.\nAs Information Security Manager for the Protective Security team, you will lead specialists responsible for governance and oversight of our most critical security frameworks. The team ensures compliance with strict protective security requirements, combining technical IT security with legislative obligations in an international and highly regulated environment.\n \nYour main tasks will be:\nEnsure legislative compliance by leading the implementation of the Swedish Protective Security Act and Ordinance within Information and IT Security.\nDrive the protective security framework by defining and overseeing security standards, baselines, and requirements.\nGuide risk assessments and threat analyses, ensuring effective mitigation strategies aligned with business needs.\nEstablish processes to monitor and validate security measures, ensuring resilience against evolving threats.\n\n \nPreferred locations for this role are Solna/Stockholm or Kallebäck/Göteborg.\n\n\n \n\nYour",
+    "text_formatted": "<p><em>Want to influence the bigger picture? At Saab, you can realise amazing innovations that keep people and societies safe. Together, we can truly make an impact - and your part matters.</em></p><p> </p>\n\nYour role\n\n<p>We are expanding our Information &amp; Cyber Security Organization within Business Area Surveillance and are looking for a strategic leader to head our Protective Security team. This role is key to bridging security governance and operational excellence, ensuring security remains both a requirement and a competitive advantage for Saab.</p><p>As Information Security Manager for the Protective Security team, you will lead specialists responsible for governance and oversight of our most critical security frameworks. The team ensures compliance with strict protective security requirements, combining technical IT security with legislative obligations in an international and highly regulated environment.</p><p> </p><p>Your main tasks will be:</p><ul><li>Ensure legislative compliance by leading the implementation of the Swedish Protective Security Act and Ordinance within Information and IT Security.</li><li>Drive the protective security framework by defining and overseeing security standards, baselines, and requirements.</li><li>Guide risk assessments and threat analyses, ensuring effective mitigation strategies aligned with business needs.</li><li>Establish processes to monitor and validate security measures, ensuring resilience against evolving threats.</li></ul",
+    "company_information": null,
+    "needs": null,
+    "requirements": null,
+    "conditions": null
+   },
+   "employment_type": {
+    "concept_id": "PFZr_Syz_cUq",
+    "label": "Vanlig anställning",
+    "legacy_ams_taxonomy_id": "1"
+   },
+   "salary_type": {
+    "concept_id": "oG8G_9cW_nRf",
+    "label": "Fast månads- vecko- eller timlön",
+    "legacy_ams_taxonomy_id": "1"
+   },
+   "salary_description": null,
+   "duration": {
+    "concept_id": "a7uU_j21_mkL",
+    "label": "Tills vidare",
+    "legacy_ams_taxonomy_id": "1"
+   },
+   "working_hours_type": {
+    "concept_id": "6YE1_gAC_R2G",
+    "label": "Heltid",
+    "legacy_ams_taxonomy_id": "1"
+   },
+   "scope_of_work": {
+    "min": 100,
+    "max": 100
+   },
+   "access": null,
+   "employer": {
+    "phone_number": null,
+    "email": null,
+    "url": null,
+    "organization_number": "5560360793",
+    "name": "SAAB Aktiebolag",
+    "workplace": "Saab"
+   },
+   "application_details": {
+    "information": null,
+    "reference": null,
+    "email": null,
+    "via_af": false,
+    "url": "https://www.aplitrak.com/?adid=aS5zb25lZm9ycy45NTQyNC4xMzc2NUBzYWFiLmFwbGl0cmFrLmNvbQ",
+    "other": null
+   },
+   "experience_required": true,
+   "access_to_own_car": false,
+   "driving_license_required": false,
+   "driving_license": null,
+   "occupation": {
+    "concept_id": "fZoS_si8_SFg",
+    "label": "IT-säkerhetsansvarig",
+    "legacy_ams_taxonomy_id": "2720"
+   },
+   "occupation_group": {
+    "concept_id": "BAeH_eg8_T2d",
+    "label": "IT-säkerhetsspecialister",
+    "legacy_ams_taxonomy_id": "2516"
+   },
+   "occupation_field": {
+    "concept_id": "apaJ_2ja_LuF",
+    "label": "Data/IT",
+    "legacy_ams_taxonomy_id": "3"
+   },
+   "workplace_model": {
+    "concept_id": null,
+    "label": null
+   },
+   "workplace_address": {
+    "municipality": "Solna",
+    "municipality_code": "0184",
+    "municipality_concept_id": "zHxw_uJZ_NJ8",
+    "region": "Stockholms län",
+    "region_code": "01",
+    "region_concept_id": "CifL_Rzy_Mku",
+    "country": "Sverige",
+    "country_code": "199",
+    "country_concept_id": "i46j_HmG_v64",
+    "street_address": null,
+    "postcode": "17154",
+    "city": "Solna",
+    "coordinates": [
+     17.974486166533413,
+     59.35446035487853
+    ]
+   },
+   "workplace_addresses": [
+    {
+     "municipality": "Solna",
+     "municipality_code": "0184",
+     "municipality_concept_id": "zHxw_uJZ_NJ8",
+     "region": "Stockholms län",
+     "region_code": "01",
+     "region_concept_id": "CifL_Rzy_Mku",
+     "country": "Sverige",
+     "country_code": "199",
+     "country_concept_id": "i46j_HmG_v64",
+     "street_address": null,
+     "postcode": "17154",
+     "city": "Solna",
+     "coordinates": [
+      17.974486166533413,
+      59.35446035487853
+     ]
+    }
+   ],
+   "must_have": {
+    "skills": [],
+    "languages": [],
+    "work_experiences": [],
+    "education": [],
+    "education_level": []
+   },
+   "nice_to_have": {
+    "skills": [],
+    "languages": [],
+    "work_experiences": [],
+    "education": [],
+    "education_level": []
+   },
+   "application_contacts": [],
+   "publication_date": "2026-09-25T10:46:06",
+   "last_publication_date": "2026-10-16T23:59:59",
+   "removed": false,
+   "removed_date": null,
+   "source_type": "VIA_JOBPOSTING",
+   "timestamp": 1790325966795
+  },
+  {
+   "relevance": 1.0,
+   "id": "31448696",
+   "external_id": null,
+   "original_id": null,
+   "label": [],
+   "webpage_url": "https://arbetsformedlingen.se/platsbanken/annonser/31448696",
+   "logo_url": null,
+   "headline": "Senior Security Engineer - Network Security",
+   "application_deadline": "2026-10-08T23:59:59",
+   "number_of_vacancies": 1,
+   "description": {
+    "text": "Job Description\nJoin our Cyber Security Engineering unit, where innovation and security drive us. We are transforming technology with modern Network Security, integrations and cloud services. We are looking for a highly skilled and experienced Senior Cyber Security Engineer to join our Network Security Engineering team. This role involves architecting, designing, implementing, and maintaining robust security measures to protect our global network infrastructure. The ideal candidate will blend theoretical knowledge with hands-on expertise. This role requires a deep understanding of cybersecurity principles, Network Security technologies, and the ability to collaborate across multiple globally dispersed stakeholders and teams. \nWHAT YOU’LL DO \nLead the development, optimization and integration of network security policies, rules and monitoring across platforms such as NDR, SSE, SD‑WAN and proxy solutions\nDesign and improve network security solutions across branches, stores and data centers, ensuring strong alignment with business and security needs\nConduct security architecture reviews, risk assessments and threat modelling, and drive hardening initiatives across our network landscape\nModernize network security by transitioning from legacy systems to modern SSE and ZTNA solutions, supported by clear roadmaps, policies and plans\nMonitor and enhance the performance, availability and reliability of network security solutions, ensuring compliance with ISO, NIST, GDPR and internal s",
+    "text_formatted": "<p><strong>Job Description</strong></p><p>Join our Cyber Security Engineering unit, where innovation and security drive us. We are transforming technology with modern Network Security, integrations and cloud services. We are looking for a highly skilled and experienced <strong>Senior Cyber Security Engineer</strong> to join our <strong>Network Security</strong> Engineering team. This role involves architecting, designing, implementing, and maintaining robust security measures to protect our global network infrastructure. The ideal candidate will blend theoretical knowledge with hands-on expertise. This role requires a deep understanding of cybersecurity principles, Network Security technologies, and the ability to collaborate across multiple globally dispersed stakeholders and teams. </p><p><strong>WHAT YOU’LL DO</strong> </p><ul><li>Lead the development, optimization and integration of network security policies, rules and monitoring across platforms such as NDR, SSE, SD‑WAN and proxy solutions</li><li>Design and improve network security solutions across branches, stores and data centers, ensuring strong alignment with business and security needs</li><li>Conduct security architecture reviews, risk assessments and threat modelling, and drive hardening initiatives across our network landscape</li><li>Modernize network security by transitioning from legacy systems to modern SSE and ZTNA solutions, supported by clear roadmaps, policies and plans</li><li>Monitor and enhance the pe",
+    "company_information": null,
+    "needs": null,
+    "requirements": null,
+    "conditions": null
+   },
+   "employment_type": {
+    "concept_id": "kpPX_CNN_gDU",
+    "label": "Tillsvidareanställning (inkl. eventuell provanställning)",
+    "legacy_ams_taxonomy_id": null
+   },
+   "salary_type": {
+    "concept_id": "oG8G_9cW_nRf",
+    "label": "Fast månads- vecko- eller timlön",
+    "legacy_ams_taxonomy_id": "1"
+   },
+   "salary_description": null,
+   "duration": {
+    "concept_id": "a7uU_j21_mkL",
+    "label": "Tills vidare",
+    "legacy_ams_taxonomy_id": "1"
+   },
+   "working_hours_type": {
+    "concept_id": "6YE1_gAC_R2G",
+    "label": "Heltid",
+    "legacy_ams_taxonomy_id": "1"
+   },
+   "scope_of_work": {
+    "min": 100,
+    "max": 100
+   },
+   "access": null,
+   "employer": {
+    "phone_number": null,
+    "email": null,
+    "url": null,
+    "organization_number": "5560701715",
+    "name": "H & M Hennes & Mauritz GBC AB",
+    "workplace": "H&M Group"
+   },
+   "application_details": {
+    "information": null,
+    "reference": null,
+    "email": null,
+    "via_af": false,
+    "url": "https://jobs.smartrecruiters.com/HMGroup/744000147892658-senior-security-engineer-network-security-",
+    "other": null
+   },
+   "experience_required": true,
+   "access_to_own_car": false,
+   "driving_license_required": false,
+   "driving_license": null,
+   "occupation": {
+    "concept_id": "fZoS_si8_SFg",
+    "label": "IT-säkerhetsansvarig",
+    "legacy_ams_taxonomy_id": "2720"
+   },
+   "occupation_group": {
+    "concept_id": "BAeH_eg8_T2d",
+    "label": "IT-säkerhetsspecialister",
+    "legacy_ams_taxonomy_id": "2516"
+   },
+   "occupation_field": {
+    "concept_id": "apaJ_2ja_LuF",
+    "label": "Data/IT",
+    "legacy_ams_taxonomy_id": "3"
+   },
+   "workplace_model": {
+    "concept_id": null,
+    "label": null
+   },
+   "workplace_address": {
+    "municipality": "Stockholm",
+    "municipality_code": "0180",
+    "municipality_concept_id": "AvNB_uwa_6n6",
+    "region": "Stockholms län",
+    "region_code": "01",
+    "region_concept_id": "CifL_Rzy_Mku",
+    "country": "Sverige",
+    "country_code": "199",
+    "country_concept_id": "i46j_HmG_v64",
+    "street_address": "Årstaängsvägen 13",
+    "postcode": "11134",
+    "city": "STOCKHOLM",
+    "coordinates": [
+     18.061474943800267,
+     59.33769106462821
+    ]
+   },
+   "workplace_addresses": [
+    {
+     "municipality": "Stockholm",
+     "municipality_code": "0180",
+     "municipality_concept_id": "AvNB_uwa_6n6",
+     "region": "Stockholms län",
+     "region_code": "01",
+     "region_concept_id": "CifL_Rzy_Mku",
+     "country": "Sverige",
+     "country_code": "199",
+     "country_concept_id": "i46j_HmG_v64",
+     "street_address": "Årstaängsvägen 13",
+     "postcode": "11134",
+     "city": "STOCKHOLM",
+     "coordinates": [
+      18.061474943800267,
+      59.33769106462821
+     ]
+    }
+   ],
+   "must_have": {
+    "skills": [],
+    "languages": [],
+    "work_experiences": [],
+    "education": [],
+    "education_level": []
+   },
+   "nice_to_have": {
+    "skills": [],
+    "languages": [],
+    "work_experiences": [],
+    "education": [],
+    "education_level": []
+   },
+   "application_contacts": [],
+   "publication_date": "2026-09-08T08:04:30",
+   "last_publication_date": "2026-10-08T23:59:59",
+   "removed": false,
+   "removed_date": null,
+   "source_type": "VIA_ANNONSERA",
+   "timestamp": 1788847470664
+  }
+ ]
+}

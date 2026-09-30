@@ -1,0 +1,272 @@
+{
+ "comments": "21/08/2026: Cursor pagination is now available and is the preferred way to page through the feed. Pass the nextCursor value from each response back as ?cursor=. It is faster than offset and will never return the same job twice. The offset parameter is deprecated and will be removed in a future release. 13/03/2026: The API has been updated to include the companySlug field in the response.",
+ "updatedAt": 1790741023,
+ "offset": 0,
+ "limit": 20,
+ "totalCount": 93362,
+ "nextCursor": "MjAyNi0wOS0zMFQwMjoxMToyMS45NzQzMTlafDIyOTg4MTk",
+ "jobs": [
+  {
+   "title": "Cloud Infrastructure Security Engineer",
+   "excerpt": "About BJAKThe original mission of BJAK is we believe people deserve smarter ways to plan, save and grow their money.",
+   "companyName": "Bjak",
+   "companySlug": "bjak",
+   "companyLogo": "https://cdn-images.himalayas.app/8ub8wtihrfrm3vfivlkcojai4np3",
+   "employmentType": "Full Time",
+   "minSalary": null,
+   "maxSalary": null,
+   "salaryPeriod": "annual",
+   "seniority": [
+    "Mid-level",
+    "Senior"
+   ],
+   "currency": null,
+   "locationRestrictions": [],
+   "timezoneRestrictions": [
+    -11,
+    -10,
+    -9.5,
+    -9,
+    -8,
+    -7,
+    -6,
+    -5,
+    -4,
+    -3.5,
+    -3,
+    -2,
+    -1,
+    0,
+    1,
+    2,
+    3,
+    3.5,
+    4,
+    4.5,
+    5,
+    5.5,
+    5.75,
+    6,
+    6.5,
+    7,
+    8,
+    8.75,
+    9,
+    9.5,
+    10,
+    10.5,
+    11,
+    12,
+    12.75,
+    13,
+    14
+   ],
+   "categories": [
+    "Cloud-Security-Engineer",
+    "Senior-Cloud-Infrastructure-Security-Engineer",
+    "Cloud-Cybersecurity-Engineer",
+    "Infrastructure-Security-Engineer",
+    "Security-Infrastructure-Engineer",
+    "Cloud-Infrastructure-Engineer",
+    "Cloud-DevSecOps-Engineer",
+    "Cloud-Security-Architect",
+    "Security-Engineer"
+   ],
+   "parentCategories": [
+    "Developer"
+   ],
+   "description": "<h3><strong>About BJAK</strong></h3><p>The original mission of BJAK is we believe people deserve smarter ways to plan, save and grow their money. This is the origin of our name.</p><p>Started in 2019, we built the first mobile-first, insurance platform, enabling insurance to be accessible online by millions in the region. Today, its the leading insurance platform in Southeast Asia.</p><p>Today, we are expanding ways to help people in the region — this includes spending, saving, investing, exchanging, travelling, and more. Our mission is help people get more from their money every day.</p><p>We have teams working around the world, with over 20 nationalities from our offices and remotely, who truly enjoys their work. We are looking for the most talented and driven people we can find. We are looking for people who work for their passion, not counting hours. Who loves building great next-generation products, not status quo. Who cares about redefining how everyone around us can get the best financial applications, not for an exclusive few.</p><p>If you're this person, we'd love to talk to you.</p><h3>The Role</h3><p>Protect BJAK's cloud environments, networks, compute platforms, and core infrastructure across AWS and GCP. Strengthen configuration, access controls, monitoring, resilience, and technology risk management.</p><h3><strong>What You Will Build</strong></h3><ul>\n<li><p>Design and maintain security controls across AWS and GCP infrastructure, networks, compute, storage, and",
+   "pubDate": 1790737790,
+   "expiryDate": 1795921790,
+   "applicationLink": "https://himalayas.app/companies/bjak/jobs/cloud-infrastructure-security-engineer",
+   "guid": "https://himalayas.app/companies/bjak/jobs/cloud-infrastructure-security-engineer"
+  },
+  {
+   "title": "DevOps Engineer",
+   "excerpt": "Wanted: Colonist DevOps Engineer Working Hours: We work asynchronously and value outcomes over hours Location: Fully Remote Compensation: Paid in USD.",
+   "companyName": "Colonist",
+   "companySlug": "colonist",
+   "companyLogo": "https://cdn-images.himalayas.app/c8lkpvtbezk2wfhu7frd2pwmlxef",
+   "employmentType": "Full Time",
+   "minSalary": null,
+   "maxSalary": null,
+   "salaryPeriod": "annual",
+   "seniority": [
+    "Mid-level"
+   ],
+   "currency": "USD",
+   "locationRestrictions": [],
+   "timezoneRestrictions": [
+    -11,
+    -10,
+    -9.5,
+    -9,
+    -8,
+    -7,
+    -6,
+    -5,
+    -4,
+    -3.5,
+    -3,
+    -2,
+    -1,
+    0,
+    1,
+    2,
+    3,
+    3.5,
+    4,
+    4.5,
+    5,
+    5.5,
+    5.75,
+    6,
+    6.5,
+    7,
+    8,
+    8.75,
+    9,
+    9.5,
+    10,
+    10.5,
+    11,
+    12,
+    12.75,
+    13,
+    14
+   ],
+   "categories": [
+    "DevOps-Engineer",
+    "DevOps-Software-Engineer",
+    "Cloud-DevOps-Engineer",
+    "DevOps-Automation-Engineer",
+    "Infrastructure-DevOps-Engineer",
+    "AWS-DevOps-Engineer",
+    "TechOps-Engineer",
+    "CloudOps-Engineer"
+   ],
+   "parentCategories": [
+    "Developer"
+   ],
+   "description": "<p><strong>Wanted:</strong> <a href=\"https://himalayas.app/companies/colonist\">Colonist</a> DevOps Engineer</p><p><strong>Working Hours:</strong> We work asynchronously and value outcomes over hours</p><p><strong>Location: </strong>Fully Remote</p><p><strong>Compensation: </strong>Paid in USD. Negotiable based on experience and location</p><h3>About <a href=\"https://himalayas.app/companies/colonist\">Colonist</a>\n</h3><p>We're building the biggest digital board game platform on the internet. Players start 250k games every day. Last year: 60M games, 3,037 years of play. We're a fully remote, asynchronous team spread across multiple continents, focused on crafting extremely polished digital board games that people truly love.</p><h3>About The Role</h3><p>Most apps scale by splitting users apart. We can't. Players share one live game state. Every lag spike is felt mid-game. One viral video can 10x our traffic overnight. Your job: absorb 50k CCU without dropping a single game. </p><p>You will own the infrastructure behind every game session: clusters, deploys, databases, the edge, and the path from merge to production. You will make our infra knowledge shared, so no system depends on one person.</p><h3>What You'll Do</h3><ul>\n<li><p>Own the stack behind every game: game, matchmaking and lobby servers on Kubernetes</p></li>\n<li><p>Manage cluster and cloud resources as code in Terraform</p></li>\n<li><p>Scale servers up and down with live traffic. Pay for players, not idle machines</",
+   "pubDate": 1790734454,
+   "expiryDate": 1795918453,
+   "applicationLink": "https://himalayas.app/companies/colonist/jobs/devops-engineer",
+   "guid": "https://himalayas.app/companies/colonist/jobs/devops-engineer"
+  },
+  {
+   "title": "Android Software Engineer - AI Neobank App",
+   "excerpt": "About DoitWe are focused on reinventing how people spend, save, invest, exchange, travel, and more.",
+   "companyName": "Bjak",
+   "companySlug": "bjak",
+   "companyLogo": "https://cdn-images.himalayas.app/8ub8wtihrfrm3vfivlkcojai4np3",
+   "employmentType": "Full Time",
+   "minSalary": null,
+   "maxSalary": null,
+   "salaryPeriod": "annual",
+   "seniority": [
+    "Mid-level"
+   ],
+   "currency": null,
+   "locationRestrictions": [
+    "Netherlands"
+   ],
+   "timezoneRestrictions": [
+    1
+   ],
+   "categories": [
+    "Android-Software-Engineer",
+    "Android-Engineer",
+    "Mobile-Android-Engineer",
+    "Mobile-Software-Engineer-(IOS-Android)",
+    "Android-Developer-Jobs",
+    "Software-Engineer",
+    "Developer"
+   ],
+   "parentCategories": [
+    "Developer"
+   ],
+   "description": "<h3><strong>About Doit</strong></h3><p>We are focused on reinventing how people spend, save, invest, exchange, travel, and more. Our objective is to build tools that will help people get more from their money and become an expert at ease. We believe AI will help make finance smart, assessible and safe.   </p><p>We are looking for the most talented and driven people we can find. We are looking for people who work for their passion, not counting hours. Who loves building great next-generation products, not status quo. Who cares about redefining how everyone around us can get the best financial applications, not for an exclusive few. We have teams working around the world, with over 20 nationalities and growing from our offices and remotely. Join us and build a better future for our society.  </p><p><em>In 2019, we built the first mobile-first, insurance platform, enabling insurance to be accessible online by millions in the region. Today, it's the leading insurance platform in Southeast Asia.</em></p><h3><strong>The Role</strong></h3><p>We are looking for Android software engineers to build the native Android experience for Doit's AI Neobank App.<br><br>This role is for someone who cares about clean user flows, fast performance, product quality and shipping reliable mobile features used by real customers.</p><h3><strong>What You'll Own</strong></h3><ul>\n<li><p>Build and ship Android features using Kotlin.</p></li>\n<li><p>Create clean mobile flows for insurance, payments, claims",
+   "pubDate": 1790734290,
+   "expiryDate": 1795918289,
+   "applicationLink": "https://himalayas.app/companies/bjak/jobs/android-software-engineer-ai-neobank-app-273715112",
+   "guid": "https://himalayas.app/companies/bjak/jobs/android-software-engineer-ai-neobank-app-273715112"
+  },
+  {
+   "title": "Architecture Operations Specialists: Structured Data for Post-Training Evaluatio",
+   "excerpt": "What We're ResearchingWe're running a paid study on data structuring practices within architecture firms.",
+   "companyName": "Terac",
+   "companySlug": "terac",
+   "companyLogo": "https://cdn-images.himalayas.app/y0q4p6irnizjhlrejw4lu9rdgeur",
+   "employmentType": "Contractor",
+   "minSalary": 100,
+   "maxSalary": 100,
+   "salaryPeriod": "hourly",
+   "seniority": [
+    "Mid-level"
+   ],
+   "currency": "USD",
+   "locationRestrictions": [
+    "United States"
+   ],
+   "timezoneRestrictions": [
+    -10,
+    -9,
+    -8,
+    -7,
+    -6,
+    -5,
+    14
+   ],
+   "categories": [
+    "Training-Architecture",
+    "Training-Architect"
+   ],
+   "parentCategories": [],
+   "description": "<h3>What We're Researching</h3><p>We're running a paid study on data structuring practices within architecture firms. Transforming messy operational data into clean evaluations and structured formats is critical for post-training workflows. Help us evaluate the current methodologies and challenges teams face when organizing this specialized architectural data.</p><h3>How It Works</h3><p>You will participate in a remote video interview to discuss how your firm handles operational data. We will ask you to walk us through the end-to-end process of turning unstructured architectural data into usable evaluations. You will be shown a few hypothetical data transformation scenarios and asked to provide feedback on potential workflow improvements. We will also ask you to describe the specific tools and practices your team relies on for post-training data management.</p><h3>Who This Is For</h3><p>We are looking for operations specialists, data managers, and technical architects who handle operational data within architecture firms. We welcome data operations leads, BIM managers, and internal workflow specialists with direct experience in post-training evaluations. If you regularly wrangle messy firm data into structured formats, this study is a great fit.</p><h3>What You'll Do</h3><ul>\n<li><p>Discuss how your architecture firm transforms messy operational data into structured evaluations.</p></li>\n<li><p>Walk us through your day-to-day data management and post-training workflows.</p></",
+   "pubDate": 1790741017,
+   "expiryDate": 1795925016,
+   "applicationLink": "https://himalayas.app/companies/terac/jobs/architecture-operations-specialists-structured-data-for-post-training-evaluatio",
+   "guid": "https://himalayas.app/companies/terac/jobs/architecture-operations-specialists-structured-data-for-post-training-evaluatio"
+  },
+  {
+   "title": "Product Manager - AI Neobank App",
+   "excerpt": "About BJAKThe original mission of BJAK is we believe people deserve smarter ways to plan, save and grow their money.",
+   "companyName": "Bjak",
+   "companySlug": "bjak",
+   "companyLogo": "https://cdn-images.himalayas.app/8ub8wtihrfrm3vfivlkcojai4np3",
+   "employmentType": "Full Time",
+   "minSalary": null,
+   "maxSalary": null,
+   "salaryPeriod": "annual",
+   "seniority": [
+    "Mid-level"
+   ],
+   "currency": null,
+   "locationRestrictions": [
+    "Poland"
+   ],
+   "timezoneRestrictions": [
+    1
+   ],
+   "categories": [
+    "Banking-Product-Manager",
+    "Bank-Product-Manager",
+    "AI-Product-Manager",
+    "AI-ML-Product-Manager",
+    "Product-Manager-II-AI",
+    "Digital-Banking-Product-Management",
+    "Product-Manager",
+    "Product"
+   ],
+   "parentCategories": [
+    "Product"
+   ],
+   "description": "<h3>About BJAK</h3><p>The original mission of BJAK is we believe people deserve smarter ways to plan, save and grow their money. This is the origin of our name.<br><br>Started in 2019, we built the first mobile-first, insurance platform, enabling insurance to be accessible online by millions in the region. Today, its the leading insurance platform in Southeast Asia.<br><br>Today, we are expanding ways to help people in the region — this includes spending, saving, investing, exchanging, travelling, and more. Our mission is help people get more from their money every day.<br><br>We have teams working around the world, with over 20 nationalities from our offices and remotely, who truly enjoys their work. We are looking for the most talented and driven people we can find. We are looking for people who work for their passion, not counting hours. Who loves building great next-generation products, not status quo. Who cares about redefining how everyone around us can get the best financial applications, not for an exclusive few.<br><br>If you're this person, we'd love to talk to you.</p><h3><strong>The Role</strong></h3><p>We are looking for product managers to own product areas within BJAK's AI Neobank app.<br><br>This role is for builders who can understand users, define product direction, work with engineering and design, launch fast and keep improving after release.</p><h3><strong>What You'll Own</strong></h3><ul>\n<li><p>Own product areas across insurance, payments, savings, inve",
+   "pubDate": 1790741023,
+   "expiryDate": 1795925022,
+   "applicationLink": "https://himalayas.app/companies/bjak/jobs/product-manager-ai-neobank-app-6427846949",
+   "guid": "https://himalayas.app/companies/bjak/jobs/product-manager-ai-neobank-app-6427846949"
+  }
+ ]
+}

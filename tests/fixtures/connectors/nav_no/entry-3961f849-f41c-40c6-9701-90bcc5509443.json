@@ -1,0 +1,88 @@
+{
+ "uuid": "3961f849-f41c-40c6-9701-90bcc5509443",
+ "ad_content": {
+  "uuid": "3961f849-f41c-40c6-9701-90bcc5509443",
+  "published": "2026-09-25T00:00:00+02:00",
+  "expires": "2026-10-25T00:00:00+02:00",
+  "updated": "2026-09-28T08:04:25.955212+02:00",
+  "workLocations": [
+   {
+    "country": "NORGE",
+    "address": "Jan Johansonsgate",
+    "city": "STAVANGER",
+    "postalCode": "4011",
+    "county": "ROGALAND",
+    "municipal": "STAVANGER"
+   }
+  ],
+  "contactList": [],
+  "title": "Sikkerhetspost A1 Sykepleier/Vernepleier Fast 100% D/A med hver 4. helg. ",
+  "description": "<p>Post A1 har 10 sengeplasser og er sikkerhetspost for Helse Stavanger med Rogaland Fylke som nedslagsfelt. Post A1 har spesialkompetanse innen observasjon, utredning, behandling og rehabilitering av pasienter med alvorlig sinnslidelse som også har langvarig dokumentert utfordrende adferd eller svært alvorlig voldspotensiale. Våre pasienter kommer fra fengselsvesen eller internt innenfor psykiatrien.</p><p>Vi har et godt og inkluderende arbeidsmiljø hvor trivsel og innvirkning på egen arbeidssituasjon vektlegges. Vi har en kjønnsfordeling med 60 % menn på jobb og har derfor et godt og blandet miljø med kvinner og menn. Vi oppfordrer menn til å søke.</p><p>Se film om Stavanger universitetssjukehus her: <a href=\"https://vimeo.com/1159186100/fe7c710a77?share&#61;copy&amp;fl&#61;sv&amp;fe&#61;ci\" rel=\"nofollow\">https://vimeo.com/1159186100/fe7c710a77?share&#61;copy&amp;fl&#61;sv&amp;fe&#61;ci</a></p><p><strong>Attester, vitnemål og eventuell annen relevant dokumentasjon må vedlegges søknaden. </strong> </p><br />\n<h3>Arbeidsoppgaver</h3><ul><li>Gi miljøterapeutisk behandling, støtte, sykepleie og omsorg til inneliggende pasienter gjennom teambasert behandling.</li><li>Bidra til å sikre sykepleiedekning i avdelingen.</li><li>Bidra til tverrfaglighet i behandlingsmiljøet.</li><li>Bidra til å høyne faglig standard i behandlingsmiljøet.</li><li>PK oppgaver og pårørendearbeid </li><li>Følge opp pasienter i rehabilitering og utskrivingsfase. </li><li>Være faglig ansvarlig i posten jf.",
+  "sourceurl": "",
+  "source": "IMPORTAPI",
+  "applicationUrl": "https://candidate.webcruiter.com/cv?advertid=5186187754&language=nb&link_source_id=17&utm_medium=talentech_publishing&utm_source=nav",
+  "applicationDue": "2026-10-25T00:00:00",
+  "occupationCategories": [
+   {
+    "level1": "Helse og sosial",
+    "level2": "Sykepleier"
+   },
+   {
+    "level1": "Helse og sosial",
+    "level2": "Vernepleier"
+   }
+  ],
+  "categoryList": [
+   {
+    "categoryType": "ESCO",
+    "code": "http://data.europa.eu/esco/occupation/9c55aa23-e3f2-4c00-8c90-5ed5204951a3",
+    "name": "personlig assistent",
+    "description": "",
+    "score": 1.0
+   },
+   {
+    "categoryType": "JANZZ",
+    "code": "21536",
+    "name": "Sykepleier",
+    "description": "",
+    "score": 1.0
+   },
+   {
+    "categoryType": "JANZZ",
+    "code": "387198",
+    "name": "Vernepleier",
+    "description": "",
+    "score": 1.0
+   },
+   {
+    "categoryType": "STYRK08",
+    "code": "2223",
+    "name": "Sykepleiere",
+    "description": "",
+    "score": 1.0
+   },
+   {
+    "categoryType": "STYRK08",
+    "code": "2224",
+    "name": "Vernepleiere",
+    "description": "",
+    "score": 1.0
+   }
+  ],
+  "jobtitle": "Sykepleier/Vernepleier hver 4. helg",
+  "link": "https://arbeidsplassen.nav.no/stillinger/stilling/3961f849-f41c-40c6-9701-90bcc5509443",
+  "employer": {
+   "name": "Klinikk psykisk helsevern voksne, Sikkerhetspost A1, Helse Stavanger HF",
+   "orgnr": "976248910",
+   "description": "<p><em> </em></p>\n<p><em>Helse Stavanger HF, Stavanger universitetssjukehus, har ansvar for spesialisthelsetjenesten i Sør-Rogaland. Med nærmere 8000 ansatte er vi en av regionens største arbeidsgivere. Pasientbehandling, utdanning av helsepersonell, pasientopplæring og forskning er våre hovedoppgav",
+   "homepage": ""
+  },
+  "engagementtype": "Fast",
+  "extent": "Heltid",
+  "starttime": "",
+  "positioncount": "1",
+  "sector": "Offentlig"
+ },
+ "sistEndret": "2026-09-28T08:04:25.955+02:00",
+ "status": "ACTIVE"
+}

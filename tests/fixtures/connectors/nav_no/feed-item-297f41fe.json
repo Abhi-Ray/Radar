@@ -1,0 +1,15 @@
+{
+ "id": "297f41fe-6d82-4a74-9c06-1be9135fa77e",
+ "url": "/api/v1/feedentry/297f41fe-6d82-4a74-9c06-1be9135fa77e",
+ "title": "Kitchen Staff Needed",
+ "content_text": "Stillingsannonse",
+ "date_modified": "2026-09-30T05:17:55.854765+02:00",
+ "_feed_entry": {
+  "uuid": "297f41fe-6d82-4a74-9c06-1be9135fa77e",
+  "status": "ACTIVE",
+  "title": "Kitchen Staff Needed",
+  "businessName": "Momo Chhe As",
+  "municipal": "OSLO",
+  "sistEndret": "2026-09-30T05:17:55.854765+02:00"
+ }
+}

@@ -1,0 +1,48 @@
+{
+  "_note": "Live capture 2026-09-30: GET /pc/v4/jobdetails/{base64(referenznummer)}",
+  "stellenangebotsart": "ARBEIT",
+  "stellenangebotsTitel": "Referent:in IT-Sicherheit Datenanalyse und Betrieb",
+  "quereinstiegGeeignet": false,
+  "stellenangebotsBeschreibung": "Dir ist es wichtig, mit deinem Wissen zukunftsweisende Großprojekte voranzutreiben. Bei uns vernetzt du mit deinem IT-Können Menschen sowie Güter, um Mobilität langfristig zu gestalten. Unterstütze in einem Team die Digitalisierung der Deutschen Bahn und gestalte schon heute mit, wie der Schienenverkehr von morgen aussieht.\n\n\nZum nächstmöglichen Zeitpunkt suchen wir dich als Referent:in IT-Sicherheit Datenanalyse und Betrieb (w/m/d) für die DB Engineering & Consulting GmbH am Standort Berlin.\n\nDeine Aufgaben:\n\n- Mit fundierten Sicherheitsanalysen stärkst du die digitale Widerstandsfähigkeit der DB E&C, schützt wichtige Informationen und trägst dazu bei, dass verlässliche Mobilität sowie gesellschaftliche Infrastruktur dauerhaft sicher und zuverlässig funktionieren\n- Informationssicherheitsvorfälle erkennst du frühzeitig, du unterstützt die Ursachenanalyse und koordinierst die Einleitung und Umsetzung wirksamer Gegenmaßnahmen\n- Die Überwachung und kontinuierliche Verbesserung der operativen Informationssicherheit gehören zu deinem zentralen Aufgabenbereich\n- Du erstellst Analysen, Berichte und Kennzahlen aus Sicherheitsdaten von Anwendungen und Cloud-Plattformen\n- Dadurch trägst du zur frühzeitigen und langfristigen Risikosteuerung, Auditfähigkeit und kontinuierlichen Weiterentwicklung des Informationssicherheitsmanagements bei\n- Die Einführung und der Betrieb von Sicherheitslösungen sowie die sorgfältige Dokumentation deiner Arbeit ergänzen dein Aufgabenfeld\n- Als Schnittstelle für Informationssicherheitsvorfälle innerhalb der DB E&C arbeitest du mit dem DB-Konzern, dem CSIRT, dem IT-Betrieb sowie internen und externen Stakeholder:innen eng zusammen\n\n\nDein Profil:\n\n- Basis deines Erfolgs ist ein Studium als Informatiker:in, Wirtschaftsinformatiker:in,Spezialist:in IT-Security oder eine vergleichbare Qualifikation durch relevante Berufserfahrung\n- Deine Kenntnisse in der Behandlung von Sicherheitsvorfällen, im Schwachstellenmanagement und in der Sicherheitsüberwachung aus vorherigen vergleichbaren Rollen setzt du sicher ein\n- Dir sind moderne Angriffsverfahren und Sicherheitsarchitekturen vertraut, Erfahrungen in der digitalen Forensik sind von Vorteil\n- Du verfügst über praktische Erfahrung in der Analyse von Protokoll-, Sicherheits- und Ereignisdaten\n- Im Umgang mit bzw. in der Anwendung von Werkzeugen zur Erkennung von Bedrohungen auf Endgeräten bist du sicher\n- Deine analytische, vorausschauende und selbstorganisierte Arbeitsweise bewahrst du auch in anspruchsvollen Situationen\n- In der Zusammenarbeit weißt du dich konstruktiv-empathisch durchzusetzen und du fokussierst die pragmatische aber langfristig wirksame Lösung von Herausforderungen\n- Sehr gute Deutschkenntnisse in Wort und Schrift sowie gute Englischkenntnisse ermöglichen dir eine sichere Zusammenarbeit\n\n\nDas ist uns wichtig:\n\nUnser Anspruch ist es, allen Kandidat:innen bei gleicher Eignung die gleichen Chancen für den Einstieg bei uns zu bieten. Wir fördern aktiv die Vielfalt und das Miteinander in unseren Teams. Wir schätzen jede Bewerbung, unabhängig von Geschlecht, Nationalität, ethnischer und sozialer Herkunft, Religion, Weltanschauung, Behinderung, Alter, Dauer der Arbeitslosigkeit sowie sexueller Orientierung und Identität.\n\n\nDeine Vorteile\n* Du leistest Großes und bekommst auch Großes zurück: ein marktgerechtes Gehaltspaket mit in der Regel unbefristetem Arbeitsvertrag und Arbeitsplatzgarantie sowie vielfältige Nebenleistungen und eine betriebliche Altersvorsorge.\n* Bis zu 40 Tage Urlaub: Bei uns kannst du selbst entscheiden, ob du mehr Urlaub nehmen, deine Arbeitszeit verkürzen oder gerne mehr verdienen möchtest. Je nachdem, wie es zu deinem Leben passt.\n* Wir bieten dir attraktive, individuelle Angebote zur beruflichen Orientierung und Weiterentwicklung wie das DB Karriere Lab, die konzernweite Nachfolgeplanung und langfristige Entwicklungsmöglichkeiten auf Fach-, Projekt- oder Führungsebene.\n* Faszinierende Projekte und Aufgaben – von spannenden regionalen Infrastrukturmaßnahmen bis hin zu den größten Baustellen Europas – fordern dein Können und warten auf deine Handschrift.\n* Wir fördern flexible, individuelle Arbeitsmodelle und unterstützen, wenn es betrieblich möglich ist, durch moderne Arbeitsformen, z.B. mobiles Arbeiten.\n\n\nChancengleichheit und selbstbestimmte Teilhabe Schwerbehinderter und Gleichgestellter sowie eine respektvolle Zusammenarbeit sind innerhalb des DB Konzerns fest verankerte Grundsätze. Deshalb werden schwerbehinderte und gleichgestellte Bewerber:innen bei gleicher Eignung bevorzugt berücksichtigt.",
+  "arbeitszeitSchichtNachtWochenende": false,
+  "arbeitszeitTeilzeitAbend": true,
+  "arbeitszeitTeilzeitNachmittag": true,
+  "arbeitszeitTeilzeitVormittag": true,
+  "arbeitszeitTeilzeitFlexibel": false,
+  "arbeitszeitVollzeit": true,
+  "eintrittszeitraum": {
+    "von": "2026-09-25"
+  },
+  "verguetungsangabe": "KEINE_ANGABEN",
+  "vertragsdauer": "KEINE_ANGABE",
+  "istGeringfuegigeBeschaeftigung": false,
+  "istBehinderungGefordert": false,
+  "stellenlokationen": [
+    {
+      "adresse": {
+        "plz": "10789",
+        "ort": "Berlin",
+        "region": "BERLIN",
+        "land": "DEUTSCHLAND"
+      },
+      "breite": 52.5015865,
+      "laenge": 13.3374446
+    }
+  ],
+  "homeofficemoeglich": false,
+  "chiffrenummer": "582588",
+  "istPrivateArbeitsvermittlung": false,
+  "istArbeitnehmerUeberlassung": false,
+  "veroeffentlichungszeitraum": {
+    "von": "2026-09-24"
+  },
+  "datumErsteVeroeffentlichung": "2026-09-24",
+  "aenderungsdatum": "2026-09-25T06:59:34.767",
+  "istBetreut": true,
+  "hauptberuf": "Informatiker/in",
+  "firma": "Deutsche Bahn AG",
+  "arbeitgeberKundennummerHash": "yjIOvgjf5Crlw0chSxcAnUCWkGmLYyoftEbH3IL5NMc=",
+  "allianzpartnerUrl": "www.deutschebahn.com/Karriere",
+  "allianzpartnerName": "Deutsche Bahn AG",
+  "referenznummer": "12456-1636264-1-S"
+}

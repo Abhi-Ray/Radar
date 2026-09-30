@@ -1,0 +1,224 @@
+{
+ "jobs": [
+  {
+   "absolute_url": "https://job-boards.greenhouse.io/gitlab/jobs/8697493002",
+   "data_compliance": [
+    {
+     "type": "gdpr",
+     "requires_consent": false,
+     "requires_processing_consent": false,
+     "requires_retention_consent": false,
+     "retention_period": null,
+     "demographic_data_consent_applies": false
+    }
+   ],
+   "internal_job_id": 6475328002,
+   "location": {
+    "name": "Remote, United Kingdom"
+   },
+   "metadata": [
+    {
+     "id": 4595831002,
+     "name": "Quota Coverage Type",
+     "value": "n/a",
+     "value_type": "single_select"
+    }
+   ],
+   "id": 8697493002,
+   "updated_at": "2026-09-29T10:38:50-04:00",
+   "requisition_id": "6799",
+   "title": "Senior Fullstack Engineer, Marketing",
+   "company_name": "GitLab",
+   "first_published": "2026-08-11T18:50:24-04:00",
+   "language": "en",
+   "application_deadline": null,
+   "content": "&lt;div class=&quot;content-intro&quot;&gt;&lt;p&gt;GitLab is the intelligent orchestration platform for DevSecOps. GitLab enables organizations to increase developer productivity, improve operational efficiency, reduce security and compliance risk, and accelerate digital transformation. More than 50 million registered users and more than 50% of the Fortune 100* trust GitLab to ship better, more secure software faster.&lt;/p&gt;\n&lt;p&gt;The same principles built into our products are reflected in how our team works: we embrace AI as a core productivity multiplier, with all team members expected to incorporate AI into their daily workflows to drive efficiency, innovation, and impact. GitLab is where careers accelerate, innovation flourishes, and every voice is valued. Our high-performance culture is driven by our values&amp;nbsp;and continuous knowledge exchange, enabling our team members to reach their full potential while collaborating with industry leaders to solve complex problems. &lt;a href=&quot;https://www.youtube.com/watch?v=OuZIb5zszQI&quot;&gt;Co-create the future with us&lt;/a&gt; as we build technology that transforms how the world develops software.&lt;/p&gt;\n&lt;p&gt;*&lt;em&gt;Fortune 500® is a registered trademark of Fortune Media IP Limited, used under license. Claim based on GitLab data. Fortune 100 refers to the top 20% ranked companies in the 2025 Fortune 500 list, published in June 2025. Fortune and Fortune Media IP Limited are not affiliated with, and do not endorse products or services of GitLab.&lt;/em&gt;&lt;/p&gt;&lt;/div&gt;&lt;h2&gt;An overview of this role&lt;/h2&gt;\n&lt;p&gt;As a Senior Fullstack Engineer on GTM Engineering, you will design and build the backend systems and services that power our go-to-market and growth platforms, while a",
+   "departments": [
+    {
+     "id": 4049468002,
+     "name": "Digital Experience",
+     "child_ids": [],
+     "parent_id": 4011045002
+    }
+   ],
+   "offices": [],
+   "ai_disclaimer": null,
+   "include_ai_disclaimer": null,
+   "ai_opt_out_request_url": null
+  },
+  {
+   "absolute_url": "https://job-boards.greenhouse.io/gitlab/jobs/8628447002",
+   "data_compliance": [
+    {
+     "type": "gdpr",
+     "requires_consent": false,
+     "requires_processing_consent": false,
+     "requires_retention_consent": false,
+     "retention_period": null,
+     "demographic_data_consent_applies": false
+    }
+   ],
+   "internal_job_id": 6445956002,
+   "location": {
+    "name": "Remote, Israel; Remote, Poland; Remote, United Kingdom"
+   },
+   "metadata": [
+    {
+     "id": 4595831002,
+     "name": "Quota Coverage Type",
+     "value": "n/a",
+     "value_type": "single_select"
+    }
+   ],
+   "id": 8628447002,
+   "updated_at": "2026-09-29T10:38:50-04:00",
+   "requisition_id": "6649",
+   "title": "Senior Security Engineer, Security Incident Response Team (SIRT) - EMEA",
+   "company_name": "GitLab",
+   "first_published": "2026-07-10T16:02:45-04:00",
+   "language": "en",
+   "application_deadline": null,
+   "content": "&lt;div class=&quot;content-intro&quot;&gt;&lt;p&gt;GitLab is the intelligent orchestration platform for DevSecOps. GitLab enables organizations to increase developer productivity, improve operational efficiency, reduce security and compliance risk, and accelerate digital transformation. More than 50 million registered users and more than 50% of the Fortune 100* trust GitLab to ship better, more secure software faster.&lt;/p&gt;\n&lt;p&gt;The same principles built into our products are reflected in how our team works: we embrace AI as a core productivity multiplier, with all team members expected to incorporate AI into their daily workflows to drive efficiency, innovation, and impact. GitLab is where careers accelerate, innovation flourishes, and every voice is valued. Our high-performance culture is driven by our values&amp;nbsp;and continuous knowledge exchange, enabling our team members to reach their full potential while collaborating with industry leaders to solve complex problems. &lt;a href=&quot;https://www.youtube.com/watch?v=OuZIb5zszQI&quot;&gt;Co-create the future with us&lt;/a&gt; as we build technology that transforms how the world develops software.&lt;/p&gt;\n&lt;p&gt;*&lt;em&gt;Fortune 500® is a registered trademark of Fortune Media IP Limited, used under license. Claim based on GitLab data. Fortune 100 refers to the top 20% ranked companies in the 2025 Fortune 500 list, published in June 2025. Fortune and Fortune Media IP Limited are not affiliated with, and do not endorse products or services of GitLab.&lt;/em&gt;&lt;/p&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;An overview of this role&lt;/strong&gt;&lt;/p&gt;\n&lt;p&gt;As a Senior Security Engineer on GitLab’s Security Incident Response Team (SIRT), you will play a critical role in defending GitLab.com and ",
+   "departments": [
+    {
+     "id": 4099706002,
+     "name": "Security Operations",
+     "child_ids": [],
+     "parent_id": 4011054002
+    }
+   ],
+   "offices": [],
+   "ai_disclaimer": null,
+   "include_ai_disclaimer": null,
+   "ai_opt_out_request_url": null
+  },
+  {
+   "absolute_url": "https://job-boards.greenhouse.io/gitlab/jobs/8615319002",
+   "data_compliance": [
+    {
+     "type": "gdpr",
+     "requires_consent": false,
+     "requires_processing_consent": false,
+     "requires_retention_consent": false,
+     "retention_period": null,
+     "demographic_data_consent_applies": false
+    }
+   ],
+   "internal_job_id": 6440848002,
+   "location": {
+    "name": "Bangalore, India"
+   },
+   "metadata": [
+    {
+     "id": 4595831002,
+     "name": "Quota Coverage Type",
+     "value": "n/a",
+     "value_type": "single_select"
+    }
+   ],
+   "id": 8615319002,
+   "updated_at": "2026-09-29T10:38:50-04:00",
+   "requisition_id": "6566",
+   "title": "Senior Site Reliability Engineer - Monitoring and Anomaly Detection (Monetization)  ",
+   "company_name": "GitLab",
+   "first_published": "2026-07-23T04:55:12-04:00",
+   "language": "en",
+   "application_deadline": null,
+   "content": "&lt;div class=&quot;content-intro&quot;&gt;&lt;p&gt;GitLab is the intelligent orchestration platform for DevSecOps. GitLab enables organizations to increase developer productivity, improve operational efficiency, reduce security and compliance risk, and accelerate digital transformation. More than 50 million registered users and more than 50% of the Fortune 100* trust GitLab to ship better, more secure software faster.&lt;/p&gt;\n&lt;p&gt;The same principles built into our products are reflected in how our team works: we embrace AI as a core productivity multiplier, with all team members expected to incorporate AI into their daily workflows to drive efficiency, innovation, and impact. GitLab is where careers accelerate, innovation flourishes, and every voice is valued. Our high-performance culture is driven by our values&amp;nbsp;and continuous knowledge exchange, enabling our team members to reach their full potential while collaborating with industry leaders to solve complex problems. &lt;a href=&quot;https://www.youtube.com/watch?v=OuZIb5zszQI&quot;&gt;Co-create the future with us&lt;/a&gt; as we build technology that transforms how the world develops software.&lt;/p&gt;\n&lt;p&gt;*&lt;em&gt;Fortune 500® is a registered trademark of Fortune Media IP Limited, used under license. Claim based on GitLab data. Fortune 100 refers to the top 20% ranked companies in the 2025 Fortune 500 list, published in June 2025. Fortune and Fortune Media IP Limited are not affiliated with, and do not endorse products or services of GitLab.&lt;/em&gt;&lt;/p&gt;&lt;/div&gt;&lt;h2&gt;An overview of this role&lt;/h2&gt;\n&lt;p&gt;The Observability, Monitoring, and Integrations team sits within GitLab&#39;s Monetization section and owns end-to-end observability, monitoring, and detection across ",
+   "departments": [
+    {
+     "id": 4115239002,
+     "name": "Data Engineering",
+     "child_ids": [],
+     "parent_id": 4011044002
+    }
+   ],
+   "offices": [
+    {
+     "id": 4112140002,
+     "name": "India",
+     "location": null,
+     "child_ids": [],
+     "parent_id": 4019590002
+    }
+   ],
+   "ai_disclaimer": null,
+   "include_ai_disclaimer": null,
+   "ai_opt_out_request_url": null
+  },
+  {
+   "absolute_url": "https://job-boards.greenhouse.io/gitlab/jobs/8773546002",
+   "data_compliance": [
+    {
+     "type": "gdpr",
+     "requires_consent": false,
+     "requires_processing_consent": false,
+     "requires_retention_consent": false,
+     "retention_period": null,
+     "demographic_data_consent_applies": false
+    }
+   ],
+   "internal_job_id": 6510457002,
+   "location": {
+    "name": "Remote"
+   },
+   "metadata": [
+    {
+     "id": 4595831002,
+     "name": "Quota Coverage Type",
+     "value": "n/a",
+     "value_type": "single_select"
+    }
+   ],
+   "id": 8773546002,
+   "updated_at": "2026-09-29T10:38:50-04:00",
+   "requisition_id": "6923",
+   "title": "Site Reliability Engineer, Infrastructure Platforms — UK (Intermediate to Senior Staff)",
+   "company_name": "GitLab",
+   "first_published": "2026-09-08T13:52:41-04:00",
+   "language": "en",
+   "application_deadline": null,
+   "content": "&lt;div class=&quot;content-intro&quot;&gt;&lt;p&gt;GitLab is the intelligent orchestration platform for DevSecOps. GitLab enables organizations to increase developer productivity, improve operational efficiency, reduce security and compliance risk, and accelerate digital transformation. More than 50 million registered users and more than 50% of the Fortune 100* trust GitLab to ship better, more secure software faster.&lt;/p&gt;\n&lt;p&gt;The same principles built into our products are reflected in how our team works: we embrace AI as a core productivity multiplier, with all team members expected to incorporate AI into their daily workflows to drive efficiency, innovation, and impact. GitLab is where careers accelerate, innovation flourishes, and every voice is valued. Our high-performance culture is driven by our values&amp;nbsp;and continuous knowledge exchange, enabling our team members to reach their full potential while collaborating with industry leaders to solve complex problems. &lt;a href=&quot;https://www.youtube.com/watch?v=OuZIb5zszQI&quot;&gt;Co-create the future with us&lt;/a&gt; as we build technology that transforms how the world develops software.&lt;/p&gt;\n&lt;p&gt;*&lt;em&gt;Fortune 500® is a registered trademark of Fortune Media IP Limited, used under license. Claim based on GitLab data. Fortune 100 refers to the top 20% ranked companies in the 2025 Fortune 500 list, published in June 2025. Fortune and Fortune Media IP Limited are not affiliated with, and do not endorse products or services of GitLab.&lt;/em&gt;&lt;/p&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;An overview of this role&lt;/strong&gt;&lt;/p&gt;\n&lt;p&gt;Site Reliability Engineers keep GitLab&#39;s user-facing services and production systems running reliably at scale. They combine software en",
+   "departments": [
+    {
+     "id": 4016843002,
+     "name": "Platforms Engineering",
+     "child_ids": [],
+     "parent_id": 4011044002
+    }
+   ],
+   "offices": [
+    {
+     "id": 4019553002,
+     "name": "EMEA",
+     "location": "Turkey",
+     "child_ids": [
+      4141035002,
+      4042500002,
+      4040905002,
+      4040903002,
+      4112146002,
+      4112147002,
+      4112148002,
+      4040908002,
+      4112149002,
+      4112150002,
+      4040907002,
+      4112151002,
+      4112152002,
+      4112153002,
+      4112154002,
+      4041064002
+     ],
+     "parent_id": null
+    }
+   ],
+   "ai_disclaimer": null,
+   "include_ai_disclaimer": null,
+   "ai_opt_out_request_url": null
+  }
+ ],
+ "meta": {
+  "total": 4
+ }
+}
