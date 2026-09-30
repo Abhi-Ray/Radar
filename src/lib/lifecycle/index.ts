@@ -289,7 +289,11 @@ export async function sweepLifecycle(db: Db, opts: SweepOptions): Promise<SweepR
         .where(and(openCond, or(isNull(jobs.scoreVersion), ne(jobs.scoreVersion, SCORE_VERSION))))
         .orderBy(asc(jobs.id))
         .limit(limit - ids.length);
-      for (const r of outdated) if (!have.has(r.id)) (have.add(r.id), ids.push(r.id));
+      for (const r of outdated) {
+        if (have.has(r.id)) continue;
+        have.add(r.id);
+        ids.push(r.id);
+      }
     }
     if (ids.length < limit) {
       const startOfDay = new Date(`${utcDay(now)}T00:00:00.000Z`);
@@ -300,7 +304,11 @@ export async function sweepLifecycle(db: Db, opts: SweepOptions): Promise<SweepR
         .where(and(openCond, lt(jobScores.computedAt, startOfDay)))
         .orderBy(asc(jobScores.computedAt))
         .limit(limit - ids.length);
-      for (const r of aged) if (!have.has(r.id)) (have.add(r.id), ids.push(r.id));
+      for (const r of aged) {
+        if (have.has(r.id)) continue;
+        have.add(r.id);
+        ids.push(r.id);
+      }
     }
     for (const id of ids) {
       if (opts.signal?.aborted) break;

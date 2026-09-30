@@ -1,6 +1,6 @@
 /**
  * Arbeitnow job board API (free, public, Europe/Germany focused):
- *   GET https://www.arbeitnow.com/api/job-board-api?page=N  (newest first, 100 per page)
+ *   GET https://www.arbeitnow.com/api/job-board-api?page=N  (newest first; the API sets the page size, 326 in 2026-09)
  * Broad feed → relevance pre-filter; capped pages → incremental. Terms ask for a link back.
  * https://www.arbeitnow.com/blog/job-board-api
  */

@@ -37,6 +37,18 @@ describe('relevance pre-filter', () => {
   it('tags can make a vague title relevant', () => {
     expect(relevanceOf('Engineer II', ['Kubernetes'])).toBe('security');
     expect(relevanceOf('Engineer II', ['Marketing'])).toBeNull();
+    expect(relevanceOf('Engineer II', ['Security'])).toBe('security');
+    expect(relevanceOf('Engineer II', [' Cloud Security '])).toBe('security');
+  });
+
+  it('a department-style tag that merely contains "security" does not make a title relevant', () => {
+    // Live Arbeitnow items (2026-09-30): tags are often department names.
+    expect(relevanceOf('Senior Mechanical Engineer', ['Quantum Platform - Network and Security'])).toBeNull();
+    expect(relevanceOf('Senior R&D Scientist', ['Quantum Platform - Network and Security'])).toBeNull();
+    expect(relevanceOf('Senior Manager (Safety)', ['National Security & Safety'])).toBeNull();
+    expect(relevanceOf('Senior Cryptography Engineer', ['Quantum Platform - Network and Security'])).toBe('security');
+    expect(relevanceOf('Staff DevSecOps Engineer', ['Quantum Platform - Network and Security'])).toBe('security');
+    expect(relevanceOf('Security Engineer II', ['Platform'])).toBe('security');
   });
 
   it('decision: disabled keeps all, keywords extend, empty titles pass to validation', () => {

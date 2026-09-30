@@ -26,8 +26,11 @@ export type TaskResult = Record<string, unknown>;
 export interface TaskContext {
   db: Db;
   requestedBy: RunRequester;
-  /** Worker start (heartbeat reference before the first successful run). */
-  startedAt: Date;
+  /**
+   * Worker start: the heartbeat reference before the first successful daily run. Null for one-shot
+   * CLI tasks (a process that just started says nothing about whether the pipeline ran).
+   */
+  startedAt: Date | null;
   signal?: AbortSignal;
 }
 

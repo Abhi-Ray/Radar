@@ -74,7 +74,7 @@ async function main(): Promise<number> {
   const onSignal = () => abort.abort(new Error('interrupted'));
   process.once('SIGINT', onSignal);
   process.once('SIGTERM', onSignal);
-  const ctx: TaskContext = { db: getDb(), requestedBy: 'cli', startedAt: new Date(), signal: abort.signal };
+  const ctx: TaskContext = { db: getDb(), requestedBy: 'cli', startedAt: null, signal: abort.signal };
   try {
     const result = await dispatch(args, ctx);
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);

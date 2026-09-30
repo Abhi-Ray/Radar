@@ -7,12 +7,21 @@
  */
 import type { PrefilterResult } from './types';
 
-export const RELEVANCE_VERSION = 'relevance@2026-09-30.1';
+export const RELEVANCE_VERSION = 'relevance@2026-09-30.2';
+
+/** The bare word "security": relevant in a title, too vague in a department-style tag. */
+const BARE_SECURITY_RE = /\bsecurity\b/i;
+
+/**
+ * A tag that is itself a security category ("Security", "IT Security", "Cloud Security"), as
+ * opposed to a department name that merely contains the word ("Quantum Platform - Network and
+ * Security", "National Security & Safety").
+ */
+const SECURITY_TAG_RE = /^(?:(?:it|information|cyber|cloud|application|network|product|infrastructure|data)[\s-])?security(?:[\s-](?:engineering|operations))?$/i;
 
 const SECURITY_RES: readonly RegExp[] = [
   /\b(?:cyber[\s-]?security|cybersec|infosec|appsec|devsecops|secops|netsec|sec[\s-]?eng)/i,
-  /\bsecurity\b/i,
-  /\b(?:penetration test|pen[\s-]?test|red[\s-]team|blue[\s-]team|purple[\s-]team|threat (?:hunt|intel|detect)|incident respon|vulnerabilit|soc analyst|security operations|siem|iam engineer|identity (?:and|&) access|zero[\s-]trust|ciso|grc\b)/i,
+  /\b(?:penetration test|pen[\s-]?test|red[\s-]team|blue[\s-]team|purple[\s-]team|threat (?:hunt|intel|detect)|incident respon|vulnerabilit|soc analyst|security operations|siem|iam engineer|identity (?:and|&) access|zero[\s-]trust|ciso|grc\b|cryptograph)/i,
   // Cloud / platform / infrastructure track.
   /\b(?:cloud (?:engineer|architect|platform|infrastructure|ops|operations|developer|consultant|specialist)|cloud[\s-]native|aws|azure|gcp|google cloud|kubernetes|k8s|devops|site reliability|\bsre\b|platform engineer|infrastructure engineer)/i,
   // German
@@ -45,7 +54,9 @@ export type RelevanceBucket = 'security' | 'fullstack';
 export function relevanceOf(title: string, tags: readonly string[] = []): RelevanceBucket | null {
   const t = title.normalize('NFC');
   if (EXCLUDE_RES.some((re) => re.test(t))) return null;
-  const hay = [t, ...tags.map((x) => x.normalize('NFC'))].join(' | ');
+  const cleanTags = tags.map((x) => x.normalize('NFC').trim());
+  const hay = [t, ...cleanTags].join(' | ');
+  if (BARE_SECURITY_RE.test(t) || cleanTags.some((x) => SECURITY_TAG_RE.test(x))) return 'security';
   if (SECURITY_RES.some((re) => re.test(hay))) return 'security';
   if (FULLSTACK_RES.some((re) => re.test(hay))) return 'fullstack';
   return null;

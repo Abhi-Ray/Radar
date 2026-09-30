@@ -6,7 +6,7 @@
 import { and, asc, eq } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { aiCache, alerts, applications, deadLetters, jobChanges, jobs, jobSources, linkChecks, loginAttempts, pipelineRuns, rawSnapshots } from '../../src/db/schema';
-import { raiseAlert, type AlertChannel, type AlertMessage } from '../../src/lib/alerts';
+import { raiseAlertAndNotify, type AlertChannel, type AlertMessage } from '../../src/lib/alerts';
 import { sendMorningDigest } from '../../src/lib/alerts/digest';
 import { checkHeartbeat, HEARTBEAT_DEDUPE_KEY, pingHealthcheck } from '../../src/lib/alerts/heartbeat';
 import { alertSettingsSchema } from '../../src/lib/contracts/settings';
@@ -282,20 +282,20 @@ describe('alerts', () => {
     const channels = [tg, mail];
     const input = { kind: 'source_failed', severity: 'warn' as const, title: 'Source X failed', body: 'details', dedupeKey: 'source_failed:1' };
 
-    const a = await raiseAlert(t.db, input, { now: NOW, channels });
+    const a = await raiseAlertAndNotify(t.db, input, { now: NOW, channels });
     expect(a).toMatchObject({ created: true, notified: ['telegram'] });
     expect(mail.sent.length).toBe(0); // email not enabled in settings
 
-    const b = await raiseAlert(t.db, input, { now: new Date(NOW.getTime() + HOUR_MS), channels });
+    const b = await raiseAlertAndNotify(t.db, input, { now: new Date(NOW.getTime() + HOUR_MS), channels });
     expect(b).toMatchObject({ alertId: a.alertId, created: false, notified: [] });
 
-    const c = await raiseAlert(t.db, { ...input, severity: 'critical' }, { now: new Date(NOW.getTime() + 2 * HOUR_MS), channels });
+    const c = await raiseAlertAndNotify(t.db, { ...input, severity: 'critical' }, { now: new Date(NOW.getTime() + 2 * HOUR_MS), channels });
     expect(c.notified).toEqual(['telegram']);
     expect(tg.sent[1]).toMatchObject({ severity: 'critical', occurrences: 3 });
 
-    const d = await raiseAlert(t.db, input, { now: new Date(NOW.getTime() + 3 * HOUR_MS), channels });
+    const d = await raiseAlertAndNotify(t.db, input, { now: new Date(NOW.getTime() + 3 * HOUR_MS), channels });
     expect(d.notified).toEqual([]);
-    const e = await raiseAlert(t.db, input, { now: new Date(NOW.getTime() + 27 * HOUR_MS), channels });
+    const e = await raiseAlertAndNotify(t.db, input, { now: new Date(NOW.getTime() + 27 * HOUR_MS), channels });
     expect(e.notified).toEqual(['telegram']);
 
     const [row] = await t.db.select().from(alerts).where(eq(alerts.id, a.alertId));
@@ -304,7 +304,7 @@ describe('alerts', () => {
 
     // Acknowledged → the next raise is a new alert.
     await t.db.update(alerts).set({ acknowledgedAt: NOW }).where(eq(alerts.id, a.alertId));
-    const f = await raiseAlert(t.db, input, { now: new Date(NOW.getTime() + 28 * HOUR_MS), channels });
+    const f = await raiseAlertAndNotify(t.db, input, { now: new Date(NOW.getTime() + 28 * HOUR_MS), channels });
     expect(f.created).toBe(true);
     expect(f.alertId).not.toBe(a.alertId);
   });
@@ -314,18 +314,18 @@ describe('alerts', () => {
     const tg = new FakeChannel('telegram');
     const mail = new FakeChannel('email');
     tg.fail = true;
-    const info = await raiseAlert(t.db, { kind: 'note', severity: 'info', title: 'fyi' }, { now: NOW, channels: [tg, mail] });
+    const info = await raiseAlertAndNotify(t.db, { kind: 'note', severity: 'info', title: 'fyi' }, { now: NOW, channels: [tg, mail] });
     expect(info.notified).toEqual([]);
     expect(mail.sent.length).toBe(0);
 
-    const r = await raiseAlert(t.db, { kind: 'x', severity: 'critical', title: 'boom' }, { now: NOW, channels: [tg, mail] });
+    const r = await raiseAlertAndNotify(t.db, { kind: 'x', severity: 'critical', title: 'boom' }, { now: NOW, channels: [tg, mail] });
     expect(r.notified).toEqual(['email']);
     const [row] = await t.db.select().from(alerts).where(eq(alerts.id, r.alertId));
     const json = JSON.stringify(row.sentChannelsJson);
     expect(json).toContain('"ok":false');
     expect(json).not.toContain('AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw');
 
-    const stored = await raiseAlert(t.db, { kind: 'x', severity: 'critical', title: 'quiet' }, { now: NOW, channels: [tg, mail], notify: false });
+    const stored = await raiseAlertAndNotify(t.db, { kind: 'x', severity: 'critical', title: 'quiet' }, { now: NOW, channels: [tg, mail], notify: false });
     expect(stored.notified).toEqual([]);
     expect((await t.db.select().from(alerts)).length).toBe(3);
   });

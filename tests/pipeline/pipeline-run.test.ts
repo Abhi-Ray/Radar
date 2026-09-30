@@ -211,7 +211,7 @@ describe('never mass-close', () => {
     const part = await seedFakeSource(t.db, 'part');
     feed.set('inc', items(6));
     feed.set('part', items(6, 'p'));
-    const r0 = await run();
+    await run();
     clock.advance(24 * HOUR_MS);
     feed.set('inc', items(1));
     feed.set('part', items(1, 'p'));

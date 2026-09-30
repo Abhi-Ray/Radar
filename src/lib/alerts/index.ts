@@ -145,7 +145,18 @@ export function shouldPush(
   return prev !== null && SEVERITY_RANK[severity] > SEVERITY_RANK[prev];
 }
 
-export async function raiseAlert(db: DbOrTx, input: RaiseAlertInput, opts: RaiseAlertOptions = {}): Promise<RaiseAlertResult> {
+/**
+ * Stores (or bumps) an alert and pushes it to the configured channels. The result keeps the
+ * foundation contract `{ alertId, created }`; use `raiseAlertAndNotify` to learn which channels
+ * accepted the push.
+ */
+export async function raiseAlert(db: DbOrTx, input: RaiseAlertInput, opts: RaiseAlertOptions = {}): Promise<{ alertId: number; created: boolean }> {
+  const { alertId, created } = await raiseAlertAndNotify(db, input, opts);
+  return { alertId, created };
+}
+
+/** `raiseAlert` plus the list of channels that accepted the push during this call. */
+export async function raiseAlertAndNotify(db: DbOrTx, input: RaiseAlertInput, opts: RaiseAlertOptions = {}): Promise<RaiseAlertResult> {
   const now = opts.now ?? new Date();
   const stored = await storeAlert(db, input, now);
   const result: RaiseAlertResult = { alertId: stored.alertId, created: stored.created, notified: [] };
