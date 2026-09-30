@@ -70,7 +70,8 @@ async function main(): Promise<number> {
       log.info('wait-for-migrations: schema current', { applied: status.applied, latest: status.latestTag });
       return 0;
     }
-    if (Date.now() + POLL_MS > deadline) {
+    const remainingMs = deadline - Date.now();
+    if (remainingMs <= 0) {
       log.error('wait-for-migrations: timed out', {
         timeoutSec,
         expected: journal.length,
@@ -85,7 +86,8 @@ async function main(): Promise<number> {
         applied: status?.applied ?? null,
       });
     }
-    await new Promise((r) => setTimeout(r, POLL_MS));
+    // The last poll lands exactly on the deadline, so a migration finishing late still counts.
+    await new Promise((r) => setTimeout(r, Math.min(POLL_MS, remainingMs)));
   }
 }
 

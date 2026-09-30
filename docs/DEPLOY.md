@@ -14,7 +14,7 @@ firewall.
 | What | Value |
 |---|---|
 | Public URL | `https://radar.187-127-129-127.sslip.io` (`DOMAIN` / `APP_URL` in `.env`) |
-| VPS | Ubuntu 24.04, UTC, nginx 1.24, Docker + compose v2, certbot 2.9, no swap, 7.8 GB RAM |
+| VPS | Ubuntu 24.04, UTC, 2 vCPU, 7.8 GB RAM, no swap, Docker 29 + compose v5, certbot 2.9, host nginx from Ubuntu (1.24 in 24.04; the installer detects the real version) |
 | Code | `/opt/radar`: a clone of `github.com/Abhi-Ray/Radar`, branch `main`, owned by root |
 | Compose project | `radar` (`/opt/radar/docker-compose.yml`) |
 | Published port | **`127.0.0.1:3100`** → `app:3000`. Nothing else is published; MySQL has no host port. |
@@ -110,7 +110,7 @@ deployed commit, shown by `/api/health`), `NODE_OPTIONS`.
     `/api/auth/login`, answering `429`. The app adds its own per-IP lockout in the database.
   - Every http-level name is prefixed `radar_` (`radar_login`, `radar_app`,
     `radar_connection_upgrade`, `radar_tls`) so nothing clashes with the other sites.
-- **HTTP/2.** nginx 1.24 turns `listen 443 ssl http2` on for *every* site sharing the `:443`
+- **HTTP/2.** On nginx < 1.25.1 (Ubuntu 24.04 ships 1.24) `listen 443 ssl http2` turns HTTP/2 on for *every* site sharing the `:443`
   socket, so `ops/install.sh --http2 auto` enables it only when another enabled site already
   does (then nothing changes for the neighbours). With nginx ≥ 1.25.1 the per-site
   `http2 on;` is used instead. `--http2 on|off` forces it.
@@ -236,13 +236,17 @@ Edit `/opt/radar/.env` (`sudo nano /opt/radar/.env`), apply, then refresh the en
 
 `MYSQL_PASSWORD` (the application user):
 
+Run it as root (`.env` is mode 600, owned by root), so start with `sudo -i`:
+
 ```sh
 cd /opt/radar
 NEW=$(openssl rand -hex 24)
-sudo docker compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot' \
-  <<<"ALTER USER '$(grep -E '^MYSQL_USER=' .env | cut -d= -f2 | sed 's/^$/radar/')'@'%' IDENTIFIED BY '$NEW';"
-sudo sed -i "s/^MYSQL_PASSWORD=.*/MYSQL_PASSWORD=$NEW/" .env && unset NEW
-sudo ops/deploy.sh --no-pull
+USER_NAME=$(grep -E '^MYSQL_USER=' .env | cut -d= -f2-); USER_NAME=${USER_NAME:-radar}
+docker compose exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot' \
+  <<<"ALTER USER '$USER_NAME'@'%' IDENTIFIED BY '$NEW';"
+sed -i "s/^MYSQL_PASSWORD=.*/MYSQL_PASSWORD=$NEW/" .env && unset NEW USER_NAME
+ops/deploy.sh --no-pull
+exit
 ```
 
 `BACKUP_PASSPHRASE`: a new passphrase applies to the *next* backup; the one stored on

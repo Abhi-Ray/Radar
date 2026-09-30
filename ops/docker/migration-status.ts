@@ -46,7 +46,8 @@ export function parseJournal(json: unknown): JournalEntry[] {
 
 /** Compares the journal with what the database has recorded. */
 export function migrationStatus(journal: readonly JournalEntry[], applied: AppliedState): MigrationStatus {
-  const latest = journal.length > 0 ? journal[journal.length - 1] : null;
+  // Newest by `when`, regardless of the order the caller passed.
+  const latest = journal.reduce<JournalEntry | null>((best, e) => (best === null || e.when > best.when ? e : best), null);
   const base = { expected: journal.length, applied: applied.count, latestTag: latest?.tag ?? null };
   if (!latest) return { satisfied: true, ...base };
   const satisfied = applied.maxCreatedAt !== null && applied.maxCreatedAt >= latest.when && applied.count >= journal.length;

@@ -105,6 +105,9 @@ export function parseArgs(argv, defaults) {
 /**
  * Splits the selected entries into present / missing (by source file existence).
  * `exists` is injectable for tests.
+ * @param {string} root
+ * @param {readonly string[] | null} [only]
+ * @param {(file: string) => boolean} [exists]
  */
 export function resolveEntries(root, only = null, exists = existsSync) {
   const selected = only ? ENTRIES.filter((e) => only.includes(e.name)) : [...ENTRIES];
@@ -242,8 +245,10 @@ async function main() {
     return 1;
   }
 
-  // A clean output folder: stale bundles from an older build must never ship.
-  for (const e of ENTRIES) {
+  // Stale bundles from an older build must never ship: remove every selected output first
+  // (with --only, the other bundles in the folder are left alone).
+  const selected = opts.only ? ENTRIES.filter((e) => opts.only.includes(e.name)) : ENTRIES;
+  for (const e of selected) {
     rmSync(path.join(opts.outdir, e.out), { force: true });
     rmSync(path.join(opts.outdir, `${e.out}.map`), { force: true });
   }

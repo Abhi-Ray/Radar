@@ -13,7 +13,8 @@
 #   anything else       exec'd as-is (e.g. `sh` for debugging)
 set -eu
 
-cd /app
+# /app in the image (Dockerfile WORKDIR); overridable only so the script can be exercised in tests.
+cd "${RADAR_APP_DIR:-/app}"
 
 node_run() {
   # Source maps: stack traces in logs point at src/…ts lines, not bundle offsets.

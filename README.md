@@ -16,6 +16,30 @@ This repository is **public**. It never contains secrets or personal data: the p
 lives only on the server (and encrypted in `ops/secrets.env.enc`), and database backups on the
 `db-backups` branch are encrypted with a passphrase that is not in the repository.
 
+## Features
+
+What the product is built to do (the rules behind each one are in [docs/SPEC.md](docs/SPEC.md)):
+
+- **Daily collection with isolation.** Graded sources (A–D) from a registry; every connector has
+  its own rate limit, timeout, retries and circuit breaker, so one failing source never stops the
+  run. Raw responses are stored before parsing, so rule changes re-process saved data.
+- **Provenance on every fact.** Each displayed value carries its evidence, source, method,
+  confidence, check time and logic version; a fixed trust order (manual > official > posting >
+  rule > AI > estimate) decides which value wins.
+- **Conservative visa decisions.** Confirmed · Likely · Conflicting · Not offered · Unknown,
+  driven by official sponsor registers and explicit statements; AI can never produce
+  *Confirmed*. An "Am I eligible?" check against dated country rules.
+- **Remote eligibility, normalisation and dedup.** Place, title, experience, salary (with FX) and
+  language normalisation; cross-source dedup with company identity and manual merge/split.
+- **Explainable, versioned Fit Score** with the factors shown next to the number.
+- **Budgeted AI layer** (OpenRouter free tier): quotes must exist in the posting text, results
+  are cached and never overwrite official records.
+- **Application tracker.** Append-only timeline, snapshot of the posting at apply time, export.
+- **Observability.** Run reports per pipeline and source, a heartbeat, a review queue and alerts
+  (in-app, Telegram, e-mail) for failed runs, stale data and failed backups.
+- **Operations.** One-command install on a shared VPS, 5-minute auto-deploy with health-checked
+  rollback, nightly encrypted off-site backups and a monthly automatic restore test.
+
 ## Stack
 
 Next.js 16 (App Router, standalone output) · React 19 · TypeScript strict · Tailwind CSS v4 ·
