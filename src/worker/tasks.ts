@@ -14,12 +14,16 @@ import type { Db } from '../lib/db';
 import { resolveMigrationsDir } from '../lib/db/migrations';
 import { getEnvVar } from '../lib/env';
 import { ensureFxRates } from '../lib/fx/ecb';
+import { tidyDuplicateQueue } from '../lib/dedup/tidy';
 import { runRetention } from '../lib/lifecycle/retention';
 import { runLinkCheck } from '../lib/linkcheck';
 import { log } from '../lib/log';
+import { ignoreUnrelatedTitles } from '../lib/normalize/title-tidy';
 import { processQueuedRuns, reprocessFromRaw, runPipeline } from '../lib/pipeline';
 import type { RunRequester } from '../lib/pipeline/queue';
 import { getSetting } from '../lib/settings';
+import { refreshRegistersAndEvidence } from '../lib/visa/company-evidence';
+import { checkOfficialPages } from '../lib/visa/rules';
 import { aiBatchCalls } from './ai-batch';
 
 export type TaskResult = Record<string, unknown>;
@@ -39,15 +43,29 @@ const tlog = log.child({ module: 'worker' });
 
 // ---------------------------------------------------------------- pipeline
 
+/**
+ * After a real run: clear the review queues of what never needed a person — same-source pairs
+ * (exact twins merged, the rest kept as two jobs) and titles with no technical word. Never throws.
+ */
+async function tidyReviewQueues(db: Db): Promise<TaskResult> {
+  const dup = await tidyDuplicateQueue(db, { actor: 'worker' });
+  const titles = await ignoreUnrelatedTitles(db, { actor: 'worker' }).catch((err: unknown) => {
+    tlog.warn('tidying the unknown titles failed', { error: err });
+    return { ignored: 0 };
+  });
+  return { duplicatesMerged: dup.merged, duplicatesKeptBoth: dup.dismissed, duplicatesNeedYou: dup.needHuman, titlesIgnored: titles.ignored };
+}
+
 export async function dailyPipelineTask(ctx: TaskContext, opts: { sourceIds?: number[] } = {}): Promise<TaskResult> {
   const res = await runPipeline(ctx.db, { kind: 'daily', dryRun: false, sourceIds: opts.sourceIds, requestedBy: ctx.requestedBy, signal: ctx.signal });
   if (res.status === 'ok' || res.status === 'partial') {
+    const tidy = await tidyReviewQueues(ctx.db);
     const pinged = await pingHealthcheck();
     const digest = await sendMorningDigest(ctx.db).catch((err: unknown) => {
       tlog.warn('digest after daily run failed', { error: err });
       return null;
     });
-    return { runId: res.runId, status: res.status, pinged, digest: digest?.status ?? 'error' };
+    return { runId: res.runId, status: res.status, pinged, digest: digest?.status ?? 'error', tidy };
   }
   return { runId: res.runId, status: res.status };
 }
@@ -60,7 +78,8 @@ export async function manualPipelineTask(ctx: TaskContext, opts: { dryRun: boole
     requestedBy: ctx.requestedBy,
     signal: ctx.signal,
   });
-  return { runId: res.runId, status: res.status, stats: res.stats };
+  const tidy = !opts.dryRun && (res.status === 'ok' || res.status === 'partial') ? await tidyReviewQueues(ctx.db) : undefined;
+  return { runId: res.runId, status: res.status, stats: res.stats, ...(tidy ? { tidy } : {}) };
 }
 
 export async function reprocessTask(ctx: TaskContext, opts: { sourceIds?: number[]; since?: Date }): Promise<TaskResult> {
@@ -98,39 +117,26 @@ export async function fxTask(ctx: TaskContext): Promise<TaskResult> {
   return { refreshed: res.refreshed, date: res.setting?.date ?? null, error: res.error, outdated: res.outdated };
 }
 
-type ModuleFn = (db: Db) => Promise<unknown>;
-
 /**
- * Loads an optional module owned by another step. A missing module or export is a logged skip, so
- * the worker runs before that step lands.
+ * Sponsor registers → company evidence → job visa statuses. `refreshRegistersAndEvidence` imports
+ * the registers (skipped within 20 h) and, when any was checked, matches EVERY company against them;
+ * a company whose evidence changed has its jobs' visa verdicts re-evaluated. (The scheduler used to
+ * call the import alone, so companies were never matched and no job ever got register evidence.)
  */
-async function optionalTask(name: string, load: () => Promise<unknown>, exportName: string, db: Db): Promise<TaskResult> {
-  let mod: unknown;
-  try {
-    mod = await load();
-  } catch (err) {
-    tlog.warn(`${name}: module not available, skipped`, { error: err instanceof Error ? err.message : String(err) });
-    return { skipped: 'module_unavailable' };
-  }
-  const fn = mod && typeof mod === 'object' ? (mod as Record<string, unknown>)[exportName] : undefined;
-  if (typeof fn !== 'function') {
-    tlog.warn(`${name}: ${exportName}() not exported, skipped`);
-    return { skipped: 'export_missing' };
-  }
-  const out = await (fn as ModuleFn)(db);
-  return { result: out && typeof out === 'object' ? (out as Record<string, unknown>) : (out ?? null) };
-}
-
 export async function registersTask(ctx: TaskContext): Promise<TaskResult> {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore -- owned by the registers step; absent until it lands (graceful skip).
-  return optionalTask('registers', () => import('../lib/registers'), 'refreshRegisters', ctx.db);
+  const res = await refreshRegistersAndEvidence(ctx.db);
+  return {
+    registers: res.registers.map((r) => ({ key: r.key, status: r.status, rows: r.rows, inserted: r.inserted, reason: r.reason })),
+    evidence: res.evidence
+      ? { companies: res.evidence.companies, changed: res.evidence.changed, confirmed: res.evidence.confirmed, possible: res.evidence.possible, failed: res.evidence.failed }
+      : null,
+  };
 }
 
+/** Compares every watched official immigration page with the last stored copy; a change raises an alert. */
 export async function officialPagesTask(ctx: TaskContext): Promise<TaskResult> {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore -- owned by the visa-rules step; absent until it lands (graceful skip).
-  return optionalTask('official pages', () => import('../lib/visa/rules'), 'checkOfficialPages', ctx.db);
+  const { checked, baseline, unchanged, changed, errors } = await checkOfficialPages(ctx.db);
+  return { checked, baseline, unchanged, changed, errors };
 }
 
 export async function aiQueueTask(ctx: TaskContext, opts: { maxCalls?: number; now?: Date } = {}): Promise<TaskResult> {

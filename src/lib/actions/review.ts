@@ -16,7 +16,9 @@ import { clientIp } from '@/lib/auth/request';
 import { requireSession } from '@/lib/auth/session';
 import { getDb } from '@/lib/db';
 import { confirmDuplicate, dismissDuplicate } from '@/lib/dedup/manual';
+import { dismissSameSourcePairs, mergeExactTwins } from '@/lib/dedup/tidy';
 import { log } from '@/lib/log';
+import { ignoreUnrelatedTitles } from '@/lib/normalize/title-tidy';
 import { getSetting, setSetting } from '@/lib/settings';
 
 async function actor() {
@@ -111,5 +113,46 @@ export async function clearReviewFlagAction(_prev: ActionState | undefined, form
     return changed ? done('Marked as checked.') : fail('That job no longer exists.');
   } catch (err) {
     return unexpected('mark this job as checked', err);
+  }
+}
+
+// ---- bulk clean-up (the same work the nightly run does, on demand) -------------------------------
+
+export async function keepBothAction(_prev: ActionState | undefined, formData: FormData): Promise<ActionState> {
+  void formData;
+  const { ip } = await actor();
+  try {
+    const { dismissed } = await dismissSameSourcePairs(getDb(), { ip });
+    refresh();
+    return dismissed > 0 ? done(`Kept both jobs for ${dismissed} pair${dismissed === 1 ? '' : 's'}.`) : fail('There is nothing to clear.');
+  } catch (err) {
+    return unexpected('clear these pairs', err);
+  }
+}
+
+export async function mergeTwinsAction(_prev: ActionState | undefined, formData: FormData): Promise<ActionState> {
+  void formData;
+  const { ip } = await actor();
+  try {
+    const r = await mergeExactTwins(getDb(), { limit: 150, ip });
+    refresh();
+    if (r.merged === 0 && r.failed === 0) return fail('There are no exact twins to merge.');
+    const left = r.remaining > 0 ? ` ${r.remaining} more — press the button again.` : '';
+    const bad = r.failed > 0 ? ` ${r.failed} could not be merged and stay in the queue.` : '';
+    return done(`Merged ${r.merged} exact twin${r.merged === 1 ? '' : 's'}.${bad}${left}`);
+  } catch (err) {
+    return unexpected('merge the twins', err);
+  }
+}
+
+export async function ignoreUnrelatedTitlesAction(_prev: ActionState | undefined, formData: FormData): Promise<ActionState> {
+  void formData;
+  const { ip } = await actor();
+  try {
+    const { ignored } = await ignoreUnrelatedTitles(getDb(), { ip });
+    refresh();
+    return ignored > 0 ? done(`Marked ${ignored} title${ignored === 1 ? '' : 's'} as “not a role I track”.`) : fail('There is nothing to clear.');
+  } catch (err) {
+    return unexpected('clear these titles', err);
   }
 }

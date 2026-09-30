@@ -5,8 +5,8 @@ import { ActionForm } from "@/components/system/ActionForm";
 import { Badge, EmptyState, LinkTabs, Notice, Pagination, SectionHeader, formatNumber, formatRelative, truncate } from "@/components/ui";
 import { ROLES } from "@/data/titles/roles";
 import { requireSession } from "@/lib/auth/session";
-import { clearReviewFlagAction, dismissDuplicateAction, mapTitleAction, mergeDuplicateAction } from "@/lib/actions/review";
-import { REVIEW_PAGE_SIZE, listFlaggedJobs, listPairs, listTitles, reviewCounts, type PairSide } from "@/lib/queries/review";
+import { clearReviewFlagAction, dismissDuplicateAction, ignoreUnrelatedTitlesAction, keepBothAction, mapTitleAction, mergeDuplicateAction, mergeTwinsAction } from "@/lib/actions/review";
+import { REVIEW_PAGE_SIZE, listFlaggedJobs, listPairs, listTitles, reviewCounts, reviewTidy, type PairSide } from "@/lib/queries/review";
 
 export const metadata: Metadata = { title: "Review" };
 
@@ -34,7 +34,7 @@ export default async function ReviewPage({ searchParams }: PageProps<"/review">)
   const tab: Tab = (TABS as readonly string[]).includes(first(sp.tab)) ? (first(sp.tab) as Tab) : "duplicates";
   const page = Math.max(1, Math.floor(Number(first(sp.page))) || 1);
   const now = new Date();
-  const counts = await reviewCounts();
+  const [counts, tidy] = await Promise.all([reviewCounts(), reviewTidy()]);
   const count: Record<Tab, number> = { duplicates: counts.duplicates, titles: counts.titles, jobs: counts.jobs, failed: counts.failed };
 
   const pairs = tab === "duplicates" ? await listPairs(page) : null;
@@ -60,6 +60,28 @@ export default async function ReviewPage({ searchParams }: PageProps<"/review">)
           <EmptyState icon="merge" code="ALL CLEAR" title="No possible duplicates" tone="radar"><p>Every pair RADAR was unsure about has been decided.</p></EmptyState>
         ) : (
           <>
+            {tidy.pairs.twins + tidy.pairs.keepBoth > 0 ? (
+              <Notice
+                kind="warn"
+                title={`${formatNumber(tidy.pairs.twins + tidy.pairs.keepBoth)} of these pairs are one source listing separate postings`}
+                live="off"
+              >
+                <p>
+                  When the <b>same source</b> lists two jobs, it is telling you they are two postings — usually the same role in several cities, or one opening per team. They rarely need you.
+                  RADAR clears them after every run; these buttons do it right now. Pairs from <b>different</b> sources (the real duplicates) are never touched
+                  {tidy.pairs.needHuman ? ` — ${formatNumber(tidy.pairs.needHuman)} of those are waiting below` : ""}.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-3">
+                  {tidy.pairs.twins > 0 ? (
+                    <ActionForm action={mergeTwinsAction} submit={`Merge ${formatNumber(tidy.pairs.twins)} exact twins`} icon="merge" variant="primary" pending="Merging…" />
+                  ) : null}
+                  {tidy.pairs.keepBoth > 0 ? (
+                    <ActionForm action={keepBothAction} submit={`Keep both for ${formatNumber(tidy.pairs.keepBoth)} pairs`} icon="split" pending="Clearing…" />
+                  ) : null}
+                </div>
+                <p className="micro mt-2">Exact twin = same company, title, city and text. Merging keeps the older job and can be undone from the job page.</p>
+              </Notice>
+            ) : null}
             <Notice kind="info" title="Highest match first">Merging keeps one job and moves the other&apos;s links onto it; you can undo a merge later from the job page.</Notice>
             <ul className="m-0 flex list-none flex-col gap-4 p-0">
               {pairs.rows.map((p) => (
@@ -91,6 +113,14 @@ export default async function ReviewPage({ searchParams }: PageProps<"/review">)
           <EmptyState icon="review" code="ALL CLEAR" title="No unknown titles" tone="radar"><p>Every title seen so far could be placed.</p></EmptyState>
         ) : (
           <>
+            {tidy.titles.unrelated > 0 ? (
+              <Notice kind="warn" title={`${formatNumber(tidy.titles.unrelated)} of ${formatNumber(tidy.titles.total)} titles contain no technical word`} live="off">
+                <p>Sales, HR, retail, trades … They are already scored as “not a target role”, so nothing changes if you mark them as ignored. RADAR does this after every run; the button does it now. Titles with a technical word stay for you.</p>
+                <div className="mt-3">
+                  <ActionForm action={ignoreUnrelatedTitlesAction} submit={`Ignore ${formatNumber(tidy.titles.unrelated)} unrelated titles`} icon="check" variant="primary" pending="Clearing…" />
+                </div>
+              </Notice>
+            ) : null}
             <Notice kind="info" title="Most common first">Tell RADAR which role a title is. It applies to new and re-processed jobs; “Not a role I track” hides the guess for good.</Notice>
             <ul className="m-0 flex list-none flex-col gap-3 p-0">
               {titles.rows.map((t) => (

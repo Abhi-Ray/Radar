@@ -227,6 +227,9 @@ const CASES = [
   'show=all&show=hidden',
   'show=remote&show=closed',
   'show=experience',
+  'show=roles',
+  'family=other',
+  'show=roles&show=closed&sort=posted',
   'remote=region_limited&remote=worldwide',
   'visa=unknown',
   'visa=confirmed&visa=likely&salary=60000',
@@ -263,7 +266,7 @@ describe('/jobs list: SQL rules agree with passesRule()', () => {
     expect(all).toHaveLength(N);
     const f = parseJobFilters({ show: 'all' });
     // Every default rule hides something and keeps something.
-    for (const id of ['remote_limited', 'experience_band', 'closed', 'hidden'] as const) {
+    for (const id of ['remote_limited', 'experience_band', 'target_roles', 'closed', 'hidden'] as const) {
       const passing = all.filter((s) => passesRule(id, f, s, NOW)).length;
       expect(passing, id).toBeGreaterThan(0);
       expect(passing, id).toBeLessThan(N);
@@ -474,13 +477,16 @@ describe('getDeskData', () => {
     const tomorrow = addCalendarDaysInTz(today, 1, tz);
     const job = async (title: string, set: Partial<typeof jobs.$inferInsert>) => {
       const { jobId } = await seedJob(t.db, { title, companyName: `${title} Co` });
-      await t.db.update(jobs).set(set).where(eq(jobs.id, jobId));
+      // A target role by default: the default view leaves out the "other" family.
+      await t.db.update(jobs).set({ roleFamily: 'primary', ...set }).where(eq(jobs.id, jobId));
       return jobId;
     };
     const fresh = await job('Fresh match', { firstSeenAt: new Date(today.getTime() + 60_000), score: 80, remoteClass: 'worldwide' });
     await job('Fresh but hidden', { firstSeenAt: new Date(today.getTime() + 120_000), score: 90, hidden: true });
     await job('Fresh but region-limited', { firstSeenAt: new Date(today.getTime() + 180_000), score: 95, remoteClass: 'region_limited' });
     const old = await job('Yesterday', { firstSeenAt: new Date(today.getTime() - 60_000), score: 99 });
+    // Newest and best-scored, but not one of the target roles: it must not reach the Desk.
+    await job('Unrelated role', { firstSeenAt: new Date(today.getTime() + 240_000), score: 99, roleFamily: 'other' });
 
     const app = async (title: string, stage: typeof applications.$inferInsert.currentStage, followUp: Date | null) => {
       const [r] = await t.db.insert(applications).values({ jobId: fresh, companyName: 'Fresh match Co', title, currentStage: stage, nextFollowUpAt: followUp });
@@ -510,6 +516,6 @@ describe('getDeskData', () => {
     expect(ticker).toEqual(['Fresh but region-limited', 'Fresh match', 'Yesterday']);
     expect(d.scope.ok && d.scope.data.map((r) => r.id)).toEqual([old, fresh]);
     expect(d.health.alerts).toMatchObject({ ok: true, data: { open: 1, critical: 1, newest: { title: 'Greenhouse feed failing' } } });
-    expect(d.totalJobs).toEqual({ ok: true, data: 4 });
+    expect(d.totalJobs).toEqual({ ok: true, data: 5 });
   });
 });

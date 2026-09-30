@@ -3,6 +3,8 @@ import { and, count, desc, eq, isNull } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/mysql-core';
 import { companies, deadLetters, duplicateCandidates, jobs, sources, titleReviewQueue } from '@/db/schema';
 import { getDb, type DbOrTx } from '@/lib/db';
+import { tidyCounts, type TidyCounts } from '@/lib/dedup/tidy';
+import { countUnrelatedTitles } from '@/lib/normalize/title-tidy';
 
 export const REVIEW_PAGE_SIZE = 20;
 
@@ -148,4 +150,15 @@ export async function listFlaggedJobs(page: number, db: DbOrTx = getDb()): Promi
     db.select({ n: count() }).from(jobs).where(where),
   ]);
   return { rows: rows as FlaggedJob[], total: total?.n ?? 0 };
+}
+
+export interface ReviewTidy {
+  pairs: TidyCounts;
+  titles: { unrelated: number; total: number };
+}
+
+/** What the "clear the noise" buttons would do right now. */
+export async function reviewTidy(db: DbOrTx = getDb()): Promise<ReviewTidy> {
+  const [pairs, titles] = await Promise.all([tidyCounts(db), countUnrelatedTitles(db)]);
+  return { pairs, titles };
 }

@@ -87,6 +87,8 @@ export function ruleCondition(id: RuleId, f: JobFilters, now: Date): SQL | undef
       return or(isNull(jobs.remoteClass), notInArray(jobs.remoteClass, [...LIMITED_REMOTE]));
     case 'experience_band':
       return or(isNull(jobs.experienceBand), ne(jobs.experienceBand, 'hide'));
+    case 'target_roles':
+      return or(ne(jobs.roleFamily, 'other'), eq(jobs.saved, true), appliedExists);
     case 'closed':
       return notInArray(jobs.state, [...CLOSED_STATES]);
     case 'hidden':

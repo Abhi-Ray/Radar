@@ -36,8 +36,8 @@ export const SORT_LABEL: Record<SortKey, string> = { fit: "Best fit", posted: "N
 /** "Posted within N days" windows offered in the UI (any positive integer ≤ 365 parses). */
 export const POSTED_WINDOWS = [1, 3, 7, 14, 30, 90] as const;
 
-/** Default-view switches. `all` turns off the remote, experience and closed rules at once. */
-export const SHOW_FLAGS = ["all", "remote", "experience", "closed", "hidden"] as const;
+/** Default-view switches. `all` turns off the remote, experience, target-roles and closed rules at once. */
+export const SHOW_FLAGS = ["all", "remote", "experience", "roles", "closed", "hidden"] as const;
 export type ShowFlag = (typeof SHOW_FLAGS)[number];
 
 /** "My" jobs: any of saved / applied / hidden (OR). */
@@ -216,7 +216,7 @@ export function jobsHref(f: JobFilters, patch: Record<string, ParamUpdate> = {})
 
 // ---- rules -----------------------------------------------------------------------------------
 
-export type DefaultRuleId = "remote_limited" | "experience_band" | "closed" | "hidden";
+export type DefaultRuleId = "remote_limited" | "experience_band" | "target_roles" | "closed" | "hidden";
 export type FilterRuleId =
   | "q"
   | "country"
@@ -250,6 +250,7 @@ export interface RuleSpec {
 const DEFAULT_RULE_FLAG: Record<DefaultRuleId, ShowFlag> = {
   remote_limited: "remote",
   experience_band: "experience",
+  target_roles: "roles",
   closed: "closed",
   hidden: "hidden",
 };
@@ -260,6 +261,9 @@ export function activeDefaultRules(f: JobFilters): DefaultRuleId[] {
   const out: DefaultRuleId[] = [];
   if (!all && !f.show.includes("remote") && f.remote.length === 0) out.push("remote_limited");
   if (!all && !f.show.includes("experience")) out.push("experience_band");
+  // Only your target roles (primary / secondary / fallback) by default: an explicit role or family
+  // filter, a search or a "my jobs" view means you are asking for something specific, so it steps aside.
+  if (!all && !f.show.includes("roles") && f.family.length === 0 && f.role.length === 0 && f.q === null && f.mine.length === 0) out.push("target_roles");
   if (!all && !f.show.includes("closed") && f.state.length === 0) out.push("closed");
   // Hidden jobs are my own decision: "show all" does not bring them back, only an explicit reveal.
   if (!f.show.includes("hidden") && !f.mine.includes("hidden")) out.push("hidden");
@@ -269,6 +273,7 @@ export function activeDefaultRules(f: JobFilters): DefaultRuleId[] {
 const DEFAULT_RULE_LABEL: Record<DefaultRuleId, string> = {
   remote_limited: "Remote, but region- or time-zone-limited",
   experience_band: "Experience ask outside your band",
+  target_roles: "Not one of your target roles",
   closed: "Closed or expired",
   hidden: "Hidden by you",
 };
@@ -429,6 +434,9 @@ export function passesRule(id: RuleId, f: JobFilters, job: JobFilterSubject, now
       return job.remoteClass === null || !LIMITED_REMOTE.includes(job.remoteClass);
     case "experience_band":
       return job.experienceBand !== "hide";
+    case "target_roles":
+      // Never hide something you saved or applied to, whatever its role family.
+      return job.roleFamily !== "other" || job.saved || job.applied;
     case "closed":
       return !CLOSED_STATES.includes(job.state);
     case "hidden":

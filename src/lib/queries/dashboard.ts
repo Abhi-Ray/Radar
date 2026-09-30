@@ -333,7 +333,8 @@ export async function getDeskData(opts: { db?: DbOrTx; now?: Date } = {}): Promi
         .select({ id: jobs.id, title: jobs.canonicalTitle, company: companies.name, countryIso2: jobs.countryIso2, score: jobs.score, firstSeenAt: jobs.firstSeenAt })
         .from(jobs)
         .innerJoin(companies, eq(companies.id, jobs.companyId))
-        .where(and(isNull(jobs.mergedIntoJobId), eq(jobs.hidden, false)))
+        // Newest jobs in your target roles (the same rule as the default /jobs view).
+        .where(and(isNull(jobs.mergedIntoJobId), eq(jobs.hidden, false), ruleCondition('target_roles', EMPTY_FILTERS, now)))
         .orderBy(desc(jobs.firstSeenAt), desc(jobs.id))
         .limit(12),
     ),

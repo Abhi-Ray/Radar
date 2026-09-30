@@ -114,11 +114,11 @@ describe('parseJobFilters', () => {
 });
 
 describe('default view rules', () => {
-  it('all four apply to the bare list', () => {
-    expect(activeDefaultRules(f())).toEqual(['remote_limited', 'experience_band', 'closed', 'hidden']);
+  it('all five apply to the bare list', () => {
+    expect(activeDefaultRules(f())).toEqual(['remote_limited', 'experience_band', 'target_roles', 'closed', 'hidden']);
   });
 
-  it('"show all" lifts remote/experience/closed but never the hidden rule', () => {
+  it('"show all" lifts remote/experience/target-roles/closed but never the hidden rule', () => {
     expect(activeDefaultRules(f({ show: ['all'] }))).toEqual(['hidden']);
     expect(activeDefaultRules(f({ show: ['all', 'hidden'] }))).toEqual([]);
   });
@@ -127,6 +127,25 @@ describe('default view rules', () => {
     expect(activeDefaultRules(f({ remote: ['region_limited'] }))).not.toContain('remote_limited');
     expect(activeDefaultRules(f({ state: ['closed'] }))).not.toContain('closed');
     expect(activeDefaultRules(f({ mine: ['hidden'] }))).not.toContain('hidden');
+  });
+
+  it('target_roles steps aside for a role / family filter, a search, a "my jobs" view or show=roles', () => {
+    expect(activeDefaultRules(f())).toContain('target_roles');
+    expect(activeDefaultRules(f({ family: ['other'] }))).not.toContain('target_roles');
+    expect(activeDefaultRules(f({ role: ['devsecops_engineer'] }))).not.toContain('target_roles');
+    expect(activeDefaultRules(f({ q: 'stripe' }))).not.toContain('target_roles');
+    expect(activeDefaultRules(f({ mine: ['saved'] }))).not.toContain('target_roles');
+    expect(activeDefaultRules(f({ show: ['roles'] }))).not.toContain('target_roles');
+    // the other defaults are unaffected by show=roles
+    expect(activeDefaultRules(f({ show: ['roles'] }))).toEqual(['remote_limited', 'experience_band', 'closed', 'hidden']);
+  });
+
+  it('target_roles hides only the "other" family — unless you saved it or applied to it', () => {
+    const pass = (over: Partial<JobFilterSubject>) => passesRule('target_roles', f(), job(over), NOW);
+    for (const roleFamily of ['primary', 'secondary', 'fallback'] as const) expect(pass({ roleFamily })).toBe(true);
+    expect(pass({ roleFamily: 'other' })).toBe(false);
+    expect(pass({ roleFamily: 'other', saved: true })).toBe(true);
+    expect(pass({ roleFamily: 'other', applied: true })).toBe(true);
   });
 
   it('remote_limited keeps worldwide, unclear, not-remote and unknown; hides region/time-zone limited', () => {
@@ -209,7 +228,7 @@ describe('filter predicates', () => {
 describe('rule list and breakdown', () => {
   it('lists default rules first, then filters, each with a reveal link', () => {
     const rules = activeRules(f({ country: ['DE'], fit: 70 }));
-    expect(rules.map((r) => r.id)).toEqual(['remote_limited', 'experience_band', 'closed', 'hidden', 'country', 'fit']);
+    expect(rules.map((r) => r.id)).toEqual(['remote_limited', 'experience_band', 'target_roles', 'closed', 'hidden', 'country', 'fit']);
     const remote = rules[0];
     expect(remote.revealHref).toBe('/jobs?country=DE&fit=70&show=remote');
     const country = rules.find((r) => r.id === 'country');
@@ -231,13 +250,14 @@ describe('rule list and breakdown', () => {
       job({ hidden: true }),
       job({ state: 'expired', hidden: true }),
       job({ countryIso2: 'NL' }),
+      job({ roleFamily: 'other' }),
     ];
     const b = breakdownOf(f({ country: ['DE'] }), jobs, NOW);
-    expect(b.total).toBe(7);
+    expect(b.total).toBe(8);
     expect(b.shown).toBe(1);
-    expect(b.hidden).toBe(6);
+    expect(b.hidden).toBe(7);
     const by = Object.fromEntries(b.byRule.map((r) => [r.rule.id, r.count]));
-    expect(by).toEqual({ remote_limited: 2, experience_band: 1, closed: 0, hidden: 1, country: 1 });
+    expect(by).toEqual({ remote_limited: 2, experience_band: 1, target_roles: 1, closed: 0, hidden: 1, country: 1 });
     expect(b.multi).toBe(1);
   });
 });
