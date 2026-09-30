@@ -33,7 +33,7 @@ const CASES: [string, Expect, LocationHints?][] = [
   ['Remote – Europe (CET ± 3 hours)', { country: 'XW', macro: ['EUROPE'], tz: ['CET'] }],
   ['Remote (EST hours)', { country: 'XW', tz: ['ET'] }],
   ['Remote, ET hours', { country: 'XW', tz: ['ET'] }],
-  ['UTC+1 to UTC+3, remote', { country: 'XW', wp: 'remote', tz: ['UTC', 'UTC+1', 'UTC+3'] }],
+  ['UTC+1 to UTC+3, remote', { country: 'XW', wp: 'remote', tz: ['UTC+1', 'UTC+3'] }],
   ['US-Remote', { country: 'US', city: null, wp: 'remote', conf: 'high' }],
   ['Remote, US', { country: 'US', wp: 'remote' }],
   ['Remote, USA', { country: 'US', wp: 'remote' }],
@@ -211,6 +211,23 @@ describe('normalizeLocation (table)', () => {
 });
 
 describe('normalizeLocation details', () => {
+  it('does not add a bare UTC zone for the prefix of an offset', () => {
+    expect(normalizeLocation('Remote UTC-5 to UTC+1').timezones).toEqual(['UTC-5', 'UTC+1']);
+    expect(normalizeLocation('Remote (GMT+1)').timezones).toEqual(['UTC+1']);
+    expect(normalizeLocation('Remote, UTC time zone').timezones).toEqual(['UTC']);
+    expect(normalizeLocation('Remote, UTC or UTC+1').timezones).toEqual(['UTC', 'UTC+1']);
+  });
+
+  it('a region name that is also a country is not read with high confidence on its own', () => {
+    const r = normalizeLocation('Georgia');
+    expect(r.countryIso2).toBe('US');
+    expect(r.region).toBe('GA');
+    expect(r.confidence).toBe('medium');
+    expect(r.evidence).toContain('also a country name');
+    expect(normalizeLocation('Atlanta, Georgia').confidence).toBe('high');
+    expect(normalizeLocation('California').confidence).toBe('high');
+  });
+
   it('records the postal code and strips gender markers', () => {
     const r = normalizeLocation('80331 München (m/w/d)');
     expect(r.postalCode).toBe('80331');
