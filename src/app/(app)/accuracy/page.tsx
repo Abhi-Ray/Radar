@@ -4,7 +4,7 @@ import { FIELD_LABEL, type SpotField } from "@/components/accuracy/labels";
 import { SpotCheckForm } from "@/components/accuracy/SpotCheckForm";
 import { ActionForm } from "@/components/system/ActionForm";
 import { Panel } from "@/components/tracker/Panel";
-import { Badge, DataTable, EmptyState, Icon, Notice, ProgressBlocks, SectionHeader, StatBlock, formatNumber, formatPercent, formatRelative, formatMoneyRange, type Column } from "@/components/ui";
+import { Badge, DataTable, EmptyState, Icon, Notice, ProgressBlocks, SectionHeader, StatBlock, formatNumber, formatPercent, formatRelative, formatMoneyRange, safeExternalHref, type Column } from "@/components/ui";
 import { ROLES } from "@/data/titles/roles";
 import { requireSession } from "@/lib/auth/session";
 import { runEvalAction } from "@/lib/actions/accuracy";
@@ -86,9 +86,13 @@ export default async function AccuracyPage() {
                     <Link href={`/jobs/${j.id}`} className="font-bold underline underline-offset-4 [overflow-wrap:anywhere]">{j.canonicalTitle}</Link>
                     <span className="text-sm">{j.company}</span>
                     <span className="micro">{j.locationRaw || j.countryIso2 || ""}</span>
-                    <a href={j.applyUrl} target="_blank" rel="noopener noreferrer" className="micro inline-flex min-h-9 items-center gap-1 border-2 border-ink bg-acid px-2 font-bold">
-                      Original posting <Icon name="external" size={14} />
-                    </a>
+                    {safeExternalHref(j.applyUrl) ? (
+                      <a href={safeExternalHref(j.applyUrl) ?? undefined} target="_blank" rel="noopener noreferrer" className="micro inline-flex min-h-9 items-center gap-1 border-2 border-ink bg-acid px-2 font-bold">
+                        Original posting <Icon name="external" size={14} />
+                      </a>
+                    ) : (
+                      <span className="micro">no usable link — search the company&apos;s site</span>
+                    )}
                   </div>
                   <SpotCheckForm job={{ id: j.id, shown: shownFor(j) }} />
                 </li>
