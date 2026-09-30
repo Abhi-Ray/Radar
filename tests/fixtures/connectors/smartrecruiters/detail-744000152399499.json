@@ -1,0 +1,140 @@
+{
+ "id": "744000152399499",
+ "name": "Senior Software Engineer, DevOps - Moveworks (DevSecOps)",
+ "uuid": "0870e660-8ce2-4902-93e0-a60a42946c2f",
+ "jobId": "3f9fc055-2cfb-4666-8acc-1189c81c64cb",
+ "jobAdId": "c9ed64d4-3998-4820-a9e8-2bc5348ecafc",
+ "defaultJobAd": true,
+ "refNumber": "JB0075319",
+ "company": {
+  "name": "ServiceNow",
+  "identifier": "ServiceNow"
+ },
+ "location": {
+  "city": "Bangalore",
+  "region": "Karnataka",
+  "country": "in",
+  "address": "Embassy Golf Links Business Park 1 Pebble Beach",
+  "postalCode": "560071",
+  "remote": false,
+  "hybrid": false,
+  "fullLocation": "Bangalore, Karnataka, India"
+ },
+ "customField": [
+  {
+   "fieldId": "60345fa28b4ba8595bef1863",
+   "fieldLabel": "Recruiting Team",
+   "valueId": "professional",
+   "valueLabel": "Professional"
+  },
+  {
+   "fieldId": "60345e1a0b24a127cbdfa148",
+   "fieldLabel": "Employee Type",
+   "valueId": "0082f6cbe6154da19322cbab1f6aa5af",
+   "valueLabel": "Regular"
+  },
+  {
+   "fieldId": "5f63a78f1dae5c5c4e54ba2b",
+   "fieldLabel": "Department",
+   "valueId": "2294038",
+   "valueLabel": "Engineering, Infrastructure and Operations"
+  },
+  {
+   "fieldId": "COUNTRY",
+   "fieldLabel": "Country/Region",
+   "valueId": "in",
+   "valueLabel": "India"
+  },
+  {
+   "fieldId": "5f63a78f1dae5c5c4e54ba2a",
+   "fieldLabel": "Brands",
+   "valueId": "default",
+   "valueLabel": "ServiceNow"
+  },
+  {
+   "fieldId": "60345d5c5165a31b17288279",
+   "fieldLabel": "Region",
+   "valueId": "858884996eea4a49baa6231279f39054",
+   "valueLabel": "APAC - Asia Pacific"
+  },
+  {
+   "fieldId": "603462175165a31b1728827d",
+   "fieldLabel": "Cost Center",
+   "valueId": "CC6751",
+   "valueLabel": "6751 MVW Engineering"
+  },
+  {
+   "fieldId": "6034601b43915a29a4b3389b",
+   "fieldLabel": "Job Location",
+   "valueId": "L_BLR009",
+   "valueLabel": "Embassy Golf Links Business Park, Bangalore, 560071, India(L_BLR009)"
+  },
+  {
+   "fieldId": "618ed92b8f5e5f110e5bfb95",
+   "fieldLabel": "Work Persona",
+   "valueId": "e5efb1ea-f0e1-4bc5-94b6-d5072787c528",
+   "valueLabel": "Required in Office"
+  },
+  {
+   "fieldId": "690cc0e8c682c3dbadaa7d73",
+   "fieldLabel": "Job Posting Type",
+   "valueId": "professional",
+   "valueLabel": "Professional"
+  }
+ ],
+ "releasedDate": "2026-09-29T12:03:08.632Z",
+ "creator": {
+  "name": "",
+  "avatarUrl": ""
+ },
+ "postingUrl": "https://jobs.smartrecruiters.com/ServiceNow/744000152399499-senior-software-engineer-devops-moveworks-devsecops-",
+ "applyUrl": "https://jobs.smartrecruiters.com/ServiceNow/744000152399499-senior-software-engineer-devops-moveworks-devsecops-?oga=true",
+ "referralUrl": "https://jobs.smartrecruiters.com/external-referrals/company/ServiceNow/publication/0870e660-8ce2-4902-93e0-a60a42946c2f?dcr_ci=ServiceNow",
+ "jobAd": {
+  "sections": {
+   "companyDescription": {
+    "title": "Company Description",
+    "text": "<p>It all started when engineer Fred Luddy wrote code that automated a tedious task for his coworker, Phyllis. She cried tears of joy. That moment inspired Fred to build a company that could do that for everyone—freeing people from busywork so they could focus on meaningful work. Today, ServiceNow is the AI control tower for business reinvention. Our ServiceNow AI platform brings together any AI, any data, and any workflow— helping 85% of the Fortune 500® work smarter, faster, and better. We're building an AI-native culture where technology and talent are unstoppable together. And we're just getting started.</p><p>Join us to put AI to work for people.</p><p>&#xa0;</p>"
+   },
+   "jobDescription": {
+    "title": "Job Description",
+    "text": "<p><strong>What you do in this role:</strong></p><ul><li><p>Responsible for vulnerability management and security automation across the Moveworks AI cloud infrastructure and developer platform</p></li><li><p>Closely work with platform, machine learning, search, data, and frontend teams to understand their security and infrastructure needs, and execute on DevSecOps roadmap initiatives</p></li><li><p>Triage and drive remediation of findings from SAST, dependency, and container vulnerability scans across multi-cloud infrastructure, including AWS and Azure environments</p></li><li><p>Implement and tune policy-as-code guardrails for Kubernetes and infrastructure-as-code, closing gaps identified through audits and scans</p></li><li><p>Support secrets management operations, identity federation (IRSA on AWS, Managed Identity/Workload Identity on Azure), and least-privilege access patterns across"
+   },
+   "qualifications": {
+    "title": "Qualifications",
+    "text": "<p><strong>To be successful in this role you have:</strong><br>\n&#xa0;</p><ul><li>Experience in leveraging or critically thinking about how to integrate AI into work processes, decision-making, or problem-solving. This may include using AI-powered tools, automating workflows, analyzing AI-driven insights, or exploring AI's potential impact on the function or industry.</li><li><p>3-5 years of experience in DevOps, Platform, or Security Engineering</p></li><li><p>Hands-on technical contributor with a strong sense of ownership, able to work through vulnerability findings and remediation from triage to closure</p></li><li><p>Working knowledge of AWS infrastructure, including IAM roles, security groups, and core networking (VPC, DNS)</p></li><li><p>Working knowledge of, or strong interest in, Azure infrastructure and security services (Azure AD/Entra ID, Azure Key Vault, Network Security Grou"
+   },
+   "additionalInformation": {
+    "title": "Additional Information",
+    "text": "<p><strong>Work Personas</strong></p><p>We approach our distributed world of work with flexibility and trust. Work personas (flexible, remote, or required in office) are categories that are assigned to ServiceNow employees depending on the nature of their work and their assigned work location. <a href=\"https://careers.servicenow.com/life-at-servicenow#workpersonas\" rel=\"noopener noreferrer\"><u>Learn more here</u></a>. To determine eligibility for a work persona, ServiceNow may confirm the distance between your primary residence and the closest ServiceNow office using a third-party service.</p><p><strong>Equal Opportunity Employer</strong></p><p>ServiceNow is an equal opportunity employer. All qualified applicants will receive consideration for employment without regard to race, color, religion, sex, sexual orientation, national origin, age, disability, gender identity,&#xa0; veteran stat"
+   }
+  }
+ },
+ "active": true,
+ "visibility": "PUBLIC",
+ "industry": {
+  "id": "it_and_services",
+  "label": "Information Technology And Services"
+ },
+ "function": {
+  "id": "engineering",
+  "label": "Engineering"
+ },
+ "department": {
+  "id": 2294038,
+  "label": "Engineering, Infrastructure and Operations"
+ },
+ "experienceLevel": {
+  "id": "not_applicable",
+  "label": "Not Applicable"
+ },
+ "typeOfEmployment": {
+  "id": "permanent",
+  "label": "Full-time"
+ },
+ "language": {
+  "code": "en",
+  "label": "English",
+  "labelNative": "English (US)"
+ }
+}

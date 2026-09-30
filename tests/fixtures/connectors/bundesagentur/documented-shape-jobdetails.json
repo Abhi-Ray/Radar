@@ -1,0 +1,14 @@
+{
+  "_note": "Documented-shape sample, NOT a live capture (see documented-shape-jobs.json). Shape of pc/v4/jobdetails/{base64(refnr)}.",
+  "refnr": "10000-1201234567-S",
+  "stellenangebotsTitel": "IT Security Engineer (m/w/d)",
+  "firma": "Beispiel Cloud GmbH",
+  "stellenangebotsBeschreibung": "Wir suchen eine:n IT Security Engineer für unser Cloud-Team in Berlin.\n\nIhre Aufgaben:\n- Absicherung unserer AWS- und Kubernetes-Umgebungen\n- Aufbau von DevSecOps-Pipelines\n\nIhr Profil:\n- Mindestens 3 Jahre Berufserfahrung in der IT-Sicherheit\n- Sehr gute Deutsch- und Englischkenntnisse\n\nWir bieten ein Jahresgehalt von 70.000 - 85.000 EUR brutto.",
+  "arbeitsorte": [
+    { "plz": "10115", "ort": "Berlin", "region": "Berlin", "land": "Deutschland" }
+  ],
+  "arbeitszeitmodelle": ["VOLLZEIT"],
+  "verguetungsangabe": "70.000 - 85.000 EUR brutto jährlich",
+  "veroeffentlichungszeitraum": { "von": "2026-09-25", "bis": "2026-11-25" },
+  "eintrittsdatum": "2026-11-01"
+}

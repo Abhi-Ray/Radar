@@ -1,0 +1,426 @@
+{
+ "offers": [
+  {
+   "country": "Netherlands",
+   "position": 1623,
+   "options_cv": "required",
+   "location_question_visible": false,
+   "open_questions": [
+    {
+     "id": 4402381,
+     "position": 1,
+     "options": {},
+     "required": true,
+     "body": "What country do you currently live in?",
+     "kind": "string",
+     "translations": {
+      "en": {
+       "body": "What country do you currently live in?"
+      }
+     },
+     "open_question_options": []
+    }
+   ],
+   "on_site": true,
+   "postal_code": null,
+   "published_at": "2026-09-29 16:02:37 UTC",
+   "experience_code": "experienced",
+   "hybrid": true,
+   "company_name": "bunq",
+   "state_name": "Noord-Holland",
+   "city": "Amsterdam",
+   "country_code": "NL",
+   "category_code": "banking",
+   "employment_type_code": "fulltime_permanent",
+   "locations_question": "What is your preferred work location?",
+   "sharing_image": null,
+   "slug": "ios-developer-3",
+   "salary": {
+    "max": null,
+    "min": null,
+    "period": null,
+    "currency": null
+   },
+   "careers_url": "https://careers.bunq.com/o/ios-developer-3",
+   "requirements": "<ul><li><p><span style=\"font-size:0.9em\">Proficiency in Swift, Objective-C, and SwiftUI to build intuitive, high-performance interfaces.</span></p></li><li><p><span style=\"font-size:0.9em\">Experience in designing scalable and secure network layers using REST APIs &amp; authentication.</span></p></li><li><p><span style=\"font-size:0.9em\">Familiarity with CI/CD pipelines and automated testing for implementing continuous testing strategies.</span></p></li><li><p><span style=\"font-size:0.9em\">Expertise in state management and UI frameworks to create fluid, responsive applications using UIKit or SwiftUI.</span></p></li><li><p><span style=\"font-size:0.9em\">Fluency in English to effectively communicate in a global team and ensure collaboration and clarity across all project stages.</span></p></li></ul><p style=\"min-height: 1.7em;\"></p><p><em>All new hires are subject to Pre-employment Screening (PES), which includes checks conducted by our third-party partner, Zinc. This is part of our commitment to a secure and trustworthy workplace</em></p><p style=\"min-height: 1.7em;\"></p><p><em>Curious to see how we make life easy? - try the <a rel=\"noopener\" target=\"_blank\" href=\"https://app.adjust.co",
+   "locations_question_required": true,
+   "title": "iOS Developer",
+   "options_salutation": "off",
+   "mailbox_email": "job.mtpr7@bunq.recruitee.com",
+   "updated_at": "2026-09-29 16:02:37 UTC",
+   "options_photo": "off",
+   "max_hours": 40,
+   "highlight": null,
+   "options_title": "off",
+   "guid": "mtpr7",
+   "cover_image": null,
+   "description": "<p><span style=\"color:#5A5F72\">At bunq, we're not just building a banking app; we're reshaping how people around the world experience financial freedom. As a (Senior) iOS Developer, you’ll be instrumental in crafting and maintaining cutting-edge mobile applications that elevate our users' banking journeys. Collaborate with our dynamic team to deliver a seamless, innovative, and user-friendly experience on the iOS platform.<br></span></p><p><strong><span style=\"color:#5A5F72\">Take Ownership</span></strong></p><ul><li><p><span style=\"color:#5A5F72\">Develop and maintain scalable iOS architecture, ensuring efficiency and a seamless user experience using Swift and iOS SDK. </span></p></li><li><p><span style=\"color:#5A5F72\">Integrate and optimize REST APIs, managing authentication, error handling, and data flow for smooth performance. </span></p></li><li><p><span style=\"color:#5A5F72\">Enhance CI/CD and testing automation, maintaining fast release cycles and ensuring robust app quality.</span></p></li><li><p><span style=\"color:#5A5F72\">Develop new features and fix bugs proactively, keeping performance sharp and delivering a seamless experience for Eva.</span></p></li></ul>",
+   "department": "Technology",
+   "locations": [
+    {
+     "id": 39979,
+     "name": "Amsterdam",
+     "state": "Noord-Holland",
+     "country": "Netherlands",
+     "city": "Amsterdam",
+     "translations": {
+      "en": {
+       "name": "Amsterdam",
+       "city": "Amsterdam",
+       "postal_code": null,
+       "street": null,
+       "note": null
+      }
+     },
+     "country_code": "NL",
+     "state_code": "NH",
+     "postal_code": null,
+     "street": null,
+     "note": null
+    }
+   ],
+   "sharing_title": "iOS Developer",
+   "state_code": "NH",
+   "dynamic_fields": [],
+   "options_phone": "required",
+   "remote": false,
+   "created_at": "2026-09-29 15:56:16 UTC",
+   "education_code": "professional",
+   "id": 2763710,
+   "location": "Amsterdam, Noord-Holland, Netherlands",
+   "min_hours_per_week": "40",
+   "sharing_description": "At bunq, we're not just building a banking app; we're reshaping how people around the world experience financial freedom. As a (Senior) iOS Developer, you’ll be instrumental in crafting and maintainin",
+   "max_hours_per_week": "40",
+   "options_cover_letter": "optional",
+   "locations_question_type": "multiple_choice",
+   "careers_apply_url": "https://careers.bunq.com/o/ios-developer-3/c/new",
+   "min_hours": 40,
+   "status": "published",
+   "tags": [
+    "E4"
+   ],
+   "close_at": null
+  },
+  {
+   "country": "Netherlands",
+   "position": 1621,
+   "options_cv": "off",
+   "location_question_visible": true,
+   "open_questions": [
+    {
+     "id": 4402351,
+     "position": 1,
+     "options": {},
+     "required": true,
+     "body": "What country do you currently live in?",
+     "kind": "string",
+     "translations": {
+      "en": {
+       "body": "What country do you currently live in?"
+      }
+     },
+     "open_question_options": []
+    }
+   ],
+   "on_site": false,
+   "postal_code": null,
+   "published_at": "2026-09-29 16:01:39 UTC",
+   "experience_code": "experienced",
+   "hybrid": true,
+   "company_name": "bunq",
+   "state_name": "Noord-Holland",
+   "city": "Amsterdam",
+   "country_code": "NL",
+   "category_code": "banking",
+   "employment_type_code": "fulltime_permanent",
+   "locations_question": "What is your preferred work location?",
+   "sharing_image": null,
+   "slug": "head-of-people-6",
+   "salary": {
+    "max": null,
+    "min": null,
+    "period": null,
+    "currency": null
+   },
+   "careers_url": "https://careers.bunq.com/o/head-of-people-6",
+   "requirements": "<ul><li><p>Proven experience building and scaling data-driven People systems across hiring, onboarding, performance, development and retention.</p></li><li><p>A track record of identifying the most important bottlenecks across the employee lifecycle and delivering practical improvements with measurable results.</p></li><li><p>Strong commercial judgment, including experience owning People budgets, developing compensation and benefits structures, and setting salary benchmarks across multiple markets.</p></li><li><p>The ability to connect People priorities and investments directly to company goals, operational needs and business outcomes.</p></li><li><p>Experience attracting, assessing and retaining exceptional talent in fast-paced, high-performance environments.</p></li><li><p>A practical approach to culture, translating company values into clear expectations, leadership behaviours and everyday ways of working.</p></li><li><p>Hands-on experience supporting international expansion, including employment structures, contracts, compensation, benefits and local compliance.</p></li><li><p>Confidence working with senior leaders, using data to challenge decisions and address performance or o",
+   "locations_question_required": true,
+   "title": "Head of People",
+   "options_salutation": "off",
+   "mailbox_email": "job.eg5s2@bunq.recruitee.com",
+   "updated_at": "2026-09-29 16:01:39 UTC",
+   "options_photo": "off",
+   "max_hours": 40,
+   "highlight": null,
+   "options_title": "off",
+   "guid": "eg5s2",
+   "cover_image": null,
+   "description": "<p>At bunq, People is a core business function. We use data, technology and automation to help our people perform at their best and enable bunq to scale internationally.</p><p>As VP/ Head of People, you will turn bunq’s mission and business priorities into a clear global People strategy. You’ll take ownership of hiring, performance, development and retention, ensuring every initiative solves a real business problem and delivers measurable results.</p><p>This is a hands-on leadership role for someone who combines strong commercial judgment with genuine People expertise. You’ll identify bottlenecks, improve systems and work closely with leaders to build high-performing teams and an environment where people can grow and succeed.</p><p style=\"min-height: 1.7em;\"></p><h3>Take ownership</h3><ul><li><p>Understand bunq’s mission, vision and business priorities.</p></li><li><p>Translate them into a clear, outcome-driven People strategy.</p></li><li><p>Build scalable systems that help employees perform, develop and succeed.</p></li><li><p>Hire and retain the right people in roles where they can make the greatest impact.</p></li><li><p>Provide employees with the tools, training and feedback t",
+   "department": "People",
+   "locations": [
+    {
+     "id": 39979,
+     "name": "Amsterdam",
+     "state": "Noord-Holland",
+     "country": "Netherlands",
+     "city": "Amsterdam",
+     "translations": {
+      "en": {
+       "name": "Amsterdam",
+       "city": "Amsterdam",
+       "postal_code": null,
+       "street": null,
+       "note": null
+      }
+     },
+     "country_code": "NL",
+     "state_code": "NH",
+     "postal_code": null,
+     "street": null,
+     "note": null
+    },
+    {
+     "id": 39967,
+     "name": "Sofia",
+     "state": "Sofia (stolitsa)",
+     "country": "Bulgaria",
+     "city": "Sofia",
+     "translations": {
+      "en": {
+       "name": "Sofia",
+       "city": "Sofia",
+       "postal_code": null,
+       "street": null,
+       "note": null
+      }
+     },
+     "country_code": "BG",
+     "state_code": "22",
+     "postal_code": null,
+     "street": null,
+     "note": null
+    }
+   ],
+   "sharing_title": "Head of People",
+   "state_code": "NH",
+   "dynamic_fields": [],
+   "options_phone": "required",
+   "remote": false,
+   "created_at": "2026-09-29 15:41:07 UTC",
+   "education_code": "bachelor_degree",
+   "id": 2763695,
+   "location": "Amsterdam, Noord-Holland, Netherlands",
+   "min_hours_per_week": "40",
+   "sharing_description": "At bunq, People is a core business function. We use data, technology and automation to help our people perform at their best and enable bunq to scale internationally.As VP/ Head of People, you will tu",
+   "max_hours_per_week": "40",
+   "options_cover_letter": "off",
+   "locations_question_type": "single_choice",
+   "careers_apply_url": "https://careers.bunq.com/o/head-of-people-6/c/new",
+   "min_hours": 40,
+   "status": "published",
+   "tags": [],
+   "close_at": null
+  },
+  {
+   "country": "Netherlands",
+   "position": 1619,
+   "options_cv": "off",
+   "location_question_visible": false,
+   "open_questions": [
+    {
+     "id": 4396462,
+     "position": 1,
+     "options": {},
+     "required": true,
+     "body": "What country do you currently live in?",
+     "kind": "string",
+     "translations": {
+      "en": {
+       "body": "What country do you currently live in?"
+      }
+     },
+     "open_question_options": []
+    }
+   ],
+   "on_site": false,
+   "postal_code": null,
+   "published_at": "2026-09-25 15:46:07 UTC",
+   "experience_code": "experienced",
+   "hybrid": true,
+   "company_name": "bunq",
+   "state_name": "Noord-Holland",
+   "city": "Amsterdam",
+   "country_code": "NL",
+   "category_code": "banking",
+   "employment_type_code": "fulltime_permanent",
+   "locations_question": "What is your preferred work location?",
+   "sharing_image": null,
+   "slug": "senior-legal-counsel-3",
+   "salary": {
+    "max": null,
+    "min": null,
+    "period": null,
+    "currency": null
+   },
+   "careers_url": "https://careers.bunq.com/o/senior-legal-counsel-3",
+   "requirements": "<ul><li><p>You are a qualified lawyer with a Master's degree in Law and a strong background in financial services.</p></li></ul><ul><li><p>You've reviewed and negotiated a high volume of third-party contracts, vendor agreements, data processing agreements, tech partnerships, and you know what good looks like.</p></li><li><p>You're comfortable with the regulatory landscape: GDPR, PSD2, DORA, DNB/EBA, you don't need to look these up, you work with them every day.</p></li><li><p>You've used AI tools to make legal work faster and smarter, and you know how to build processes around them, not just use them.</p></li><li><p>You use good judgment to make the call yourself, you know when to push back on a contract and when to get the deal done.</p></li><li><p><span style=\"color:#5A5F72\">You speak conversational Dutch (B1+ or higher), so you can navigate contracts, conversations, and context in both languages.</span></p></li></ul><p style=\"min-height: 1.7em;\"></p><p><em>Curious to see how we make life easy? - try the <a rel=\"noopener\" target=\"_blank\" href=\"https://app.adjust.com/1tyd4x67?fallback=https%3A%2F%2Fwww.bunq.com%2F&redirect_macos=https%3A%2F%2Fwww.bunq.com%2F\">bunq app</a>, it only",
+   "locations_question_required": true,
+   "title": "(Senior) Legal Counsel",
+   "options_salutation": "off",
+   "mailbox_email": "job.1ak1m@bunq.recruitee.com",
+   "updated_at": "2026-09-25 15:46:07 UTC",
+   "options_photo": "off",
+   "max_hours": 40,
+   "highlight": null,
+   "options_title": "off",
+   "guid": "1ak1m",
+   "cover_image": null,
+   "description": "<p class=\"font-claude-response-body break-words whitespace-normal\">At bunq , we move fast, launching products, entering new markets, and onboarding partners across the globe. Behind every partnership that makes users’ banking experience better, there's a contract. We need a sharp, senior lawyer who owns that process end to end, and in doing so, gets a front-row seat to every corner of bunq's business, from product launches to market expansions.</p><p class=\"font-claude-response-body break-words whitespace-normal\">Up for this? Kick off your application by taking our assessment and find out if bunq is your perfect match.</p><p style=\"min-height: 1.7em;\"></p><p><strong>Take ownership</strong></p><p>As our Medior Legal Counsel, you'll get exposure to all areas of legal at bunq, from product launches to regulatory changes to new market expansions. On top of that, you own the following:</p><ul><li><p>Be the go-to person for every third-party contract at bunq, from payment processors to tech vendors, making sure we move fast without cutting corners.</p></li></ul><ul><li><p>Take our AI contract review tool (Luminance) to the next level, building smarter workflows that handle more, faster, ",
+   "department": null,
+   "locations": [
+    {
+     "id": 39979,
+     "name": "Amsterdam",
+     "state": "Noord-Holland",
+     "country": "Netherlands",
+     "city": "Amsterdam",
+     "translations": {
+      "en": {
+       "name": "Amsterdam",
+       "city": "Amsterdam",
+       "postal_code": null,
+       "street": null,
+       "note": null
+      }
+     },
+     "country_code": "NL",
+     "state_code": "NH",
+     "postal_code": null,
+     "street": null,
+     "note": null
+    }
+   ],
+   "sharing_title": "(Senior) Legal Counsel",
+   "state_code": "NH",
+   "dynamic_fields": [],
+   "options_phone": "required",
+   "remote": false,
+   "created_at": "2026-09-25 15:38:25 UTC",
+   "education_code": "professional",
+   "id": 2760348,
+   "location": "Amsterdam, Noord-Holland, Netherlands",
+   "min_hours_per_week": "40",
+   "sharing_description": "At bunq , we move fast, launching products, entering new markets, and onboarding partners across the globe. Behind every partnership that makes users’ banking experience better, there's a contract. We",
+   "max_hours_per_week": "40",
+   "options_cover_letter": "off",
+   "locations_question_type": "single_choice",
+   "careers_apply_url": "https://careers.bunq.com/o/senior-legal-counsel-3/c/new",
+   "min_hours": 40,
+   "status": "published",
+   "tags": [
+    "E4",
+    "Enablers"
+   ],
+   "close_at": null
+  },
+  {
+   "country": "Netherlands",
+   "position": 1618,
+   "options_cv": "off",
+   "location_question_visible": false,
+   "open_questions": [
+    {
+     "id": 4396271,
+     "position": 1,
+     "options": {},
+     "required": true,
+     "body": "What country do you currently live in?",
+     "kind": "string",
+     "translations": {
+      "en": {
+       "body": "What country do you currently live in?"
+      }
+     },
+     "open_question_options": []
+    }
+   ],
+   "on_site": false,
+   "postal_code": null,
+   "published_at": "2026-09-25 14:45:40 UTC",
+   "experience_code": "entry_level",
+   "hybrid": true,
+   "company_name": "bunq",
+   "state_name": "Noord-Holland",
+   "city": "Amsterdam",
+   "country_code": "NL",
+   "category_code": "banking",
+   "employment_type_code": "fulltime_permanent",
+   "locations_question": "What is your preferred work location?",
+   "sharing_image": null,
+   "slug": "copywriting-intern-3",
+   "salary": {
+    "max": null,
+    "min": null,
+    "period": null,
+    "currency": null
+   },
+   "careers_url": "https://careers.bunq.com/o/copywriting-intern-3",
+   "requirements": "<ul><li><p>You’re fluent in written and spoken English</p></li><li><p>You’re available 5 days &amp; 40 hours a week for 3 months.</p></li><li><p>You’re currently studying or recently graduated in English, Media, Communications, Marketing, Journalism, or a similar field</p></li><li><p>You have strong writing skills and can adapt tone for ads, social media, and marketing content</p></li><li><p>You understand the basics of digital marketing and why hooks, headlines, and variations matter</p></li><li><p>You’re curious about why certain messages perform better than others</p></li><li><p>You enjoy researching competitor campaigns, social trends, and messaging patterns</p></li><li><p>You can turn research into clear insights and practical content ideas</p></li><li><p>You have strong attention to detail and are comfortable receiving feedback and revising your work</p></li><li><p>You have experience running or contributing to social media accounts (strong plus ⭐)</p></li><li><p>You’re eager to learn and excited to contribute to marketing that actually drives impact</p></li></ul><p style=\"min-height: 1.7em;\"></p><p style=\"min-height: 1.7em;\"></p><p><span style=\"color:#121317\">Curious to see ",
+   "locations_question_required": true,
+   "title": "Copywriting Intern",
+   "options_salutation": "off",
+   "mailbox_email": "job.tt4u1@bunq.recruitee.com",
+   "updated_at": "2026-09-29 06:50:02 UTC",
+   "options_photo": "off",
+   "max_hours": 40,
+   "highlight": null,
+   "options_title": "off",
+   "guid": "tt4u1",
+   "cover_image": null,
+   "description": "<p>At bunq, we Make Life Easy, and so does our content. As our Copywriting Intern, you will contribute to making every line across our ads, website/blogs, and social media clear, helpful, and actionable for our users. You’ll help craft messaging that grabs attention and support the content team by turning ideas, insights, and trends into content that actually performs.</p><p>Ready to help us turn words into impact? 🚀</p><p style=\"min-height: 1.7em;\"></p><p><strong>Take ownership</strong></p><ul><li><p>Contribute ideas and copy variations for ads and social campaigns, helping the team test and learn faster ✍️</p></li><li><p>Turn competitor and social trend research into actionable insights — identify patterns, spot opportunities, and propose messaging angles that differentiate bunq 🔎</p></li><li><p>Create and manage engaging blog and website content to support brand awareness and marketing goals.</p></li><li><p>Support campaign testing by proposing A/B ideas for headlines, hooks, and messaging variations to learn what resonates across markets 📊</p></li><li><p>Write structured drafts for ads, social posts, and website content that support product launches and high-impact campaigns 📣<",
+   "department": null,
+   "locations": [
+    {
+     "id": 39979,
+     "name": "Amsterdam",
+     "state": "Noord-Holland",
+     "country": "Netherlands",
+     "city": "Amsterdam",
+     "translations": {
+      "en": {
+       "name": "Amsterdam",
+       "city": "Amsterdam",
+       "postal_code": null,
+       "street": null,
+       "note": null
+      }
+     },
+     "country_code": "NL",
+     "state_code": "NH",
+     "postal_code": null,
+     "street": null,
+     "note": null
+    }
+   ],
+   "sharing_title": "Copywriting Intern",
+   "state_code": "NH",
+   "dynamic_fields": [],
+   "options_phone": "required",
+   "remote": false,
+   "created_at": "2026-09-25 14:35:28 UTC",
+   "education_code": "bachelor_degree",
+   "id": 2760260,
+   "location": "Amsterdam, Noord-Holland, Netherlands",
+   "min_hours_per_week": "40",
+   "sharing_description": "At bunq, we Make Life Easy, and so does our content. As our Copywriting Intern, you will contribute to making every line across our ads, website/blogs, and social media clear, helpful, and actionable ",
+   "max_hours_per_week": "40",
+   "options_cover_letter": "off",
+   "locations_question_type": "single_choice",
+   "careers_apply_url": "https://careers.bunq.com/o/copywriting-intern-3/c/new",
+   "min_hours": 40,
+   "status": "published",
+   "tags": [],
+   "close_at": null
+  }
+ ]
+}
