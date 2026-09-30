@@ -48,6 +48,8 @@ export const ENTRIES = Object.freeze([
  * `const`) so a bundled ES module that declares its own top-level `__dirname` cannot collide.
  */
 export const BANNER = [
+  // Generated code (dist/ is not in the shared ESLint ignores): never lint a bundle.
+  '/* eslint-disable */',
   "import { createRequire as __radarCreateRequire } from 'node:module';",
   "import { fileURLToPath as __radarFileURLToPath } from 'node:url';",
   "import { dirname as __radarDirname } from 'node:path';",

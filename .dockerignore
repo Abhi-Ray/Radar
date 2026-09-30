@@ -1,14 +1,18 @@
 # Build context for the app image (Dockerfile). Keep secrets and local state OUT of the image.
 
 # Secrets / environment (the containers get them at runtime via env_file)
-.env
-.env.*
+# (`**/` so a stray copy in any sub-folder is excluded too; patterns are root-relative otherwise)
+**/.env
+**/.env.*
 !.env.example
 secrets/
 .secrets/
-*.pem
-*.key
-id_*
+**/*.pem
+**/*.key
+**/id_rsa*
+**/id_ecdsa*
+**/id_ed25519*
+**/deploy_key*
 ops/secrets.env.enc
 
 # Dependencies and build output (rebuilt inside the image)
@@ -31,9 +35,9 @@ next-env.d.ts
 
 # Local databases, dumps, backups
 .data/
-*.sql.gz
-*.enc
-*.dump
+**/*.sql.gz
+**/*.enc
+**/*.dump
 ops/backup/
 
 # Tests and their artefacts
