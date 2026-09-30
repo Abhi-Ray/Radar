@@ -2,7 +2,8 @@
  * Pipeline runs against a real (ephemeral) MySQL with scripted fake connectors — no network.
  * Covers: idempotency, source isolation + alert, never mass-closing, the circuit breaker, dead
  * letters + retry, dry runs writing nothing, reproducible reprocessing, the single-run lock and
- * the UI → worker run queue.
+ * the UI → worker run queue; plus lifecycle bookkeeping (last confirmed live from grade-A
+ * listings, repost counting → ghost risk) and the checklist auto-tick.
  */
 import { and, asc, eq } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
