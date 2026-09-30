@@ -26,7 +26,10 @@ COPY --chmod=0644 github_known_hosts /etc/radar-backup/github_known_hosts
 COPY --chmod=0644 lib.sh /opt/radar-backup/lib.sh
 COPY --chmod=0755 backup.sh restore.sh restore-test.sh scheduler.sh radar-alert.sh /opt/radar-backup/
 
+# COPY --chmod also applies to the directories BuildKit creates for the destination, leaving them
+# 0644 (no x bit). With `cap_drop: ALL` nothing can traverse them, so tini fails with EACCES.
 RUN set -eux; \
+    chmod 0755 /opt/radar-backup /etc/radar-backup; \
     ln -s /opt/radar-backup/backup.sh /usr/local/bin/radar-backup; \
     ln -s /opt/radar-backup/restore.sh /usr/local/bin/radar-restore; \
     ln -s /opt/radar-backup/restore-test.sh /usr/local/bin/radar-restore-test; \
