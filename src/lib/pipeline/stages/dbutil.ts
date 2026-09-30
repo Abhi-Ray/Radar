@@ -5,6 +5,12 @@ import { withTransaction, type Db, type Tx } from '../../db';
 export const ER_LOCK_DEADLOCK = 1213;
 export const ER_LOCK_WAIT_TIMEOUT = 1205;
 export const ER_DUP_ENTRY = 1062;
+/**
+ * "SAVEPOINT … does not exist": a deadlock inside a nested transaction (drizzle SAVEPOINT) makes
+ * InnoDB roll back the WHOLE transaction, so drizzle's `ROLLBACK TO SAVEPOINT` fails with this and
+ * masks the original deadlock. Retrying the outer transaction is the right answer.
+ */
+export const ER_SP_DOES_NOT_EXIST = 1305;
 
 /** errno of a mysql2 error, also when wrapped by drizzle (`cause` chain). */
 export function mysqlErrno(err: unknown): number | null {
@@ -19,7 +25,7 @@ export function mysqlErrno(err: unknown): number | null {
 
 export function isRetryableTxError(err: unknown): boolean {
   const n = mysqlErrno(err);
-  return n === ER_LOCK_DEADLOCK || n === ER_LOCK_WAIT_TIMEOUT;
+  return n === ER_LOCK_DEADLOCK || n === ER_LOCK_WAIT_TIMEOUT || n === ER_SP_DOES_NOT_EXIST;
 }
 
 export function isDuplicateEntry(err: unknown): boolean {
@@ -31,7 +37,7 @@ export function isDuplicateEntry(err: unknown): boolean {
  * Three sources are processed concurrently and `addFact` locks fact rows, so an occasional
  * deadlock is expected; InnoDB rolls the victim back and the retry succeeds.
  */
-export async function withTxRetry<T>(db: Db, fn: (tx: Tx) => Promise<T>, attempts = 3): Promise<T> {
+export async function withTxRetry<T>(db: Db, fn: (tx: Tx) => Promise<T>, attempts = 5): Promise<T> {
   for (let i = 1; ; i++) {
     try {
       return await withTransaction(db, fn);

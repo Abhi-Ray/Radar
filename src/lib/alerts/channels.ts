@@ -111,8 +111,11 @@ export function formatAlertSubject(msg: AlertMessage): string {
   return redactString(`[RADAR ${SEVERITY_LABEL[msg.severity]}] ${msg.title}`).slice(0, 200);
 }
 
+/** Telegram bot token shape (`<bot id>:<secret>`), redacted even outside a URL. */
+const BOT_TOKEN_RE = /\b\d{6,12}:[A-Za-z0-9_-]{30,}\b/g;
+
 /** Error text safe to store: redacted and short. */
 export function safeErrorText(err: unknown): string {
   const m = err instanceof Error ? err.message : String(err);
-  return redactString(m).slice(0, 300);
+  return redactString(m).replace(BOT_TOKEN_RE, '[redacted]').slice(0, 300);
 }

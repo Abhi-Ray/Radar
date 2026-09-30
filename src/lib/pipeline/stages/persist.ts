@@ -18,7 +18,7 @@ import type { Tx } from '../../db';
 import { canonicalJobId, findDuplicate, recordPossibleDuplicates } from '../../dedup';
 import { reopenDecision } from '../../lifecycle';
 import { formatSalary } from '../../normalize/salary';
-import { loadResolvedFacts, syncResolvedJobColumns, type ResolvedFacts } from '../../provenance/store';
+import { loadResolvedFacts, reapplyColumnOverrides, syncResolvedJobColumns, type ResolvedFacts } from '../../provenance/store';
 import { DAY_MS } from '../../time';
 import type { RunContext } from './context';
 import { withTxRetry } from './dbutil';
@@ -354,6 +354,9 @@ async function persistInTx(tx: Tx, ctx: RunContext, input: PersistInput): Promis
   }
 
   if (Object.keys(set).length) await tx.update(jobs).set(set).where(eq(jobs.id, jobId));
+  // Manual column fixes (title/country/city/workplace_type) always win over a re-scrape. The
+  // diff above already skips overridden fields; re-applying also repairs rows edited elsewhere.
+  if (!isNew) await reapplyColumnOverrides(tx, jobId);
 
   // ---- facts → resolved columns → score
   await writeSourceFacts(tx, jobId, p, input.source.sourceKey);

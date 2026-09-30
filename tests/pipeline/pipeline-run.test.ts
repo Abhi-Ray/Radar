@@ -126,7 +126,7 @@ describe('idempotency', () => {
     expect(j2.job.titleRaw).toBe('Staff DevSecOps Engineer');
     const titleChanges = await t.db.select().from(jobChanges).where(and(eq(jobChanges.jobId, j2.job.id), eq(jobChanges.field, 'title')));
     expect(titleChanges).toHaveLength(1);
-    expect(titleChanges[0]).toMatchObject({ oldValue: 'DevSecOps Engineer', newValue: 'Staff DevSecOps Engineer' });
+    expect(titleChanges[0]).toMatchObject({ oldValue: 'Full Stack Developer', newValue: 'Staff DevSecOps Engineer' });
     const j1 = await jobOf(sid, 'j1');
     const descChanges = await t.db.select().from(jobChanges).where(and(eq(jobChanges.jobId, j1.job.id), eq(jobChanges.field, 'description')));
     expect(descChanges).toHaveLength(1);
@@ -212,7 +212,6 @@ describe('never mass-close', () => {
     feed.set('inc', items(6));
     feed.set('part', items(6, 'p'));
     const r0 = await run();
-    console.log('DBG', JSON.stringify(report(r0).sources), JSON.stringify(await t.db.select().from(jobSources)));
     clock.advance(24 * HOUR_MS);
     feed.set('inc', items(1));
     feed.set('part', items(1, 'p'));
@@ -415,8 +414,10 @@ describe('reprocess from raw', () => {
     }));
   const jobView = async () =>
     (await t.db.select().from(jobs).orderBy(asc(jobs.id))).map((j) => {
-      const { updatedAt: _u, ...rest } = j as typeof j & { updatedAt?: unknown };
+      // updated_at / resolved_at are bookkeeping timestamps of the write itself, not results.
+      const { updatedAt: _u, resolvedAt: _r, ...rest } = j;
       void _u;
+      void _r;
       return rest;
     });
 

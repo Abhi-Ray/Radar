@@ -1,18 +1,19 @@
 /**
- * Retention (weekly): keeps the database small without losing anything that matters.
+ * Retention (daily, 05:00 UTC): keeps the database small without losing anything that matters.
  *
  * - Raw snapshots of saved jobs and jobs with an application are marked `retained` (kept forever).
  * - Other raw snapshots older than settings.retention.rawDays (default 90) are deleted, EXCEPT
  *   the current snapshot of a posting whose job is still open or was listed within the window
  *   (reprocessFromRaw needs it) and snapshots an open dead letter points at (retry needs them).
- * - Superseded job scores, resolved / ignored dead letters and link checks older than 90 days.
- * - Old login attempts (auth rate-limit history).
+ * - AI cache entries and resolved / ignored dead letters older than 180 days.
+ * - Superseded job scores and link checks older than 90 days.
+ * - Old login attempts (auth rate-limit history, via pruneLoginAttempts).
  *
  * Takes the pipeline lock without waiting (skips when a run is in progress), so a run never
  * references a snapshot that is being deleted.
  */
 import { and, asc, eq, exists, gt, gte, inArray, lt, notExists, or, sql } from 'drizzle-orm';
-import { applications, deadLetters, jobs, jobScores, jobSources, linkChecks, rawSnapshots } from '../../db/schema';
+import { aiCache, applications, deadLetters, jobs, jobScores, jobSources, linkChecks, rawSnapshots } from '../../db/schema';
 import { pruneLoginAttempts } from '../auth/rate-limit';
 import type { Db } from '../db';
 import { log as rootLog } from '../log';
@@ -22,7 +23,10 @@ import { getSetting } from '../settings';
 import { DAY_MS } from '../time';
 import { OPEN_STATES } from '.';
 
+/** Superseded job scores and link checks. */
 export const HISTORY_RETENTION_DAYS = 90;
+/** AI cache entries and resolved / ignored dead letters. */
+export const LONG_RETENTION_DAYS = 180;
 export const RETENTION_BATCH = 1000;
 
 export interface RetentionResult {
@@ -32,6 +36,7 @@ export interface RetentionResult {
   snapshotsDeleted: number;
   scoresDeleted: number;
   deadLettersDeleted: number;
+  aiCacheDeleted: number;
   linkChecksDeleted: number;
   loginAttemptsDeleted: number;
   durationMs: number;
@@ -60,6 +65,7 @@ export async function runRetention(db: Db, opts: { now?: Date } = {}): Promise<R
     snapshotsDeleted: 0,
     scoresDeleted: 0,
     deadLettersDeleted: 0,
+    aiCacheDeleted: 0,
     linkChecksDeleted: 0,
     loginAttemptsDeleted: 0,
     durationMs: 0,
@@ -144,17 +150,30 @@ export async function runRetention(db: Db, opts: { now?: Date } = {}): Promise<R
         ).map((r) => r.id),
       async (ids) => (await db.delete(jobScores).where(and(inArray(jobScores.id, ids), eq(jobScores.isCurrent, false))))[0].affectedRows,
     );
+    const longCutoff = new Date(now.getTime() - LONG_RETENTION_DAYS * DAY_MS);
     out.deadLettersDeleted = await deleteInBatches(
       async (after) =>
         (
           await db
             .select({ id: deadLetters.id })
             .from(deadLetters)
-            .where(and(gt(deadLetters.id, after), inArray(deadLetters.status, ['resolved', 'ignored']), lt(deadLetters.updatedAt, histCutoff)))
+            .where(and(gt(deadLetters.id, after), inArray(deadLetters.status, ['resolved', 'ignored']), lt(deadLetters.updatedAt, longCutoff)))
             .orderBy(asc(deadLetters.id))
             .limit(RETENTION_BATCH)
         ).map((r) => r.id),
       async (ids) => (await db.delete(deadLetters).where(and(inArray(deadLetters.id, ids), inArray(deadLetters.status, ['resolved', 'ignored']))))[0].affectedRows,
+    );
+    out.aiCacheDeleted = await deleteInBatches(
+      async (after) =>
+        (
+          await db
+            .select({ id: aiCache.id })
+            .from(aiCache)
+            .where(and(gt(aiCache.id, after), lt(aiCache.createdAt, longCutoff)))
+            .orderBy(asc(aiCache.id))
+            .limit(RETENTION_BATCH)
+        ).map((r) => r.id),
+      async (ids) => (await db.delete(aiCache).where(inArray(aiCache.id, ids)))[0].affectedRows,
     );
     out.linkChecksDeleted = await deleteInBatches(
       async (after) =>
