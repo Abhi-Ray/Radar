@@ -25,19 +25,31 @@
  *    "Benefits" / "What we offer" section or label, an offer verb before it, "… included" after
  *    it). Anywhere else it becomes a low-confidence mention (`#mention`): likely at most.
  * 8. Question sentences (application forms) yield at most a low-confidence right_to_work_required.
+ *    One exception: a question about the employer's offer ("Visa sponsorship for this role?",
+ *    "Do you offer visa sponsorship?") answered by the next line alone ("Unfortunately not.",
+ *    "Yes!") is read from the answer, at medium confidence (`#answer`). Option lists ("Yes / No")
+ *    and questions about the candidate ("Are you seeking visa sponsorship?") never count.
  */
 import type { VisaSignal, VisaSignalKind } from '../contracts/jobs';
 import type { Confidence } from '../contracts/provenance';
 import { confidenceRank, minConfidence } from '../contracts/provenance';
 import { foldWithMap } from '../normalize/text';
 import {
+  ANSWER_EN_NO_PHRASES,
+  ANSWER_EN_YES_PHRASES,
+  ANSWER_NO_WORDS,
+  ANSWER_REGRET_NEGATORS,
+  ANSWER_REGRET_WORDS,
+  ANSWER_YES_WORDS,
   BENEFIT_HEADINGS,
+  CANDIDATE_QUESTION_CUES,
   BENEFIT_VERBS,
   CONDITION_CUES,
   DUTY_CUES,
   DUTY_HEADINGS,
   DUTY_SUBJECTS,
   DUTY_VERBS,
+  EMPLOYER_QUESTION_CUES,
   EMPLOYER_SUBJECTS,
   HEDGE_CUES,
   LABEL_POSITIVE_RE,
@@ -56,7 +68,7 @@ import {
   type VisaPhraseRule,
 } from '../../data/visa/phrases';
 
-export const VISA_SIGNALS_LOGIC_VERSION = 'visa-signals@2026-09-30.2';
+export const VISA_SIGNALS_LOGIC_VERSION = 'visa-signals@2026-09-30.3';
 export { VISA_PHRASES_VERSION };
 
 /** Longest quote we store around a hit (the whole sentence when shorter). */
@@ -172,6 +184,27 @@ const GENERIC_HEADING_RE = /^[\s\-*•·▪●◦>\d.)(#]*[\p{L}][^:]{0,50}:\s*$
 const POST_REQUIREMENT_RE =
   /^[\s:]*(?:(?:is|are|ist|est|es|e|is|wordt|jest|je)\s+)?(?:required|needed|necessary|erforderlich|notwendig|notig|benotigt|requise?|necessaire|nodig|vereist|necesario|requerido|necessario|richiesto|kravs|kraeves|kreves|vaaditaan|wymagane|nutne)(?![\p{L}\p{N}])/u;
 const QUESTION_START_RE = new RegExp(`^(?:${alternation(QUESTION_STARTERS)})(?!${L})`, 'u');
+/** A short answer stands alone: punctuation, the end of the line, or (for "yes") "we do / we can". */
+const ANSWER_END = `\\s*(?:[,.!;:)]|$)`;
+const ANSWER_LEAD = '^[\\s\\-*>()\\[\\]]*';
+const ANSWER_YES_RE = new RegExp(
+  `${ANSWER_LEAD}(?:(?:${alternation(ANSWER_YES_WORDS)})(?:${ANSWER_END}|\\s+(?=we\\s))|(?:${alternation(ANSWER_EN_YES_PHRASES)})${ANSWER_END})`,
+  'u',
+);
+const ANSWER_NO_RE = new RegExp(
+  `${ANSWER_LEAD}(?:(?:${alternation(ANSWER_REGRET_WORDS)})[\\s,!.:-]*)?(?:(?:${alternation(ANSWER_NO_WORDS)})${ANSWER_END}|(?:${alternation(ANSWER_EN_NO_PHRASES)})${ANSWER_END})`,
+  'u',
+);
+const ANSWER_REGRET_NO_RE = new RegExp(
+  `${ANSWER_LEAD}(?:${alternation(ANSWER_REGRET_WORDS)})[\\s,!.:-]*(?:${alternation(ANSWER_REGRET_NEGATORS)})(?!${L})`,
+  'u',
+);
+/** A bare yes/no token on its own: one option of an option list when another follows. */
+const ANSWER_TOKEN_RE = new RegExp(`${ANSWER_LEAD}(?:${alternation([...ANSWER_YES_WORDS, ...ANSWER_NO_WORDS])})[\\s.!)\\]]*$`, 'u');
+const CANDIDATE_Q_RE = boundedRe(alternation(CANDIDATE_QUESTION_CUES), 'u');
+const EMPLOYER_Q_RE = boundedRe(alternation(EMPLOYER_QUESTION_CUES), 'u');
+/** The most words an answer line may have to be read as an answer. */
+const ANSWER_MAX_WORDS = 8;
 /** Verbs that let a negation distribute over a comma list ("we don't offer relocation, visa sponsorship …"). */
 const LIST_VERB_RE =
   /(?<![\p{L}\p{N}])(?:offer|offers|provide|provides|sponsor|support|cover|include|bieten|anbieten|ubernehmen|offrons|proposons|fournissons|bieden|ofrecemos|ofrece|oferecemos|oferece|offriamo|forniamo|erbjuder|tilbyder|tilbyr|tarjoa|oferujemy|zapewniamy|nabizime|poskytujeme)(?![\p{L}\p{N}])/u;
@@ -266,6 +299,46 @@ function isQuestion(sentence: string): boolean {
   if (t.endsWith('?')) return true;
   const head = t.replace(/^[\s\-*•·▪●◦>\d.)(]+/u, '');
   return QUESTION_START_RE.test(head);
+}
+
+/** True when a question asks about the employer's offer rather than about the candidate. */
+function asksEmployer(question: string): boolean {
+  return EMPLOYER_Q_RE.test(question) || !CANDIDATE_Q_RE.test(question);
+}
+
+interface Answer {
+  yes: boolean;
+  /** Folded index just past the answer line. */
+  end: number;
+}
+
+/**
+ * The FAQ answer right after question `i` ("Visa sponsorship? Unfortunately not."), or null. The
+ * answer line must be short and carry no visa phrase of its own (then its own words decide), and a
+ * lone "Yes" / "No" followed by another option ("Yes | No", one option per line) is a form.
+ */
+function answerAfter(folded: string, sents: Span[], i: number): Answer | null {
+  const next = sents[i + 1];
+  if (!next) return null;
+  const line = folded.slice(next.start, next.end);
+  if (!/\p{L}/u.test(line) || wordCount(line) > ANSWER_MAX_WORDS) return null;
+  if (collectHits(line).length > 0) return null;
+  if (ANSWER_TOKEN_RE.test(line)) {
+    const sep = folded[next.end];
+    if (sep === '|' || sep === '/') return null;
+    const after = sents[i + 2];
+    if (after && ANSWER_TOKEN_RE.test(folded.slice(after.start, after.end))) return null;
+  }
+  const plain = stripPseudo(line);
+  if (ANSWER_NO_RE.test(plain) || ANSWER_REGRET_NO_RE.test(plain)) return { yes: false, end: next.end };
+  if (ANSWER_YES_RE.test(plain)) {
+    // "Yes, but not for this role" is no clean answer.
+    const m = ANSWER_YES_RE.exec(plain);
+    const rest = m ? plain.slice(m[0].length) : '';
+    if (STRONG_NEG_RE.test(rest) || WEAK_NEG_RE.test(rest)) return null;
+    return { yes: true, end: next.end };
+  }
+  return null;
 }
 
 function overlaps(a: Span, b: Span): boolean {
@@ -537,7 +610,9 @@ export function detectVisaSignals(text: string): VisaSignal[] {
   const found: (VisaSignal & { pos: number })[] = [];
 
   let current: PostingSection = null;
-  for (const sent of splitSentences(folded)) {
+  const sents = splitSentences(folded);
+  for (let si = 0; si < sents.length; si++) {
+    const sent = sents[si];
     const sentence = folded.slice(sent.start, sent.end);
     if (!/[\p{L}]/u.test(sentence)) continue;
     const heading = headingOf(sentence);
@@ -551,13 +626,19 @@ export function detectVisaSignals(text: string): VisaSignal[] {
     const { claims, positives } = resolveOverlaps(hits);
     const question = isQuestion(sentence);
     const starts = clauseStarts(sentence);
+    const answer = question && asksEmployer(sentence) ? answerAfter(folded, sents, si) : null;
 
     for (const hit of [...claims, ...positives]) {
       const ctx = hit.rule.kind === 'statement' || hit.rule.kind === 'bare' ? contextOf(sentence, starts, hit, section) : null;
-      const emitted = interpret(hit, ctx, question);
+      let emitted = interpret(hit, ctx, question);
       if (!emitted) continue;
+      let quoteEnd = sent.end;
+      if (answer && hit.rule.kind !== 'form' && interpret(hit, ctx, false)?.signal === 'offered') {
+        emitted = { signal: answer.yes ? 'offered' : 'not_offered', confidence: 'medium', ruleId: `${hit.rule.id}#answer` };
+        quoteEnd = answer.end;
+      }
       const oSentStart = map[sent.start];
-      const oSentEnd = origEnd(map, sent.end);
+      const oSentEnd = origEnd(map, quoteEnd);
       const oHitStart = map[sent.start + hit.start];
       const oHitEnd = origEnd(map, sent.start + hit.end);
       const quote = exactQuote(text, oSentStart, oSentEnd, oHitStart, oHitEnd);

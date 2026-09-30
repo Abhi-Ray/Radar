@@ -331,3 +331,99 @@ describe('detectVisaSignals: behaviour', () => {
     expect(s.map((x) => x.signal)).toEqual(['offered']);
   });
 });
+
+describe('detectVisaSignals: equal-opportunity wording is not a refusal', () => {
+  const sig = (t: string) => detectVisaSignals(t).map((s) => [s.signal, s.confidence] as const);
+
+  it.each([
+    ['We do not discriminate and offer visa sponsorship.', 'en'],
+    ['We hire without regard to national origin and offer visa sponsorship.', 'en'],
+    ['We never tolerate harassment and we offer visa sponsorship.', 'en'],
+    ['Wir diskriminieren nicht und bieten Visa-Sponsoring an.', 'de'],
+    ['Contratamos sin distinción de origen y ofrecemos patrocinio de visado.', 'es'],
+  ])('%s', (text) => {
+    const s = detectVisaSignals(text);
+    expect(s.map((x) => x.signal)).toEqual(['offered']);
+    expect(s[0].confidence).toBe('high');
+  });
+
+  it('after a label separator the offer is only a mention, never not_offered', () => {
+    expect(sig('Visa sponsorship: we do not discriminate.')).toEqual([['offered', 'low']]);
+  });
+
+  it('a real refusal is still read', () => {
+    expect(sig('We do not discriminate. We do not offer visa sponsorship.')).toEqual([['not_offered', 'high']]);
+  });
+});
+
+describe('detectVisaSignals: a refusal that points back ("cannot do so")', () => {
+  it.each([
+    'We have sponsored visas in the past but cannot do so for this role.',
+    'While we have sponsored visas before, we are unable to do so for this position.',
+    'Visa sponsorship has been possible in some teams, however we cannot offer it here.',
+  ])('%s', (text) => {
+    const s = detectVisaSignals(text);
+    expect(s.map((x) => [x.signal, x.confidence, x.ruleId])).toEqual([['not_offered', 'medium', 'en.neg.cannot_do_so']]);
+    expect(text.includes(s[0].quote)).toBe(true);
+  });
+
+  it('a plain offer with an unrelated "but" is untouched', () => {
+    expect(detectVisaSignals('We sponsor visas, but we do not offer relocation.').map((x) => x.signal)).toEqual(['offered']);
+  });
+});
+
+describe('detectVisaSignals: FAQ answers after a question about the offer', () => {
+  const one = (t: string) => {
+    const s = detectVisaSignals(t);
+    for (const x of s) expect(t.includes(x.quote)).toBe(true);
+    return s.map((x) => [x.signal, x.confidence, x.ruleId.endsWith('#answer')] as const);
+  };
+
+  it.each([
+    ['Visa sponsorship for this role? Unfortunately not.', 'not_offered'],
+    ['Do you offer visa sponsorship? No.', 'not_offered'],
+    ['Is visa sponsorship available? Not at this time.', 'not_offered'],
+    ["Visa sponsorship for this role?\n\nUnfortunately we can't at the moment.", 'not_offered'],
+    ['Bietet ihr Visa-Sponsoring an? Leider nicht.', 'not_offered'],
+    ['Parrainage de visa ? Malheureusement pas.', 'not_offered'],
+    ['Do you offer visa sponsorship? Yes.', 'offered'],
+    ['Is visa sponsorship available? We do!', 'offered'],
+    ['Visa-Sponsoring? Ja!', 'offered'],
+    ['¿Patrocinio de visado? Sí.', 'offered'],
+  ] as const)('%s', (text, signal) => {
+    expect(one(text)).toEqual([[signal, 'medium', true]]);
+  });
+
+  it('the quote covers the question and its answer', () => {
+    const [s] = detectVisaSignals('Intro.\nVisa sponsorship for this role? Unfortunately not.\nMore text.');
+    expect(s.quote).toBe('Visa sponsorship for this role? Unfortunately not.');
+  });
+
+  it.each([
+    'Do you offer visa sponsorship? Yes / No',
+    'Do you offer visa sponsorship? Yes | No',
+    'Do you offer visa sponsorship?\nYes\nNo',
+    'Visa sponsorship?\n( ) Yes\n( ) No',
+    'Are you seeking visa sponsorship? Yes.',
+    'Looking for visa sponsorship? No.',
+    'Is visa sponsorship available? Yes, but not for junior roles.',
+    'Do you offer visa sponsorship? Great question! Read on.',
+    '¿Patrocinio de visado? Si necesitas visado, avísanos.',
+  ])('no answer read: %s', (text) => {
+    for (const s of detectVisaSignals(text)) {
+      expect(s.signal).toBe('right_to_work_required');
+      expect(s.confidence).toBe('low');
+    }
+  });
+
+  it('application-form questions about the candidate stay form questions', () => {
+    for (const t of ['Will you now or in the future require sponsorship? No.', 'Do you require visa sponsorship? Yes.', 'Do you have the right to work in the UK? No.']) {
+      expect(one(t)).toEqual([['right_to_work_required', 'low', false]]);
+    }
+  });
+
+  it('an answer with its own visa phrase is read on its own', () => {
+    const s = detectVisaSignals('Can you sponsor my visa? No, we are not able to sponsor visas.');
+    expect(s.map((x) => [x.signal, x.confidence, x.ruleId])).toEqual([['not_offered', 'high', 'en.neg.aux_sponsor']]);
+  });
+});

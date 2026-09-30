@@ -350,6 +350,14 @@ describe('decideVisaStatus: end to end with detected signals', () => {
     ['visa sponsorship', 'likely'],
     ['Benefits: visa sponsorship, 30 days holiday.', 'confirmed'],
     ['We are an HR platform for visa sponsorship.\nWe cannot sponsor visas for this role.', 'not_offered'],
+    // Second audit pass: equal-opportunity wording, "cannot do so", FAQ answers.
+    ['We do not discriminate and offer visa sponsorship.', 'confirmed'],
+    ['We hire without regard to national origin and offer visa sponsorship.', 'confirmed'],
+    ['We have sponsored visas in the past but cannot do so for this role.', 'not_offered'],
+    ['Visa sponsorship for this role? Unfortunately not.', 'not_offered'],
+    ['Do you offer visa sponsorship? Yes.', 'confirmed'],
+    ['Do you offer visa sponsorship? Yes / No', 'unknown'],
+    ['Are you seeking visa sponsorship? Yes.', 'unknown'],
   ];
   it.each(cases)('%s → %s', (text, status) => {
     expect(decide({ postingSignals: detectVisaSignals(text) }).value.status).toBe(status);

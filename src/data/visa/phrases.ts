@@ -28,7 +28,7 @@
 import type { Confidence } from '../../lib/contracts/provenance';
 import type { VisaSignalKind } from '../../lib/contracts/jobs';
 
-export const VISA_PHRASES_VERSION = 'visa-phrases@2026-09-30.2';
+export const VISA_PHRASES_VERSION = 'visa-phrases@2026-09-30.3';
 
 export const VISA_SIGNAL_LANGS = ['en', 'de', 'fr', 'nl', 'es', 'pt', 'it', 'sv', 'da', 'no', 'fi', 'pl', 'cs'] as const;
 export type VisaSignalLang = (typeof VISA_SIGNAL_LANGS)[number];
@@ -122,6 +122,11 @@ export const VISA_PHRASE_RULES: readonly VisaPhraseRule[] = [
     '(?:only apply|apply only) if you (?:already )?(?:have|hold|possess) (?:the |a |an |full |valid |existing |current |unrestricted |permanent |legal )*(?:[a-z]+ )?' + EN_RTW_OBJ),
   r('en.neg.citizenship_required', 'en', 'negative', 'right_to_work_required', 'high',
     '(?!(?:no|not|without|any) )(?:eu|eea|uk|us|u\\.s\\.|british|american|european|german|french|dutch|irish|swiss|canadian|australian|[a-z]+) citizenship (?:is )?(?:required|mandatory|essential|a must|a requirement|needed)'),
+  // "We have sponsored visas in the past but cannot do so for this role": the refusal points back
+  // at the sponsorship named earlier in the sentence. Medium: it is read through the anaphora.
+  r('en.neg.cannot_do_so', 'en', 'negative', 'not_offered', 'medium',
+    "sponsor(?:ed|s|ing|ship|ships)?[^.\\n;?!]{0,80}?(?:,|,? (?:but|however|though|yet))(?: (?:we|we're|unfortunately|sadly|currently))* " + EN_NEG_AUX +
+      ' (?:do so|do this|do that|do the same|offer (?:it|this|that)|provide (?:it|this|that)|sponsor (?:for )?(?:this|these) (?:roles?|positions?|jobs?|vacanc(?:y|ies)))'),
   // Positive statements.
   r('en.offer.sponsorship_available', 'en', 'statement', 'offered', 'high',
     '(?:visa |work permit |immigration |employer |skilled worker |h-?1b |work visa |tier 2 |tier-2 |skilled worker visa )sponsorships? (?:is |are |will be |can be |may be )?(?:available|offered|provided|possible|supported|included|an option|on offer)'),
@@ -546,6 +551,17 @@ export const PSEUDO_NEGATIONS: readonly string[] = [
   'nicht nur', 'ohne zweifel', 'non seulement', 'pas seulement', 'sans doute', 'niet alleen', 'zonder twijfel', 'no solo', 'no solamente',
   'sin duda', 'nao so', 'nao apenas', 'sem duvida', 'non solo', 'senza dubbio', 'inte bara', 'inte endast', 'ikke kun', 'ikke bare',
   'ei vain', 'ei ainoastaan', 'nie tylko', 'bez watpienia', 'nejen', 'bez ohledu',
+  // Equal-opportunity wording: the negation is about discrimination, never about the offer
+  // ("We do not discriminate and offer visa sponsorship", "hired without regard to national origin").
+  "(?:do|does|did|will|shall|would) not (?:ever )?(?:discriminat[a-z]*|tolerate|charge)", "(?:don't|doesn't|didn't|won't) (?:ever )?(?:discriminat[a-z]*|tolerate|charge)",
+  'never (?:discriminat[a-z]*|tolerate|charge)', 'not (?:be )?tolerated', 'no discrimination', 'without (?:regard|distinction|discrimination|prejudice)',
+  'diskriminier[a-z]* (?:nicht|niemanden|niemand)', 'keine diskriminierung', 'ohne (?:ansehen|rucksicht auf|unterschied|diskriminierung)',
+  'ne discrimin[a-z]* (?:pas|aucun[a-z]*|personne)', 'sans (?:distinction|discrimination)', 'aucune discrimination',
+  'discrimineren niet', 'zonder (?:onderscheid|discriminatie)', 'geen discriminatie',
+  'no discrimina[a-z]*', 'sin (?:distincion|discriminacion)', 'nao discrimina[a-z]*', 'sem (?:distincao|discriminacao)',
+  'non discrimin[a-z]*', 'senza (?:distinzion[ei]|discriminazion[ei])',
+  'diskriminerar (?:inte|ej)', 'utan (?:diskriminering|hansyn till)', 'diskriminerer ikke', 'uden (?:diskrimination|hensyn til)', 'uten (?:diskriminering|hensyn til)',
+  'ei syrji[a-z]*', 'ilman syrjintaa', 'nie dyskryminuj[a-z]*', 'bez (?:dyskryminacji|wzgledu na|diskriminace|rozdilu)',
 ];
 
 /**
@@ -595,6 +611,62 @@ export const QUESTION_STARTERS: readonly string[] = [
   'heeft u', 'heb je', 'ben je', 'bent u', 'beschikt u', 'beschik je',
   'necesitas', 'necesita usted', 'tienes', 'requieres', 'voce precisa', 'voce tem', 'precisa de', 'hai bisogno', 'possiedi', 'sei in possesso',
   'behover du', 'har du', 'trenger du', 'har du brug', 'tarvitsetko', 'onko sinulla', 'czy', 'potrebujete', 'mate',
+];
+
+/**
+ * FAQ-style answers. A question about the employer's offer ("Visa sponsorship for this role?",
+ * "Do you offer visa sponsorship?") answered by the very next line ("Unfortunately not.", "Yes!")
+ * is read from the answer. Short answers must stand alone (followed by punctuation or the end of
+ * the line), so "Yes / No" option lists and "Si necesitas …" ("if you need …") never count.
+ */
+export const ANSWER_YES_WORDS: readonly string[] = [
+  'yes', 'yep', 'yeah', 'yup', 'sure', 'absolutely', 'definitely', 'certainly', 'of course', 'indeed',
+  'ja', 'jawohl', 'naturlich', 'selbstverstandlich', 'klar', 'oui', 'bien sur', 'absolument', 'natuurlijk', 'zeker', 'jazeker',
+  'si', 'claro', 'por supuesto', 'sim', 'claro que sim', 'certo', 'certamente', 'javisst', 'absolut', 'selvfolgelig', 'selvsagt',
+  'kylla', 'tottakai', 'tak', 'oczywiscie', 'ano', 'samozrejme',
+];
+
+export const ANSWER_NO_WORDS: readonly string[] = [
+  'no', 'nope', 'nein', 'non', 'nee', 'nej', 'nei', 'ei', 'nie', 'nao', 'ne',
+];
+
+/** "Unfortunately not.", "Leider nicht.", "Helaas niet.": a regret word, then a bare negator. */
+export const ANSWER_REGRET_WORDS: readonly string[] = [
+  'unfortunately', 'sadly', 'regrettably', "i'm afraid", 'i am afraid', 'sorry', 'leider', 'malheureusement', 'helaas',
+  'lamentablemente', 'desafortunadamente', 'infelizmente', 'purtroppo', 'tyvarr', 'desvaerre', 'dessverre', 'valitettavasti',
+  'niestety', 'bohuzel',
+];
+
+export const ANSWER_REGRET_NEGATORS: readonly string[] = [
+  'not', 'no', 'nicht', 'nein', 'pas', 'non', 'niet', 'nee', 'nao', 'inte', 'nej', 'ikke', 'nei', 'ei', 'nie', 'ne',
+];
+
+/** A plain English "not …" / "we can't" answer ("Not at this time.", "We don't."). */
+export const ANSWER_EN_NO_PHRASES: readonly string[] = [
+  'not (?:at the moment|at this time|at present|currently|right now|for this (?:role|position|job)|possible|available|offered|anymore|any more)',
+  "we (?:can't|cannot|can not|don't|do not|won't|will not|are unable|are not able|aren't able|are not|aren't)(?: (?:currently|at the moment|at this time|right now))?",
+];
+
+/** A plain English "we do" answer ("We do!", "We sure can."). */
+export const ANSWER_EN_YES_PHRASES: readonly string[] = [
+  'we (?:sure |certainly |absolutely |definitely )?(?:do|can|will|are)',
+];
+
+/**
+ * A question with one of these is about the candidate ("Are you seeking visa sponsorship?"), not
+ * the employer's offer: it is never read from an answer.
+ */
+export const CANDIDATE_QUESTION_CUES: readonly string[] = [
+  'you', 'your', "you're", 'yourself', 'looking for', 'seeking', 'searching for', 'in need of', 'interested in', 'hoping for',
+  'du', 'dich', 'dir', 'dein', 'deine', 'suchst', 'suchen sie', 'vous', 'votre', 'cherchez', 'jij', 'jouw', 'zoek je', 'zoekt u',
+  'usted', 'buscas', 'voce', 'procura', 'cerchi', 'tu', 'dig', 'din', 'soker du', 'sinulla', 'sinun', 'szukasz', 'hledate',
+];
+
+/** …unless the question asks whether the employer offers it ("Do you offer visa sponsorship?"). */
+export const EMPLOYER_QUESTION_CUES: readonly string[] = [
+  '(?:you|u|sie|vous|ihr|je|jullie) (?:currently |also |still |ever |actually )?(?:offer|provide|sponsor|support|help with|cover|include|arrange|bieten|sponsern|unterstutzen|ubernehmen|offrez|proposez|parrainez|bieden|sponsoren|ondersteunen)',
+  'is (?:there )?(?:any )?(?:visa |work permit |immigration )?(?:sponsorship|support)', 'available', 'possible', 'offered', 'provided', 'included',
+  'moglich', 'angeboten', 'disponible', 'mogelijk', 'posible', 'possivel', 'possibile', 'mojligt', 'muligt', 'mulig',
 ];
 
 /**
