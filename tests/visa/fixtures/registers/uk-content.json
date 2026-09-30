@@ -1,0 +1,22 @@
+{
+  "base_path": "/government/publications/register-of-licensed-sponsors-workers",
+  "content_id": "5ec0ea91-7631-11e4-a3cb-005056011aef",
+  "document_type": "guidance",
+  "title": "Register of licensed sponsors: workers",
+  "public_updated_at": "2026-09-29T09:11:22+01:00",
+  "first_published_at": "2013-11-13T00:00:00+00:00",
+  "schema_name": "publication",
+  "details": {
+    "attachments": [
+      {
+        "attachment_type": "file",
+        "content_type": "text/csv",
+        "filename": "SP_-_Worker_and_Temporary_Worker_Web_Register_-_2026-09-29.csv",
+        "file_size": 10951060,
+        "id": "9526934",
+        "title": "Register of Worker and Temporary Worker licensed sponsors",
+        "url": "https://assets.publishing.service.gov.uk/media/6abb7089fe72ed1e2b02f19e/SP_-_Worker_and_Temporary_Worker_Web_Register_-_2026-09-29.csv"
+      }
+    ]
+  }
+}

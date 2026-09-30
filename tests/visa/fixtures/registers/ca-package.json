@@ -1,0 +1,144 @@
+{
+  "help": "https://open.canada.ca/data/api/3/action/help_show?name=package_show",
+  "success": true,
+  "result": {
+    "id": "90fed587-1364-4f33-a9ee-208181dc0b97",
+    "name": "90fed587-1364-4f33-a9ee-208181dc0b97",
+    "title": "Temporary Foreign Worker Program (TFWP): Positive Labour Market Impact Assessment (LMIA) Employers List",
+    "metadata_modified": "2026-07-22T13:31:33.371998",
+    "resources": [
+      {
+        "id": "5b9c1873-dc36-456d-a308-2819d4e25309",
+        "name": "2015-Employers who were issued a positive Labour Market Impact Assessment (LMIA) in 2015, by business location",
+        "format": "CSV",
+        "language": [
+          "en"
+        ],
+        "url": "https://open.canada.ca/data/dataset/90fed587-1364-4f33-a9ee-208181dc0b97/resource/5b9c1873-dc36-456d-a308-2819d4e25309/download/2015_positive_employers_en.csv",
+        "created": "2016-10-21T14:40:15.957034",
+        "last_modified": "2022-02-10T22:41:09.943715"
+      },
+      {
+        "id": "c3611a4c-e1f0-47e8-8354-760df6340e83",
+        "name": "2015-Employers who were issued a positive Labour Market Impact Assessment (LMIA) in 2015, by business location",
+        "format": "CSV",
+        "language": [
+          "fr"
+        ],
+        "url": "https://open.canada.ca/data/dataset/90fed587-1364-4f33-a9ee-208181dc0b97/resource/c3611a4c-e1f0-47e8-8354-760df6340e83/download/2015_positive_employers_fr.csv",
+        "created": "2016-10-21T14:40:15.957120",
+        "last_modified": "2022-02-10T22:41:12.934565"
+      },
+      {
+        "id": "f995383c-800e-46dd-92fa-a06ec7a9a706",
+        "name": "2025Q1-Employers Who Were Issued a Positive Labour Market Impact Assessment (LMIA) by Program Stream, National Occupational Classification (NOC) 2021 and Business Location, January to March 2025",
+        "format": "XLSX",
+        "language": [
+          "en"
+        ],
+        "url": "https://open.canada.ca/data/dataset/90fed587-1364-4f33-a9ee-208181dc0b97/resource/f995383c-800e-46dd-92fa-a06ec7a9a706/download/tfwp_2025q1_pos_en.xlsx",
+        "created": "2025-06-19T18:41:18.857765",
+        "last_modified": "2025-06-19T17:27:45.376347"
+      },
+      {
+        "id": "d6f229d4-bce4-4a20-ae81-ac99292e70f5",
+        "name": "2025Q1-Employers Who Were Issued a Positive Labour Market Impact Assessment (LMIA) by Program Stream, National Occupational Classification (NOC) 2021 and Business Location, January to March 2025",
+        "format": "XLSX",
+        "language": [
+          "fr"
+        ],
+        "url": "https://open.canada.ca/data/dataset/90fed587-1364-4f33-a9ee-208181dc0b97/resource/d6f229d4-bce4-4a20-ae81-ac99292e70f5/download/tfwp_2025q1_pos_fr.xlsx",
+        "created": "2025-06-19T18:41:18.857770",
+        "last_modified": "2025-06-19T17:28:52.678810"
+      },
+      {
+        "id": "fbfda891-5327-4e01-927e-0e0dd580d304",
+        "name": "2025Q2-Employers Who Were Issued a Positive Labour Market Impact Assessment (LMIA) by Program Stream, National Occupational Classification (NOC) 2021 and Business Location, April to June 2025",
+        "format": "XLSX",
+        "language": [
+          "en"
+        ],
+        "url": "https://open.canada.ca/data/dataset/90fed587-1364-4f33-a9ee-208181dc0b97/resource/fbfda891-5327-4e01-927e-0e0dd580d304/download/tfwp_2025q2_pos_en.xlsx",
+        "created": "2025-10-23T18:51:08.623476",
+        "last_modified": "2025-10-23T15:50:27.245365"
+      },
+      {
+        "id": "28b9a549-2b64-4c40-8abe-e2ef3d29daa1",
+        "name": "2025Q2-Employers Who Were Issued a Positive Labour Market Impact Assessment (LMIA) by Program Stream, National Occupational Classification (NOC) 2021 and Business Location, April to June 2025",
+        "format": "XLSX",
+        "language": [
+          "fr"
+        ],
+        "url": "https://open.canada.ca/data/dataset/90fed587-1364-4f33-a9ee-208181dc0b97/resource/28b9a549-2b64-4c40-8abe-e2ef3d29daa1/download/tfwp_2025q2_pos_fr.xlsx",
+        "created": "2025-10-23T18:51:08.623481",
+        "last_modified": "2025-10-23T15:51:33.402403"
+      },
+      {
+        "id": "3b7a821b-becc-4d96-9e39-0c2849f90c50",
+        "name": "2025Q3-Employers Who Were Issued a Positive Labour Market Impact Assessment (LMIA) by Program Stream, National Occupational Classification (NOC) 2021 and Business Location, July to September 2025",
+        "format": "XLSX",
+        "language": [
+          "en"
+        ],
+        "url": "https://open.canada.ca/data/dataset/90fed587-1364-4f33-a9ee-208181dc0b97/resource/3b7a821b-becc-4d96-9e39-0c2849f90c50/download/tfwp_2025q3_pos_en.xlsx",
+        "created": "2026-01-07T20:51:25.821212",
+        "last_modified": "2026-01-07T16:49:28.705409"
+      },
+      {
+        "id": "dc061c7d-5d56-450d-8060-4bfc0ed6f0b3",
+        "name": "2025Q3-Employers Who Were Issued a Positive Labour Market Impact Assessment (LMIA) by Program Stream, National Occupational Classification (NOC) 2021 and Business Location, July to September 2025",
+        "format": "XLSX",
+        "language": [
+          "fr"
+        ],
+        "url": "https://open.canada.ca/data/dataset/90fed587-1364-4f33-a9ee-208181dc0b97/resource/dc061c7d-5d56-450d-8060-4bfc0ed6f0b3/download/tfwp_2025q3_pos_fr.xlsx",
+        "created": "2026-01-07T20:51:25.821216",
+        "last_modified": "2026-01-07T16:51:25.270116"
+      },
+      {
+        "id": "06512c1b-d4a7-413f-bc1e-fc38de9f9aca",
+        "name": "2025Q4-Employers Who Were Issued a Positive Labour Market Impact Assessment (LMIA) by Program Stream, National Occupational Classification (NOC) 2021 and Business Location, October to December 2025",
+        "format": "XLSX",
+        "language": [
+          "en"
+        ],
+        "url": "https://open.canada.ca/data/dataset/90fed587-1364-4f33-a9ee-208181dc0b97/resource/06512c1b-d4a7-413f-bc1e-fc38de9f9aca/download/tfwp_2025q4_pos_en.xlsx",
+        "created": "2026-03-16T14:51:09.408264",
+        "last_modified": "2026-03-16T13:31:44.388831"
+      },
+      {
+        "id": "3a28dd68-e061-46f4-824f-053ad292ad89",
+        "name": "2025Q4-Employers Who Were Issued a Positive Labour Market Impact Assessment (LMIA) by Program Stream, National Occupational Classification (NOC) 2021 and Business Location, October to December 2025",
+        "format": "XLSX",
+        "language": [
+          "fr"
+        ],
+        "url": "https://open.canada.ca/data/dataset/90fed587-1364-4f33-a9ee-208181dc0b97/resource/3a28dd68-e061-46f4-824f-053ad292ad89/download/tfwp_2025q4_pos_fr.xlsx",
+        "created": "2026-03-16T14:51:09.408269",
+        "last_modified": "2026-03-16T09:50:51.749662"
+      },
+      {
+        "id": "4ee7a4e0-ffc3-47af-94e7-30929d1eeb67",
+        "name": "2026Q1-Employers Who Were Issued a Positive Labour Market Impact Assessment (LMIA) by Program Stream, National Occupational Classification (NOC) 2021 and Business Location, January to March 2026",
+        "format": "XLSX",
+        "language": [
+          "en"
+        ],
+        "url": "https://open.canada.ca/data/dataset/90fed587-1364-4f33-a9ee-208181dc0b97/resource/4ee7a4e0-ffc3-47af-94e7-30929d1eeb67/download/tfwp_2026q1_pos_en.xlsx",
+        "created": "2026-07-22T13:31:33.405583",
+        "last_modified": "2026-07-21T21:11:40.257881"
+      },
+      {
+        "id": "8c205edb-9a82-468e-9aa4-b82266cbaad6",
+        "name": "2026Q1-Employers Who Were Issued a Positive Labour Market Impact Assessment (LMIA) by Program Stream, National Occupational Classification (NOC) 2021 and Business Location, January to March 2026",
+        "format": "XLSX",
+        "language": [
+          "fr"
+        ],
+        "url": "https://open.canada.ca/data/dataset/90fed587-1364-4f33-a9ee-208181dc0b97/resource/8c205edb-9a82-468e-9aa4-b82266cbaad6/download/tfwp_2026q1_pos_fr.xlsx",
+        "created": "2026-07-22T13:31:33.405588",
+        "last_modified": "2026-07-21T21:12:30.577625"
+      }
+    ]
+  }
+}
