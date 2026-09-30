@@ -10,7 +10,7 @@
 import { stdin, stdout, stderr } from 'node:process';
 import { hashPassword, verifyPassword } from '../src/lib/auth/password';
 
-const MIN_LENGTH = 12;
+const MIN_LENGTH = 8;
 
 async function readStdin(): Promise<string> {
   const chunks: Buffer[] = [];

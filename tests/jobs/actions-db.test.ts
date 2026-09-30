@@ -7,6 +7,7 @@ import { and, desc, eq } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { applications, auditLog, corrections, jobFacts, jobOverrides, jobs } from '../../src/db/schema';
 import type { AiBudget, AiExtractResult } from '../../src/lib/ai';
+import { createApplicationFromJob } from '../../src/lib/tracker';
 import { startTestDb, type TestDb } from '../helpers/db';
 import { seedJob } from '../helpers/fixtures';
 
@@ -184,11 +185,11 @@ describe('save, hide, mark applied', () => {
 
   it('moves a saved application on to "applied" and snapshots the posting', async () => {
     const { jobId } = await seedJob(t.db);
-    const first = await actions.markAppliedAction(undefined, form({ jobId }));
-    await t.db.update(applications).set({ currentStage: 'saved' }).where(eq(applications.id, first.applicationId!));
+    const saved = await createApplicationFromJob(t.db, jobId, { stage: 'saved' });
     const again = await actions.markAppliedAction(undefined, form({ jobId }));
+    expect(again).toMatchObject({ ok: true, applicationId: saved.applicationId });
     expect(again.message).toBe('The tracker already had this job — it is now at "applied". The posting was snapshotted.');
-    const [app] = await t.db.select().from(applications).where(eq(applications.id, first.applicationId!));
+    const [app] = await t.db.select().from(applications).where(eq(applications.id, saved.applicationId));
     expect(app.currentStage).toBe('applied');
   });
 });

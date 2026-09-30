@@ -392,7 +392,7 @@ ensure_admin_hash() {
   h=$(radar_env_get ADMIN_PASSWORD_HASH "$ENV_FILE")
   [ -n "$h" ] && return 0
   [ "$YES" != 1 ] && [ -t 0 ] || radar_die "ADMIN_PASSWORD_HASH is empty in .env; create it: docker compose run --rm --no-deps app hash-password"
-  step "no ADMIN_PASSWORD_HASH yet: choose the RADAR login password (min 12 characters)"
+  step "no ADMIN_PASSWORD_HASH yet: choose the RADAR login password (min 8 characters)"
   local p1 p2
   printf 'password: ' >&2
   IFS= read -r -s p1
