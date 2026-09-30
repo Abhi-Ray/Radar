@@ -8,8 +8,13 @@ conservatively, scores fit, and tracks applications.
 - Product rules: [docs/SPEC.md](docs/SPEC.md)
 - Build contracts, file ownership, design language: [docs/BUILD_BRIEF.md](docs/BUILD_BRIEF.md)
 - Architecture, data flow, trust order, visa decision, schedules: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
-- Running it on the VPS: [docs/DEPLOY.md](docs/DEPLOY.md)
+- Using the site (screens, words, weekly routine): [docs/USER_GUIDE.md](docs/USER_GUIDE.md)
+- Running it on the VPS: [docs/DEPLOY.md](docs/DEPLOY.md) (install, secrets, nginx) and the day-to-day
+  runbook [docs/OPERATIONS.md](docs/OPERATIONS.md) (schedules, safe deploys, CLI, troubleshooting)
 - When something breaks, or the server is gone: [docs/RECOVERY.md](docs/RECOVERY.md)
+- Why things are the way they are, and the lessons from production: [docs/DECISIONS.md](docs/DECISIONS.md)
+- What is live and what is left: [docs/NEXT_STEPS.md](docs/NEXT_STEPS.md)
+- Which visa rules were checked against the official pages: [docs/RULE_VERIFICATION.md](docs/RULE_VERIFICATION.md)
 - Every environment key, documented, without values: [.env.example](.env.example)
 
 This repository is **public**. It never contains secrets or personal data: the production `.env`
@@ -98,8 +103,9 @@ plus a Docker image build with smoke tests and a gitleaks secret scan.
 ## Operations in one minute
 
 - One VPS, shared with other projects. RADAR is the compose project `radar` in `/opt/radar`,
-  published only on `127.0.0.1:3100`; one nginx vhost (`/etc/nginx/sites-available/radar`,
-  enabled as `sites-enabled/zz-radar`) serves `https://radar.187-127-129-127.sslip.io`. Images
+  published only on `127.0.0.1:3100`; one nginx vhost (`/etc/nginx/sites-available/radar`; enabled as
+  `sites-enabled/radar` on the current server, `zz-radar` on fresh installs so it can never become
+  the default site) serves `https://radar.187-127-129-127.sslip.io`. Images
   are built in RADAR's own capped buildx builder (`radar-builder`: 3 GiB, no swap, 1 CPU).
 - `sudo ops/install.sh` installs or repairs everything and is safe to re-run.
 - Pushing to `main` deploys within ~5 minutes (`radar-autodeploy.timer`); a revision that fails

@@ -49,6 +49,8 @@ flowchart LR
   session cookie (`src/proxy.ts` fast path + `requireSession()` against the `sessions` table).
 - All posting HTML is untrusted: sanitised (`src/lib/security/sanitize.ts`) before display;
   every data-driven server-side fetch goes through `safeFetch()` (SSRF guard).
+- Every database connection runs at `READ COMMITTED` (`src/lib/db/index.ts`): the default
+  `REPEATABLE READ` deadlocked concurrent writers on gap locks (DECISIONS.md #5).
 - Secrets live in `/opt/radar/.env` only. The app/worker never see the MySQL root password or the
   backup passphrase; the backup container never sees the session secret or AI key.
 
@@ -117,6 +119,13 @@ matches show as "Possible match — verify". The "Am I eligible?" check compares
 country rule version valid today and answers Meets · Borderline · Doesn't meet · Can't tell, with
 the rule's verified date. Code: `src/lib/visa/` (`signals.ts`, `decide.ts`, `eligibility.ts`).
 
+Company evidence comes from the nightly register match (03:00 UTC): the five registers
+(`src/lib/registers/`: UK, NL, DK licensed sponsors; IE, CA sponsorship history) are imported and
+every company is matched against them (`refreshRegistersAndEvidence` in `src/lib/visa/company-evidence.ts`);
+a company whose evidence changed has its jobs' visa verdicts re-evaluated. Only a strong match to a
+licensed-sponsor entry *in the job's own country* can make a job *Confirmed*; a fuzzy match or a
+sponsor in another country gives *Likely · low*.
+
 ## 5. Module map
 
 | Area | Code | Owns |
@@ -176,7 +185,8 @@ gantt
 | Backup | daily 21:00 | one retry after 1 h; critical `backup_failed` alert (deduped per day); missed runs caught up 10 min after a restart |
 | Restore test | day 1 of the month, 22:00 | one retry; critical `restore_test_failed` alert; fails if the newest backup is > 72 h old |
 | Certificate renewal | twice daily (`certbot.timer`) | certbot logs; deploy hook `nginx -t && systemctl reload nginx` |
-| Worker jobs | defined in `src/worker/` (croner) | per-source isolation, run reports, heartbeat alert when a run is missing |
+| Worker jobs | the table in [OPERATIONS.md §2](OPERATIONS.md) (`src/worker/index.ts`, croner) | per-source isolation, run reports, heartbeat alert when a run is missing |
+| After a run | review-queue housekeeping (`src/lib/dedup/tidy.ts`, `src/lib/normalize/title-tidy.ts`) | never throws; a failure is logged and the run result is unaffected |
 
 ## 7. Backups
 

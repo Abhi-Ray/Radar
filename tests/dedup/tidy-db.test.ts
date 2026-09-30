@@ -131,6 +131,25 @@ describe('review queue tidy', () => {
     expect(await mergeExactTwins(t.db)).toEqual({ merged: 0, failed: 0, remaining: 0 });
   });
 
+  it('three identical postings (three pairs) merge into one job without false failures', async () => {
+    const { company, s1 } = await world();
+    const a = await mkJob(company, { title: 'Triplet Role' });
+    const b = await mkJob(company, { title: 'Triplet Role' });
+    const c = await mkJob(company, { title: 'Triplet Role' });
+    for (const j of [a, b, c]) await link(j, s1);
+    await pair(a, b);
+    await pair(a, c);
+    await pair(b, c);
+    const r = await mergeExactTwins(t.db, { limit: 10 });
+    expect(r.failed).toBe(0);
+    expect(r.remaining).toBe(0);
+    // Merging consolidates the other pairs of the dropped jobs: nothing is left open.
+    expect(await t.db.select({ id: duplicateCandidates.id }).from(duplicateCandidates).where(eq(duplicateCandidates.status, 'open'))).toHaveLength(0);
+    const rows = await t.db.select({ id: jobs.id, into: jobs.mergedIntoJobId }).from(jobs);
+    expect(rows.filter((x) => x.into === null).map((x) => x.id)).toEqual([a]);
+    expect(rows.filter((x) => x.into === a).map((x) => x.id).sort()).toEqual([b, c].sort());
+  });
+
   it('the nightly pass does both and leaves only the cross-source pair', async () => {
     const s = await scenario();
     expect(await tidyDuplicateQueue(t.db)).toEqual({ merged: 1, dismissed: 2, failed: 0, needHuman: 1 });

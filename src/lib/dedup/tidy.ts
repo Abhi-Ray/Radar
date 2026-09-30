@@ -81,6 +81,11 @@ export async function dismissSameSourcePairs(db: DbOrTx, opts: TidyOptions = {})
   return { dismissed };
 }
 
+async function stillOpen(db: DbOrTx, candidateId: number): Promise<boolean> {
+  const res = await db.execute(sql`SELECT 1 AS ok FROM duplicate_candidates WHERE id = ${candidateId} AND status = 'open' LIMIT 1`);
+  return rowsOf(res).length > 0;
+}
+
 /** Merges up to `limit` exact twins (oldest job kept). Returns how many were merged and how many remain. */
 export async function mergeExactTwins(db: DbOrTx, opts: TidyOptions & { limit?: number } = {}): Promise<{ merged: number; failed: number; remaining: number }> {
   const limit = Math.max(1, Math.min(500, Math.trunc(opts.limit ?? 200)));
@@ -93,6 +98,8 @@ export async function mergeExactTwins(db: DbOrTx, opts: TidyOptions & { limit?: 
   let merged = 0;
   let failed = 0;
   for (const id of ids) {
+    // Three identical postings make three pairs; merging the first two settles the third.
+    if (!(await stillOpen(db, id))) continue;
     try {
       const r = await confirmDuplicate(db, id, 'Exact twin: same source, company, title, city and text', { actor: opts.actor ?? 'admin', ip: opts.ip ?? null });
       if (r.ok) merged++;

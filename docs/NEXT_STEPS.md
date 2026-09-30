@@ -1,56 +1,48 @@
 # RADAR — what is live, and what is left
 
-Updated 2026-09-30, after the budget pause. The first version of this file listed the security fixes and
-six unfinished screens as "parked"; both are now done.
+Updated 2026-09-30, end of day. How to use it: [USER_GUIDE.md](USER_GUIDE.md). How to run it:
+[OPERATIONS.md](OPERATIONS.md).
 
 ## Live
 
-- URL: https://radar.187-127-129-127.sslip.io (Let's Encrypt certificate, renewed by certbot).
-- Login: `ADMIN_EMAIL` + the password whose scrypt hash is `ADMIN_PASSWORD_HASH`; cookie `radar_session`
-  lasts 1 year (HttpOnly, Secure, SameSite=Lax). A signed-out or revoked session stops working at once
-  (the proxy checks the session row in the database, cached for at most 5 s). Change the password: `docs/DEPLOY.md` §6.
-- Stack on the VPS: docker compose project `radar` in `/opt/radar` (app, worker, mysql, backup),
-  app bound to `127.0.0.1:3100`, one nginx vhost. Nothing else on the box was touched.
-- Screens: Desk, Jobs (+ detail), Tracker (+ detail), Companies, Countries, Kit, **Review, Sources
-  (+ detail), Accuracy, System, Settings** — no placeholder is left.
-- Deploys: pushing to `main` is picked up by `radar-autodeploy.timer` (every 5 min) and builds in RADAR's own
-  memory-capped buildx builder (`radar-builder`, 3 GiB, 1 CPU); `ops/deploy.sh` does it by hand.
-  **A deploy restarts app and worker, so it cuts a running pipeline run short — push between runs.**
-- Backups: 21:00 UTC daily, encrypted, force-pushed to the `db-backups` branch (yesterday's file is
-  overwritten). Restore steps: `docs/RECOVERY.md`. The env is in `ops/secrets.env.enc`
-  (decrypt with `ops/secrets.sh decrypt`; the key is `BACKUP_PASSPHRASE`).
+- https://radar.187-127-129-127.sslip.io — sign in with the owner email; the cookie lasts a year and
+  sign-out ends a session everywhere. Nothing else on the shared VPS was touched.
+- All screens are real (Desk, Jobs, Tracker, Companies, Countries, Kit, Review, Sources, Accuracy,
+  System, Settings). About 20,000 jobs from 207 sources in 40+ countries, refreshed twice a day.
+- **Jobs and Desk open on your target roles** (about 500 jobs); everything else is one *Show them* click away.
+- **Sponsor registers are loaded** (UK 142,598 · CA 45,078 · IE 15,424 · NL 12,982 · DK 982 entries) and every
+  company is matched against them each night. Among the 945 target-role jobs, 54 are *Confirmed*, 50 are
+  *Likely* at medium confidence and 545 are *Likely · low* (a sister company sponsors elsewhere).
+- **The Review queue is short**: 31 real cross-source duplicate pairs and 780 unknown titles that contain
+  a technical word. Same-source pairs and unrelated titles are tidied automatically after every run.
+- **11 visa rules verified against the official pages** ([RULE_VERIFICATION.md](RULE_VERIFICATION.md)).
+- Encrypted backup to GitHub every night (first restore test passed: 46 of 46 tables). Deploys are
+  automatic, health-checked and roll back on failure. 3,900+ tests pass.
 
-## Things learned in production (worth knowing)
+## Left, in this order
 
-- **Deadlocks on `job_facts`.** With MySQL's default REPEATABLE READ, concurrent writers deadlocked on gap
-  locks when saving the first facts of brand-new jobs; 682 of the first run's 19,616 jobs went to
-  `dead_letters`. Every pooled connection now runs at READ COMMITTED (`src/lib/db/index.ts`), and
-  `tests/foundation/db.test.ts` replays the collision. The failed items were re-collected by run #4 (1,103 new jobs, 0 failures to save; 680 of 682 recovered — the
-  other 2 are postings that no longer exist at their source).
-- **Database size.** After one full crawl the database is ~830 MB (job text and raw snapshots); the
-  encrypted daily dump is ~80 MB. Raw snapshots are now kept 14 days (Settings → Retention; default was 90).
-  If dumps keep growing, exclude `raw_snapshots` from `ops/backup/backup.sh` (it can be rebuilt by re-crawling).
-- The first crawl found 207 sources fine, but everything starts in `trial`; promote sources to `live`
-  from the Sources screen once their checklist is complete.
-
-## Still to do (in this order)
-
-1. **Independent audits** of what was built after the first review: the tracker screens, the six ops
-   screens, the seed data and the AI/accuracy step. All were exercised by hand and by the 3,881 tests, but no
-   separate reviewer has read them. Include a second security review of the new server actions.
-2. **Automated browser tests** for the new screens (Playwright): sign-in, a review decision, a settings
-   save, the weekly spot-check. Today only the underlying logic has unit/integration tests.
-3. **Repeat the restore test** (`docs/RECOVERY.md`) monthly — the scheduler does it on its own. The first one
-   passed on 2026-09-30: last night's backup restored into a scratch database and all 46 tables matched.
-4. **Label golden samples** (yours): the weekly spot-check on Accuracy fills the golden sample; 30 labelled
-   jobs make the accuracy numbers meaningful.
-5. Write your profile on Settings (roles, countries, salary floor) — the defaults are a starting point.
+1. **Check the German Blue Card rule in a browser** (the official site blocks automated readers) and
+   work through the other 26 unverified rules — 5 minutes each, steps in RULE_VERIFICATION.md.
+2. **An undo for job merges.** Exact twins are merged automatically; `splitJobs` (src/lib/dedup/manual.ts)
+   can undo it, but no screen calls it yet (company merges do have *Undo the merge*).
+3. **Phone alerts and an outside monitor.** Telegram or e-mail keys in `/opt/radar/.env`
+   (OPERATIONS.md) for the morning digest and failure alerts; a free ping monitor
+   (`HEALTHCHECK_PING_URL`) so you hear about it if the whole server is down.
+4. **Independent review and browser tests.** Nobody but the builder has read the tracker, ops and
+   review code, and there are no Playwright tests for the new screens. Include a second security review of the server actions.
+5. **Your data:** write your profile on Settings, label ten jobs a week on Accuracy (30 make the
+   numbers meaningful), and decide the 780 technical-looking unknown titles on Review.
+6. **Ideas, not promised:** group the same role posted in several cities into one card; more sources
+   (France Travail, Adzuna, EURES); an ICS calendar feed for follow-ups.
 
 ## Owner tasks (outside the code)
 
-- Rotate the VPS root password and the OpenRouter key: both were pasted into a chat. Prefer key-only SSH.
-- Make the GitHub repo private. Then point `/opt/radar` at the deploy key (SSH remote) so the autodeploy
-  timer keeps working, because it currently pulls over public HTTPS.
-- Optional: `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` or `SMTP_URL` in `/opt/radar/.env` for alerts and the
-  morning digest, then `sudo /opt/radar/ops/deploy.sh --no-pull`; re-encrypt with `ops/secrets.sh encrypt --force`.
-- Optional: a real domain (`docs/DEPLOY.md` §7).
+- Rotate the VPS root password and the OpenRouter key — both were pasted into a chat. Prefer key-only SSH.
+- Make the GitHub repository private, then point `/opt/radar` at the deploy key over SSH so the
+  auto-deploy keeps working (it pulls over public HTTPS today). See DECISIONS.md #2.
+- Optional: a real domain (DEPLOY.md §7).
+
+## FYI
+
+- Any push restarts the worker and cuts a running crawl short — push between 01:15–12:15 and 13:15–00:15 UTC (OPERATIONS.md §3).
+- The VPS's default Docker build cache is ~23 GB and is shared with other projects; RADAR's own builder cache (~5 GB) is pruned automatically. 57 GB of disk is free.

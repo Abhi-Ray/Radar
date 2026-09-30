@@ -79,10 +79,10 @@ export default async function ReviewPage({ searchParams }: PageProps<"/review">)
                     <ActionForm action={keepBothAction} submit={`Keep both for ${formatNumber(tidy.pairs.keepBoth)} pairs`} icon="split" pending="Clearing…" />
                   ) : null}
                 </div>
-                <p className="micro mt-2">Exact twin = same company, title, city and text. Merging keeps the older job and can be undone from the job page.</p>
+                <p className="micro mt-2">Exact twin = same company, title, city and text. Merging keeps the older job and moves the other&apos;s links onto it; each merge is in the audit trail (System).</p>
               </Notice>
             ) : null}
-            <Notice kind="info" title="Highest match first">Merging keeps one job and moves the other&apos;s links onto it; you can undo a merge later from the job page.</Notice>
+            <Notice kind="info" title="Highest match first">Merging keeps one job and moves the other&apos;s links onto it. Every merge is written to the audit trail (System).</Notice>
             <ul className="m-0 flex list-none flex-col gap-4 p-0">
               {pairs.rows.map((p) => (
                 <li key={p.id} className="flex flex-col gap-3 border-3 border-ink bg-paper/60 p-3 shadow-sm">

@@ -78,7 +78,7 @@ OpenRouter key.
 | monthly, day 1, 22:00 | automatic restore test into `radar_restore_test` | `backup` container (`RESTORE_TEST_*`) |
 | failed backup / restore test | one retry 1 h later, critical alert | `backup` container |
 | twice a day | certificate renewal check (renews < 30 days before expiry) | Ubuntu's `certbot.timer` |
-| pipeline, link checks, FX, registers, heartbeat, digest, AI queue, retention | see the schedule table in `src/worker/` | `worker` container |
+| pipeline, link checks, FX, registers, heartbeat, digest, AI queue, retention | the table in [OPERATIONS.md §2](OPERATIONS.md) (`src/worker/index.ts`) | `worker` container |
 
 ### 1.4 Environment keys
 
@@ -183,6 +183,32 @@ cd /opt/radar && ops/secrets.sh encrypt     # uses BACKUP_PASSPHRASE from .env
 git add ops/secrets.env.enc && git commit -m "ops: update encrypted env" && git push
 # (push from your laptop if the VPS has no GitHub write access: copy the file over, commit there)
 ```
+
+### 3.1 Installing from your laptop (how the first install was actually done)
+
+When the VPS has no GitHub credentials, prepare the secrets on your laptop and copy them over. The
+password never goes in a file or the repo.
+
+```sh
+# laptop, in a clone of the repo
+mkdir -p secrets && chmod 700 secrets                        # /secrets/ is gitignored
+ops/secrets.sh init --domain radar.<ip-with-dashes>.sslip.io --email you@example.com --out secrets/prod.env
+#   then set ADMIN_PASSWORD_HASH (printf '%s' "$PASSWORD" | node dist/hash-password.mjs --stdin after `npm run build:worker`),
+#   OPENROUTER_API_KEY, OPENROUTER_MODEL, AI_ENABLED, AI_DAILY_LIMIT, APP_TZ, ALERT_EMAIL_TO in that file
+ops/secrets.sh encrypt --in secrets/prod.env --out ops/secrets.env.enc   # commit + push this encrypted copy
+scp secrets/prod.env root@<vps>:/root/radar.prod.env && ssh root@<vps> chmod 600 /root/radar.prod.env
+
+# on the VPS
+git clone --single-branch --branch main https://github.com/<owner>/Radar.git /opt/radar
+cd /opt/radar && ops/install.sh --yes --domain <domain> --email you@example.com --env-from /root/radar.prod.env
+#   it prints the backup deploy key while it builds; from a machine with `gh` and repo admin:
+gh repo deploy-key add key.pub --repo <owner>/Radar --allow-write --title radar-vps-backup
+```
+
+The installer warns (does not fail) until that key is accepted; the first backup then succeeds.
+The login password needs at least 8 characters. After the install: `docker compose run --rm --no-deps -T app cli registers`
+loads the sponsor registers, and **Settings → Profile** and **Countries → Mark verified** finish the set-up
+([USER_GUIDE.md §2](USER_GUIDE.md)).
 
 ## 4. Deploying
 
