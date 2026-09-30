@@ -58,9 +58,15 @@ and tracks applications. Name: **RADAR**. Repo: github.com/Abhi-Ray/Radar (PUBLI
 - Entire site requires login except: `/login`, `/api/auth/login`, `/api/health` (returns only `{ok:true}`-style info), static assets.
 - Session: cookie `radar_session`, **Max-Age 1 year (31536000s)**, `HttpOnly; Secure (prod); SameSite=Lax; Path=/`.
   Value = JWT (HS256 via `jose`, secret `SESSION_SECRET`) containing `sid` (random id). DB table `sessions` stores
-  sha256(sid), created_at, last_seen_at, ip, user_agent, revoked_at. `src/proxy.ts` verifies the JWT signature/expiry
-  (fast path, redirects to `/login?next=`), and `requireSession()` (server) additionally checks the DB row isn't revoked.
-  Every server action and API route handler calls `requireSession()` first. Sliding renewal: re-issue cookie when >30 days old.
+  sha256(sid), created_at, last_seen_at, ip, user_agent, revoked_at. `src/proxy.ts` is the DB-backed gate for every
+  non-public request: JWT signature/expiry AND the DB row exists, is not revoked and belongs to `ADMIN_EMAIL`
+  (`src/lib/auth/session-gate.ts`, per-process cache ≤5 s keyed by sha256(sid), evicted on logout/revoke). Invalid →
+  401 JSON (`/api/*`) or 307 to `/login?next=` plus a cleared cookie; DB error → 503, cookie untouched (fail closed).
+  `requireSession()` (server) repeats the DB check. Every server action and API route handler calls `requireSession()` first.
+  Sliding renewal: re-issue cookie when >30 days old, only after the DB check passed.
+- **Every `page.tsx` and every data-reading `generateMetadata` calls `await requireSession()` itself.** The `(app)` layout
+  check is NOT sufficient: partial (RSC) renders — client navigations with `RSC: 1` and a router state tree — render only
+  the changed segments and skip the layout.
 - Login: email + password from env. Rate limit + lockout stored in DB table `login_attempts`: per-IP 5 failures/15 min →
   locked 15 min (doubling on repeat); plus a constant-time comparison and ~400ms artificial delay on failure. Never reveal
   which of email/password was wrong. Log to audit trail. Client IP = `x-real-ip` header (set by our nginx) else `unknown`.

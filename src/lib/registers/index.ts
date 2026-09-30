@@ -47,10 +47,12 @@ export const DEFAULT_MIN_INTERVAL_HOURS = 20;
 export const DEFAULT_FAILURE_RETRY_HOURS = 2;
 
 export interface RefreshRegistersOptions {
-  /** Injected fetcher (tests); default `createSafeFetch({ resolver, addressPolicy })`. */
+  /** Injected fetcher (tests); default `createSafeFetch({ resolver, addressPolicy, allowedPorts })`. */
   fetch?: RegisterFetch;
   resolver?: Resolver;
   addressPolicy?: AddressPolicy;
+  /** Tests only (a local server on a random port); production stays on 80/443. */
+  allowedPorts?: readonly number[];
   now?: Date;
   /** Only these registers (default: all). */
   only?: readonly RegisterKey[];
@@ -152,7 +154,7 @@ export async function refreshRegister(db: DbOrTx, key: RegisterKey, opts: Refres
         return blank(def, 'skipped', `last attempt failed ${hoursAgo(now, la.at).toFixed(1)} h ago; retrying after ${retry} h`, lastSuccess, started);
       }
     }
-    const fetch = opts.fetch ?? createSafeFetch({ resolver: opts.resolver, addressPolicy: opts.addressPolicy });
+    const fetch = opts.fetch ?? createSafeFetch({ resolver: opts.resolver, addressPolicy: opts.addressPolicy, allowedPorts: opts.allowedPorts });
     snapshot = await REGISTER_LOADERS[key]({ fetch, now });
     const out = await importSnapshot(db, def, snapshot, { version, now, force: opts.force, lastSuccess });
     if (out.status === 'busy') return blank(def, 'skipped', 'another import of this register is running', lastSuccess, started);

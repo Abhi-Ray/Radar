@@ -4,11 +4,13 @@ import { HealthStrip } from "@/components/dashboard/HealthStrip";
 import { ScopePanel } from "@/components/dashboard/ScopePanel";
 import { jobHref } from "@/components/jobs/JobCard";
 import { AsOf, SectionHeader, Ticker, type TickerItem } from "@/components/ui";
+import { requireSession } from "@/lib/auth/session";
 import { getDeskData } from "@/lib/queries/dashboard";
 
 export const metadata: Metadata = { title: "Desk" };
 
 export default async function DeskPage() {
+  await requireSession();
   const desk = await getDeskData();
   const { now, tz, startOfToday } = desk;
   const stationEmpty = desk.totalJobs.ok && desk.totalJobs.data === 0;

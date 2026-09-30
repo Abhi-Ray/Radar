@@ -6,9 +6,15 @@
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import zlib from 'node:zlib';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { envSchema, resetEnvCacheForTests } from '../../src/lib/env';
 import {
+  canonicalIp,
   createSafeFetch,
+  DEFAULT_ALLOWED_PORTS,
+  defaultAddressPolicy,
+  denyListReason,
+  effectivePort,
   hostBlockReason,
   ipBlockReason,
   ipv4BlockReason,
@@ -18,6 +24,7 @@ import {
   resolvePublicAddress,
   safeFetch,
   SafeFetchError,
+  systemResolver,
   type Resolver,
   type SafeFetchErrorCode,
   validateUrl,
@@ -310,7 +317,12 @@ const testResolver: Resolver = async (host) => {
   if (!ip) throw new Error(`ENOTFOUND ${host}`);
   return [{ address: ip, family: 4 }];
 };
-const fetchLocal = createSafeFetch({ resolver: testResolver, addressPolicy: LOOPBACK_OK });
+/**
+ * Loopback via DNS on the test server's random port (production: public addresses, 80/443 only).
+ * 80/443 stay allowed so redirect targets without a port reach the DNS / address checks.
+ */
+const fetchLocal: typeof safeFetch = (input, options) =>
+  createSafeFetch({ resolver: testResolver, addressPolicy: LOOPBACK_OK, allowedPorts: [port, ...DEFAULT_ALLOWED_PORTS] })(input, options);
 const A = () => `http://site-a.test:${port}`;
 const B = () => `http://site-b.test:${port}`;
 
@@ -434,7 +446,8 @@ describe('safeFetch over HTTP', () => {
     await new Promise<void>((resolve) => closed.listen(0, '127.0.0.1', resolve));
     const deadPort = (closed.address() as AddressInfo).port;
     await new Promise<void>((resolve) => closed.close(() => resolve()));
-    await expectCode(fetchLocal(`http://site-a.test:${deadPort}/`), 'network_error');
+    const toDead = createSafeFetch({ resolver: testResolver, addressPolicy: LOOPBACK_OK, allowedPorts: [deadPort] });
+    await expectCode(toDead(`http://site-a.test:${deadPort}/`), 'network_error');
   });
 
   it('the production safeFetch never reaches loopback', async () => {
@@ -443,8 +456,138 @@ describe('safeFetch over HTTP', () => {
     await expectCode(safeFetch(`http://localhost:${port}/hello`), 'blocked_host');
     await expectCode(safeFetch(`http://[::1]:${port}/hello`), 'blocked_ip');
     // The default policy also rejects loopback coming back from DNS.
-    const viaDns = createSafeFetch({ resolver: testResolver });
+    const viaDns = createSafeFetch({ resolver: testResolver, allowedPorts: [port] });
     await expectCode(viaDns(`${A()}/hello`), 'blocked_ip');
     expect(hits.length).toBe(before);
+  });
+});
+
+describe('ports (SSRF-1)', () => {
+  it('knows the port a URL connects to', () => {
+    expect(effectivePort(new URL('https://example.com/'))).toBe(443);
+    expect(effectivePort(new URL('http://example.com/'))).toBe(80);
+    expect(effectivePort(new URL('https://example.com:443/'))).toBe(443);
+    expect(effectivePort(new URL('http://example.com:8080/'))).toBe(8080);
+  });
+
+  it('refuses any port but 80/443 by default, before connecting', async () => {
+    const before = hits.length;
+    const defaults = createSafeFetch({ resolver: testResolver, addressPolicy: LOOPBACK_OK });
+    const err = await expectCode(defaults(`${A()}/hello`), 'blocked_host');
+    expect(err.message).toBe(`port ${port} is not allowed`);
+    expect(hits.length).toBe(before);
+  });
+
+  it('checks the port before any DNS lookup', async () => {
+    const asked: string[] = [];
+    const spy: Resolver = async (host) => {
+      asked.push(host);
+      return [{ address: '93.184.216.34', family: 4 }];
+    };
+    const f = createSafeFetch({ resolver: spy });
+    for (const url of ['http://example.com:8080/', 'https://example.com:22/', 'http://example.com:6379/']) {
+      await expectCode(f(url), 'blocked_host');
+    }
+    await expectCode(f('http://93.184.216.34:3306/'), 'blocked_host');
+    expect(asked).toEqual([]);
+  });
+
+  it('re-checks the port on every redirect hop', async () => {
+    const before = hits.length;
+    const err = await expectCode(fetchLocal(`${A()}/redirect?to=${encodeURIComponent('http://site-b.test:6379/')}`), 'blocked_host');
+    expect(err.message).toBe('port 6379 is not allowed');
+    expect(err.url).toBe('http://site-b.test:6379/');
+    // Only the first hop reached our server.
+    expect(hits.slice(before)).toEqual([`site-a.test:${port}/redirect`]);
+  });
+});
+
+describe('SAFE_FETCH_DENY_IPS (SSRF-1)', () => {
+  const saved = process.env.SAFE_FETCH_DENY_IPS;
+  const setDeny = (v: string | undefined) => {
+    if (v === undefined) delete process.env.SAFE_FETCH_DENY_IPS;
+    else process.env.SAFE_FETCH_DENY_IPS = v;
+    resetEnvCacheForTests();
+  };
+  afterEach(() => setDeny(saved));
+
+  it('env: validates and normalises the list', () => {
+    const shape = envSchema.shape.SAFE_FETCH_DENY_IPS;
+    expect(shape.parse(undefined)).toEqual([]);
+    expect(shape.parse(' 8.8.8.8 , ::FFFF:8.8.4.4,2001:4860:4860::8888,8.8.8.8, ')).toEqual([
+      '8.8.8.8',
+      '8.8.4.4',
+      '2001:4860:4860:0:0:0:0:8888',
+    ]);
+    for (const bad of ['8.8.8.8,not-an-ip', '8.8.8', '1.2.3.4/32', 'example.com']) {
+      const r = shape.safeParse(bad);
+      expect(r.success, bad).toBe(false);
+      // Never echoes the value.
+      expect(JSON.stringify(r.error?.issues)).not.toContain(bad);
+    }
+    expect(canonicalIp('[2001:DB8::1]')).toBe('2001:db8:0:0:0:0:0:1');
+    expect(canonicalIp('nope')).toBeNull();
+  });
+
+  it('the default policy refuses listed addresses in every notation', () => {
+    setDeny('8.8.8.8,2001:4860:4860::8888');
+    for (const ip of ['8.8.8.8', '::ffff:8.8.8.8', '[::ffff:808:808]', '64:ff9b::808:808', '2002:808:808::1', '2001:4860:4860:0:0:0:0:8888', '2001:4860:4860::8888']) {
+      expect(defaultAddressPolicy(ip), ip).toBe('denied by SAFE_FETCH_DENY_IPS');
+    }
+    expect(defaultAddressPolicy('8.8.4.4')).toBeNull();
+    expect(defaultAddressPolicy('10.0.0.1')).toBe('private');
+    setDeny(undefined);
+    expect(denyListReason('8.8.8.8')).toBeNull();
+    expect(defaultAddressPolicy('8.8.8.8')).toBeNull();
+  });
+
+  it('safeFetch never connects to a listed address (DNS answer or literal)', async () => {
+    setDeny('93.184.216.34');
+    const own: Resolver = async () => [{ address: '93.184.216.34', family: 4 }];
+    const viaDns = createSafeFetch({ resolver: own });
+    const e1 = await expectCode(viaDns('https://own-vps.example/'), 'blocked_ip');
+    expect(e1.message).toMatch(/SAFE_FETCH_DENY_IPS/);
+    await expectCode(safeFetch('http://93.184.216.34/'), 'blocked_ip');
+    // An injected policy (tests) replaces the default one entirely.
+    expect(await resolvePublicAddress(new URL('https://own-vps.example/'), own, () => null)).toEqual({ address: '93.184.216.34', family: 4 });
+  });
+});
+
+describe('DNS honours the deadline and the abort signal (SSRF-2)', () => {
+  it('a resolver that never answers fails with timeout within the deadline', async () => {
+    let seen: AbortSignal | undefined;
+    const hanging: Resolver = (_host, signal) => {
+      seen = signal;
+      return new Promise(() => {});
+    };
+    const f = createSafeFetch({ resolver: hanging });
+    const t0 = Date.now();
+    const err = await expectCode(f('https://never-answers.example/', { timeoutMs: 200 }), 'timeout');
+    expect(Date.now() - t0).toBeLessThan(1500);
+    expect(err).toBeInstanceOf(SafeFetchError);
+    // The resolver got the (now aborted) signal, so a real one can cancel its queries.
+    expect(seen?.aborted).toBe(true);
+  });
+
+  it('a caller abort during DNS is reported as aborted', async () => {
+    const hanging: Resolver = () => new Promise(() => {});
+    const f = createSafeFetch({ resolver: hanging });
+    const ctl = new AbortController();
+    later(50, () => ctl.abort());
+    const t0 = Date.now();
+    await expectCode(f('https://never-answers.example/', { signal: ctl.signal, timeoutMs: 10_000 }), 'aborted');
+    expect(Date.now() - t0).toBeLessThan(1500);
+  });
+
+  it('resolver errors are still dns_error', async () => {
+    const failing: Resolver = async () => {
+      throw Object.assign(new Error('queryA ENOTFOUND x'), { code: 'ENOTFOUND' });
+    };
+    await expectCode(createSafeFetch({ resolver: failing })('https://x.example/'), 'dns_error');
+  });
+
+  it('the system (c-ares) resolver stops at once for an aborted signal', async () => {
+    const reason = new Error('stop');
+    await expect(systemResolver('example.com', AbortSignal.abort(reason))).rejects.toBe(reason);
   });
 });

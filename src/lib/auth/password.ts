@@ -4,6 +4,7 @@
  * Format: `scrypt:N:r:p:<salt base64url>:<key base64url>` — N=32768, r=8, p=1, keylen=64 by
  * default, maxmem 64 MiB (node:crypto scrypt). Verification is constant-time (timingSafeEqual)
  * and runs the full KDF even for malformed hashes, so timing does not reveal the failure cause.
+ * Every KDF run (hash or verify) goes through a process-wide limit of KDF_MAX_CONCURRENT.
  */
 import { createHash, randomBytes, scrypt, timingSafeEqual, type ScryptOptions } from 'node:crypto';
 
@@ -27,10 +28,53 @@ export interface ParsedPasswordHash {
   key: Buffer;
 }
 
+/**
+ * At most this many KDF runs at once per process; the rest wait their turn. One default-strength
+ * scrypt needs 128·N·r = 32 MiB, so ~20 parallel login POSTs would otherwise allocate ~650 MiB on
+ * top of the app inside a 900 MB container limit.
+ */
+export const KDF_MAX_CONCURRENT = 2;
+
+interface KdfLimiter {
+  active: number;
+  peak: number;
+  waiting: Array<() => void>;
+}
+
+// Kept on globalThis: Next can evaluate this module more than once per process (separate bundles),
+// and the limit is about the process's memory.
+const kdfKey = Symbol.for('radar.auth.kdfLimiter');
+const kdfGlobal = globalThis as typeof globalThis & { [kdfKey]?: KdfLimiter };
+const kdf: KdfLimiter = (kdfGlobal[kdfKey] ??= { active: 0, peak: 0, waiting: [] });
+
+async function withKdfSlot<T>(fn: () => Promise<T>): Promise<T> {
+  if (kdf.active >= KDF_MAX_CONCURRENT) await new Promise<void>((resolve) => kdf.waiting.push(resolve));
+  // A released slot is handed over directly (`active` is not decremented in between).
+  else kdf.active += 1;
+  kdf.peak = Math.max(kdf.peak, kdf.active);
+  try {
+    return await fn();
+  } finally {
+    const next = kdf.waiting.shift();
+    if (next) next();
+    else kdf.active -= 1;
+  }
+}
+
+/** Test hook: the highest number of concurrent KDF runs seen since the last reset. */
+export function kdfPeakForTests(reset = false): number {
+  const peak = kdf.peak;
+  if (reset) kdf.peak = kdf.active;
+  return peak;
+}
+
 function scryptAsync(password: string | Buffer, salt: Buffer, keylen: number, opts: ScryptOptions): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    scrypt(password, salt, keylen, opts, (err, derived) => (err ? reject(err) : resolve(derived)));
-  });
+  return withKdfSlot(
+    () =>
+      new Promise((resolve, reject) => {
+        scrypt(password, salt, keylen, opts, (err, derived) => (err ? reject(err) : resolve(derived)));
+      }),
+  );
 }
 
 function isPowerOfTwo(n: number): boolean {

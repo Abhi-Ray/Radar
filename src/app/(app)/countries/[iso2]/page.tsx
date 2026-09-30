@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireSession } from "@/lib/auth/session";
 import Form from "next/form";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -26,6 +27,7 @@ const ISO2 = /^[a-zA-Z]{2}$/;
 const load = cache(async (iso2: string, asOf: string | null) => (ISO2.test(iso2) ? loadCountryGuide(iso2.toUpperCase(), { asOf }) : null));
 
 export async function generateMetadata({ params, searchParams }: PageProps<"/countries/[iso2]">): Promise<Metadata> {
+  await requireSession();
   const [{ iso2 }, sp] = await Promise.all([params, searchParams]);
   const g = await load(iso2, parseAsOf(sp.asof));
   if (!g) return { title: "Country not found" };
@@ -42,6 +44,7 @@ const JUMPS = [
 ] as const;
 
 export default async function CountryPage({ params, searchParams }: PageProps<"/countries/[iso2]">) {
+  await requireSession();
   const [{ iso2: raw }, sp] = await Promise.all([params, searchParams]);
   if (!ISO2.test(raw)) notFound();
   const asOf = parseAsOf(sp.asof);

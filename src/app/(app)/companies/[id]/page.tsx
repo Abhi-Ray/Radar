@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireSession } from "@/lib/auth/session";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
@@ -19,6 +20,7 @@ const load = cache(async (raw: string) => {
 });
 
 export async function generateMetadata({ params }: PageProps<"/companies/[id]">): Promise<Metadata> {
+  await requireSession();
   const d = await load((await params).id);
   if (!d) return { title: "Company not found" };
   return { title: `${d.company.name} · Companies` };
@@ -32,6 +34,7 @@ const JUMPS = [
 ] as const;
 
 export default async function CompanyPage({ params }: PageProps<"/companies/[id]">) {
+  await requireSession();
   const d = await load((await params).id);
   if (!d) notFound();
   const tz = appTz();

@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { constantTimeEqual, hashPassword, parsePasswordHash, verifyPassword } from '../../src/lib/auth/password';
+import {
+  constantTimeEqual,
+  hashPassword,
+  KDF_MAX_CONCURRENT,
+  kdfPeakForTests,
+  parsePasswordHash,
+  verifyPassword,
+} from '../../src/lib/auth/password';
 import { envSchema } from '../../src/lib/env';
 
 describe('password hashing (scrypt)', () => {
@@ -11,6 +18,21 @@ describe('password hashing (scrypt)', () => {
     expect(await verifyPassword('correct horse battery staple', hash)).toBe(true);
     expect(await verifyPassword('correct horse battery stapl', hash)).toBe(false);
     expect(await verifyPassword('', hash)).toBe(false);
+  });
+
+  it('runs at most KDF_MAX_CONCURRENT (2) KDFs at once and still answers every call (AUTH-3)', async () => {
+    const hash = await hashPassword('pw', { N: 16384 });
+    kdfPeakForTests(true);
+    const results = await Promise.all(Array.from({ length: 21 }, (_, i) => verifyPassword(i === 7 ? 'pw' : `no-${i}`, hash)));
+    expect(KDF_MAX_CONCURRENT).toBe(2);
+    expect(kdfPeakForTests(true)).toBe(2);
+    expect(results.filter(Boolean)).toHaveLength(1);
+    expect(results[7]).toBe(true);
+    // A failing KDF (bad params) frees its slot too.
+    await expect(hashPassword('pw', { N: 3 })).rejects.toThrow();
+    const again = await Promise.all([verifyPassword('pw', hash), verifyPassword('pw', hash), verifyPassword('pw', hash)]);
+    expect(again).toEqual([true, true, true]);
+    expect(kdfPeakForTests()).toBeLessThanOrEqual(2);
   });
 
   it('salts every hash', async () => {

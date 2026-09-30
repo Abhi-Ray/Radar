@@ -10,6 +10,13 @@ import { newSid } from '../../src/lib/auth/session-store';
 import { resetEnvCacheForTests } from '../../src/lib/env';
 import { buildCsp, generateNonce, HSTS_VALUE, staticSecurityHeaders } from '../../src/lib/security/headers';
 
+// The proxy checks the session row in the DB (session-gate.ts; covered against a real DB in
+// tests/auth/proxy.test.ts). Here the row always exists, so these tests stay about the token itself.
+vi.mock('../../src/lib/auth/session-store', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/lib/auth/session-store')>()),
+  validateSessionRow: async () => ({ row: { id: 1 } }),
+}));
+
 function directives(csp: string): Map<string, string[]> {
   const out = new Map<string, string[]>();
   for (const part of csp.split(';').map((p) => p.trim()).filter(Boolean)) {
@@ -106,7 +113,7 @@ const ORIGIN = 'https://radar.example.test';
 const envBackup: Record<string, string | undefined> = {};
 
 beforeAll(() => {
-  for (const [k, v] of Object.entries({ SESSION_SECRET: SECRET, APP_URL: ORIGIN })) {
+  for (const [k, v] of Object.entries({ SESSION_SECRET: SECRET, APP_URL: ORIGIN, ADMIN_EMAIL: 'owner@radar.example.test', DATABASE_URL: 'mysql://radar:unused@127.0.0.1:1/radar' })) {
     envBackup[k] = process.env[k];
     process.env[k] = v;
   }

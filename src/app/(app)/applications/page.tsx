@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireSession } from "@/lib/auth/session";
 import Link from "next/link";
 import { Board } from "@/components/tracker/Board";
 import { DueReminders } from "@/components/tracker/DueReminders";
@@ -14,6 +15,7 @@ import { appTz, localDay } from "@/lib/time";
 export const metadata: Metadata = { title: "Tracker" };
 
 export default async function TrackerPage({ searchParams }: PageProps<"/applications">) {
+  await requireSession();
   const f = parseTrackerFilters(await searchParams);
   const tz = appTz();
   const now = new Date();

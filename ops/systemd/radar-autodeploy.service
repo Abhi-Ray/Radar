@@ -13,8 +13,9 @@ ConditionPathExists=@RADAR_DIR@/.env
 [Service]
 Type=oneshot
 ExecStart=/bin/bash @RADAR_DIR@/ops/autodeploy.sh --dir @RADAR_DIR@
-# Stay out of the way of the other services on this box. (The image build itself runs inside
-# dockerd; its heap is capped in the Dockerfile.)
+# Stay out of the way of the other services on this box. These only apply to the git/compose
+# client processes: the image build runs in the radar-builder BuildKit container, which has its
+# own cgroup limits (3 GiB RAM, no swap, 1 CPU; ops/lib/common.sh radar_ensure_builder).
 Nice=10
 IOSchedulingClass=idle
 CPUWeight=20

@@ -10,12 +10,14 @@ import { KIT_TABS, KIT_TAB_LABEL, kitHref, parseKitParams } from "@/components/k
 import { fieldLines } from "@/components/kit/template";
 import { Panel } from "@/components/tracker/Panel";
 import { EmptyState, LinkTabs, Notice, SectionHeader } from "@/components/ui";
+import { requireSession } from "@/lib/auth/session";
 import { loadKit } from "@/lib/queries/kit";
 import { appTz } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Kit" };
 
 export default async function KitPage({ searchParams }: PageProps<"/kit">) {
+  await requireSession();
   const p = parseKitParams(await searchParams);
   const tz = appTz();
   const kit = await loadKit({ jobId: p.job });

@@ -5,7 +5,8 @@
 #
 # Fetches the latest backup from BACKUP_BRANCH, verifies sha256 + decryption, restores it into
 # the throw-away database RESTORE_TEST_DB (radar_restore_test) on the same MySQL server, compares
-# every table's row count and the last migration with LATEST.json, then drops the test database.
+# every table's row count and the last migration with the backup metadata (LATEST.meta.enc,
+# decrypted with BACKUP_PASSPHRASE), then drops the test database.
 # The live database is never touched (except for the backup_runs / alerts bookkeeping rows).
 #
 # Records a backup_runs row (kind restore_test). On failure — including a latest backup older
@@ -95,14 +96,16 @@ rb_info "restore test started (run ${RUN_ID:-unrecorded})"
 STEP=fetch
 rb_git_setup optional
 rb_fetch_backup "$RB_TMP/src" || rb_die "could not fetch branch $BACKUP_BRANCH: $(tail -n 1 "$RB_TMP/clone.err" 2>/dev/null)"
-META="$RB_TMP/src/LATEST.json"
+PUBMETA="$RB_TMP/src/LATEST.json"
 
 STEP=verify
 ENC="$RB_TMP/backup.enc"
 rb_assemble_backup "$RB_TMP/src" "$ENC"
-SIZE=$(rb_json_get "$META" '$.sizeBytes')
-SHA=$(rb_json_get "$META" '$.sha256')
-CREATED_AT=$(rb_json_get "$META" '$.createdAt')
+SIZE=$(rb_json_get "$PUBMETA" '$.sizeBytes')
+SHA=$(rb_json_get "$PUBMETA" '$.sha256')
+CREATED_AT=$(rb_json_get "$PUBMETA" '$.createdAt')
+META="$RB_TMP/meta.json"
+rb_backup_meta "$RB_TMP/src" "$META" || rb_die "cannot read the backup metadata: $RB_META_ERROR"
 rb_verify_encrypted_dump "$ENC"
 
 # Age of the backup (createdAt is written by backup.sh as YYYY-MM-DDTHH:MM:SSZ).
@@ -142,7 +145,7 @@ STEP=cleanup
 drop_test_db
 
 STEP=result
-[ "$COUNTS_OK" = 1 ] || rb_die "restored data differs from LATEST.json: $(head -n 5 "$RB_TMP/mismatches" | tr '\n' ';')"
+[ "$COUNTS_OK" = 1 ] || rb_die "restored data differs from the backup metadata: $(head -n 5 "$RB_TMP/mismatches" | tr '\n' ';')"
 if [ "$AGE_HOURS" -lt 0 ]; then rb_die "LATEST.json has no valid createdAt"; fi
 if [ "$AGE_HOURS" -gt "$MAX_AGE_HOURS" ]; then
   rb_die "restore works, but the latest backup is ${AGE_HOURS} h old (limit ${MAX_AGE_HOURS} h): nightly backups are not being pushed"

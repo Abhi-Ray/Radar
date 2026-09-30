@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireSession } from "@/lib/auth/session";
 import Link from "next/link";
 import { CompanyCards } from "@/components/companies/CompanyCards";
 import { CompanyFilterForm } from "@/components/companies/CompanyFilterForm";
@@ -11,6 +12,7 @@ import { listCompanies } from "@/lib/queries/companies";
 export const metadata: Metadata = { title: "Companies" };
 
 export default async function CompaniesPage({ searchParams }: PageProps<"/companies">) {
+  await requireSession();
   const f = parseCompanyFilters(await searchParams);
   const list = await listCompanies(f);
   const nFilters = activeCompanyFilterCount(f);

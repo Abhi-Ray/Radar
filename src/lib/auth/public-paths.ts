@@ -1,4 +1,8 @@
-/** Routes reachable without a session (spec §4). Everything else is login-walled by src/proxy.ts. */
+/**
+ * Routes reachable without a session (spec §4). Everything else is login-walled by src/proxy.ts.
+ * Only the exact '/login' is public — no '/login/*' prefix, so nothing nested under it (now or
+ * later) can bypass the proxy.
+ */
 
 const PUBLIC_EXACT = new Set([
   '/login',
@@ -15,7 +19,6 @@ const PUBLIC_ICON_RE = /^\/(?:icon|apple-icon)\d*(?:\.(?:ico|png|svg|jpg|jpeg|we
 
 export function isPublicPath(pathname: string): boolean {
   if (PUBLIC_EXACT.has(pathname)) return true;
-  if (pathname.startsWith('/login/')) return true;
   if (pathname.startsWith('/_next/static/') || pathname.startsWith('/_next/image')) return true;
   return PUBLIC_ICON_RE.test(pathname);
 }

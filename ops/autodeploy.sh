@@ -7,14 +7,18 @@
 # 1. flock on /var/lib/radar/deploy.lock, non-blocking (a running install/deploy wins; skip).
 # 2. git fetch origin <branch>.
 # 3. Nothing to do when origin/<branch> is the deployed revision.
-# 4. Otherwise: git reset --hard origin/<branch> → docker compose up -d --build →
-#    wait for /api/health to report the new commit → prune RADAR's dangling images.
+# 4. Otherwise, if MemAvailable >= 3.5 GiB: git reset --hard origin/<branch> → docker compose build
+#    --builder radar-builder (RADAR's own BuildKit container: 3 GiB RAM, no swap, 1 CPU) →
+#    docker compose up -d --no-build → wait for /api/health to report the new commit → prune
+#    RADAR's dangling images and old build cache. With less free memory the run is skipped (not
+#    counted as a failed attempt; one `deploy_deferred` alert per day) and the next run retries.
 #    If the new revision does not become healthy the previous one is redeployed and a critical
 #    `deploy_failed` alert is stored. A failing commit is retried at most MAX_ATTEMPTS (3) times;
 #    the next push (or a manual ops/deploy.sh) starts over.
 #
 # Untracked files (.env, secrets/) are never touched by the reset.
-# Exit 0 = up to date / deployed / skipped, 1 = deploy failed (rolled back), 3 = rollback failed.
+# Exit 0 = up to date / deployed / skipped / deferred, 1 = deploy failed (rolled back),
+# 3 = rollback failed.
 set -Eeuo pipefail
 umask 022
 
@@ -87,6 +91,8 @@ fi
 
 radar_info "origin/$BRANCH moved: ${deployed:0:12} → ${target:0:12} (attempt $((attempts + 1))/$MAX_ATTEMPTS)"
 cd "$RADAR_DIR"
+radar_ensure_builder || radar_warn "could not create the buildx builder $RADAR_BUILDER"
 rc=0
 radar_deploy_rev "$target" "$deployed" || rc=$?
+[ "$rc" = 4 ] && rc=0 # deferred (low memory): the next run retries
 exit "$rc"

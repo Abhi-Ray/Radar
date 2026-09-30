@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireSession } from "@/lib/auth/session";
 import { CountryTiers } from "@/components/countries/CountryCards";
 import { EmptyState, SectionHeader, StatBlock } from "@/components/ui";
 import { listCountries } from "@/lib/queries/countries";
@@ -7,6 +8,7 @@ import { appTz } from "@/lib/time";
 export const metadata: Metadata = { title: "Countries" };
 
 export default async function CountriesPage() {
+  await requireSession();
   const tz = appTz();
   const tiers = await listCountries();
   const all = tiers.flatMap((t) => t.countries);

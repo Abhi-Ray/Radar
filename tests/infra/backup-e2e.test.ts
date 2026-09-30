@@ -3,8 +3,9 @@
  * — minus Docker: a real MySQL (tests/helpers/db.ts), the real mysql/mysqldump/openssl/git tools,
  * and a local bare repository standing in for the GitHub `db-backups` branch.
  *
- *   backup → LATEST.json + one orphan commit → second backup replaces it → restore test →
- *   restore into a scratch DB → live-restore guards → tampered backup → shrink guard
+ *   backup → LATEST.json (public) + LATEST.meta.enc (encrypted) + one orphan commit → second
+ *   backup replaces it → restore test → restore into a scratch DB → live-restore guards →
+ *   tampered backup → shrink guard → the guard fails closed on unreadable stored metadata
  *
  * Needs the mysql 8.4 client tools (mysql-memory-server's download cache, RADAR_MYSQL_BIN or
  * PATH); skipped otherwise. RADAR_BACKUP_E2E=0 skips, =1 also accepts older client versions.
@@ -32,18 +33,32 @@ function clientVersionOk(bin: string | null): boolean {
   return !!m && (Number(m[1]) > 8 || (Number(m[1]) === 8 && Number(m[2]) >= 4));
 }
 
+/** The plain LATEST.json on the (possibly public) branch: only what is needed to fetch + verify. */
 interface LatestJson {
   format: string;
-  database: string;
+  createdAt: string;
+  file: string;
   sizeBytes: number;
   sha256: string;
   parts: { name: string; sizeBytes: number; sha256: string }[];
+  encryption: string;
+}
+
+/** LATEST.meta.enc, decrypted with BACKUP_PASSPHRASE. */
+interface BackupMeta {
+  format: string;
+  createdAt: string;
+  sha256: string;
+  database: string;
+  tables: number;
   rowCounts: Record<string, number>;
   totalRows: number;
   migrationsApplied: number;
   lastMigration: { createdAt: number; hash: string | null; tag: string | null } | null;
   runId: number | null;
 }
+
+const PUBLIC_KEYS = ['createdAt', 'encryption', 'file', 'format', 'parts', 'sha256', 'sizeBytes'];
 
 const BIN = findMysqlBin();
 const ENABLED = clientVersionOk(BIN);
@@ -71,6 +86,30 @@ describe.skipIf(!ENABLED)('backup container scripts end to end', () => {
     return rows as T[];
   };
   const latest = () => JSON.parse(git('--git-dir', remote, 'show', 'db-backups:LATEST.json')) as LatestJson;
+  const decrypt = (file: string, passphrase = PASSPHRASE) =>
+    spawnSync('openssl', ['enc', '-d', '-aes-256-cbc', '-pbkdf2', '-iter', '600000', '-md', 'sha256', '-pass', 'env:BACKUP_PASSPHRASE', '-in', file], {
+      env: { ...env, BACKUP_PASSPHRASE: passphrase },
+      encoding: 'utf8',
+    });
+  /** The private metadata, decrypted the way docs/RECOVERY.md does it by hand. */
+  const privateMeta = (): BackupMeta => {
+    const file = path.join(work, 'meta.enc');
+    writeFileSync(file, gitBuffer('--git-dir', remote, 'show', 'db-backups:LATEST.meta.enc'));
+    const r = decrypt(file);
+    expect(r.status, r.stderr).toBe(0);
+    return JSON.parse(r.stdout) as BackupMeta;
+  };
+  /** Replaces the stored backup commit with a modified copy (the files of the current one + edits). */
+  const rewriteStored = (edit: (dir: string) => void) => {
+    const clone = path.join(work, `rewrite-${Date.now()}`);
+    git('clone', '--quiet', '--branch', 'db-backups', remote, clone);
+    edit(clone);
+    git('-C', clone, 'add', '-A');
+    git('-C', clone, '-c', 'user.name=e2e', '-c', 'user.email=e2e@localhost.invalid', 'commit', '--quiet', '--amend', '-m', 'rewritten');
+    git('-C', clone, 'push', '--quiet', '--force', 'origin', 'HEAD:refs/heads/db-backups');
+    rmSync(clone, { recursive: true, force: true });
+    return commits()[0];
+  };
   const commits = () => git('--git-dir', remote, 'rev-list', 'db-backups').trim().split('\n');
   const schemaExists = async (name: string) =>
     (await q<{ n: number }>('SELECT COUNT(*) AS n FROM information_schema.schemata WHERE schema_name = ?', [name]))[0].n === 1;
@@ -124,21 +163,38 @@ describe.skipIf(!ENABLED)('backup container scripts end to end', () => {
     if (work) rmSync(work, { recursive: true, force: true });
   });
 
-  it('backup: encrypted dump + LATEST.json published as one orphan commit, run recorded', async () => {
+  it('backup: encrypted dump + LATEST.json + LATEST.meta.enc published as one orphan commit, run recorded', async () => {
     const r = run('backup.sh');
     expectOk(r);
     expect(r.stdout + r.stderr).not.toContain(PASSPHRASE);
 
     expect(commits()).toHaveLength(1);
-    expect(git('--git-dir', remote, 'ls-tree', '--name-only', 'db-backups').trim().split('\n')).toEqual(['LATEST.json', 'radar-db.sql.gz.enc']);
+    expect(git('--git-dir', remote, 'ls-tree', '--name-only', 'db-backups').trim().split('\n')).toEqual([
+      'LATEST.json',
+      'LATEST.meta.enc',
+      'radar-db.sql.gz.enc',
+    ]);
 
-    const meta = latest();
+    // The plain file reveals nothing about the data: no database or table names, counts, run id.
+    const raw = git('--git-dir', remote, 'show', 'db-backups:LATEST.json');
+    const pub = latest();
+    expect(Object.keys(pub).sort()).toEqual(PUBLIC_KEYS);
+    for (const leak of [dbName, 'audit_log', 'rowCounts', 'totalRows', 'runId', 'migration', 'mysql']) expect(raw).not.toContain(leak);
     const blob = gitBuffer('--git-dir', remote, 'show', 'db-backups:radar-db.sql.gz.enc');
-    expect(meta.format).toBe('radar-db-backup/1');
+    expect(pub.format).toBe('radar-db-backup/2');
+    expect(pub.file).toBe('radar-db.sql.gz.enc');
+    expect(pub.sizeBytes).toBe(blob.length);
+    expect(pub.sha256).toBe(createHash('sha256').update(blob).digest('hex'));
+    expect(pub.parts).toEqual([{ name: 'radar-db.sql.gz.enc', sizeBytes: blob.length, sha256: pub.sha256 }]);
+
+    const metaBlob = gitBuffer('--git-dir', remote, 'show', 'db-backups:LATEST.meta.enc');
+    expect(metaBlob.subarray(0, 8).toString('latin1')).toBe('Salted__');
+    expect(metaBlob.includes(Buffer.from('audit_log'))).toBe(false);
+    const meta = privateMeta();
+    expect(meta.format).toBe('radar-db-backup/2');
+    expect(meta.sha256).toBe(pub.sha256);
+    expect(meta.createdAt).toBe(pub.createdAt);
     expect(meta.database).toBe(dbName);
-    expect(meta.sizeBytes).toBe(blob.length);
-    expect(meta.sha256).toBe(createHash('sha256').update(blob).digest('hex'));
-    expect(meta.parts).toEqual([{ name: 'radar-db.sql.gz.enc', sizeBytes: blob.length, sha256: meta.sha256 }]);
     expect(meta.rowCounts.audit_log).toBe(SEED_ROWS);
     expect(meta.totalRows).toBeGreaterThan(100);
     expect(meta.migrationsApplied).toBe(journal.entries.length);
@@ -149,7 +205,8 @@ describe.skipIf(!ENABLED)('backup container scripts end to end', () => {
       'SELECT kind, status, sha256, size_bytes FROM backup_runs WHERE id = ?',
       [meta.runId],
     );
-    expect(runRow).toMatchObject({ kind: 'backup', status: 'ok', sha256: meta.sha256, size_bytes: blob.length });
+    expect(runRow).toMatchObject({ kind: 'backup', status: 'ok', sha256: pub.sha256, size_bytes: blob.length });
+    expect(decrypt(path.join(work, 'meta.enc'), 'a-wrong-passphrase-of-some-length').status).not.toBe(0);
 
     // Encrypted at rest; the documented manual recovery (docs/RECOVERY.md) reads it back.
     expect(blob.subarray(0, 8).toString('latin1')).toBe('Salted__');
@@ -172,7 +229,7 @@ describe.skipIf(!ENABLED)('backup container scripts end to end', () => {
     const after = commits();
     expect(after).toHaveLength(1);
     expect(after[0]).not.toBe(before[0]);
-    expect(latest().rowCounts.audit_log).toBe(SEED_ROWS + 1);
+    expect(privateMeta().rowCounts.audit_log).toBe(SEED_ROWS + 1);
   });
 
   it('restore test: restores into the throw-away DB, matches every count, drops it, records ok', async () => {
@@ -187,7 +244,7 @@ describe.skipIf(!ENABLED)('backup container scripts end to end', () => {
   });
 
   it('restore --target: an identical scratch copy whose own backup_runs row is finished', async () => {
-    const meta = latest();
+    const meta = privateMeta();
     expectOk(run('restore.sh', ['--target', scratchDb]));
     const sum = async (db: string) => (await q<{ Checksum: number }>(`CHECKSUM TABLE \`${db}\`.audit_log`))[0].Checksum;
     expect(await sum(scratchDb)).toBe(await sum(dbName));
@@ -202,7 +259,7 @@ describe.skipIf(!ENABLED)('backup container scripts end to end', () => {
     );
     const details = typeof runRow.details_json === 'string' ? JSON.parse(runRow.details_json) : runRow.details_json;
     expect(runRow).toMatchObject({ status: 'ok', sha256: meta.sha256 });
-    expect(details).toMatchObject({ finishedBy: 'radar-restore', format: 'radar-db-backup/1' });
+    expect(details).toMatchObject({ finishedBy: 'radar-restore', format: 'radar-db-backup/2' });
     const [running] = await q<{ n: number }>(`SELECT COUNT(*) AS n FROM \`${scratchDb}\`.backup_runs WHERE status = 'running'`);
     expect(running.n).toBe(0);
     await t.pool.query(`DROP DATABASE \`${scratchDb}\``);
@@ -277,6 +334,62 @@ describe.skipIf(!ENABLED)('backup container scripts end to end', () => {
     expectOk(run('backup.sh', ['--allow-shrink']));
     expect(commits()).toHaveLength(1);
     expect(commits()[0]).not.toBe(stored);
-    expect(latest().rowCounts.audit_log).toBe(0);
+    expect(privateMeta().rowCounts.audit_log).toBe(0);
+  });
+
+  it('shrink guard fails closed: stored metadata that cannot be decrypted, found or parsed is never replaced', async () => {
+    const stored = commits()[0];
+    const alerts = async () =>
+      (await q<{ occurrences: number }>('SELECT occurrences FROM alerts WHERE dedupe_key = ?', [`backup_failed:${today()}`]))[0].occurrences;
+    const before = await alerts();
+
+    // A different BACKUP_PASSPHRASE (e.g. a mistyped rotation) cannot read the stored metadata.
+    const wrong = run('backup.sh', [], { BACKUP_PASSPHRASE: 'another-passphrase-0123456789-abc' });
+    expect(wrong.status).toBe(1);
+    expect(wrong.stderr).toContain("cannot read the stored backup's metadata");
+    expect(wrong.stderr).toContain('wrong BACKUP_PASSPHRASE');
+    expect(wrong.stderr).toContain('refusing to replace it');
+    expect(commits()).toEqual([stored]);
+
+    // Metadata missing, or garbage: same refusal.
+    const missing = rewriteStored((dir) => rmSync(path.join(dir, 'LATEST.meta.enc')));
+    const r1 = run('backup.sh');
+    expect(r1.status).toBe(1);
+    expect(r1.stderr).toContain('LATEST.meta.enc missing');
+    expect(commits()).toEqual([missing]);
+
+    const garbage = rewriteStored((dir) => writeFileSync(path.join(dir, 'LATEST.meta.enc'), 'Salted__not-really-encrypted-metadata'));
+    const r2 = run('backup.sh');
+    expect(r2.status).toBe(1);
+    expect(r2.stderr).toContain('refusing to replace it');
+    expect(commits()).toEqual([garbage]);
+    expect(await alerts()).toBe(before + 3);
+
+    // Without its metadata a backup is only restored on request (row counts cannot be checked).
+    await t.pool.query(`DROP DATABASE IF EXISTS \`${scratchDb}\``);
+    const refused = run('restore.sh', ['--target', scratchDb]);
+    expect(refused.status).toBe(1);
+    expect(refused.stderr).toContain('cannot read the backup metadata');
+    expect(await schemaExists(scratchDb)).toBe(false);
+    expectOk(run('restore.sh', ['--target', scratchDb, '--skip-count-check']));
+    await t.pool.query(`DROP DATABASE \`${scratchDb}\``);
+
+    // --allow-shrink replaces it deliberately, with fresh, readable metadata.
+    expectOk(run('backup.sh', ['--allow-shrink']));
+    expect(commits()[0]).not.toBe(garbage);
+    expect(privateMeta().sha256).toBe(latest().sha256);
+    expectOk(run('restore-test.sh'));
+  });
+
+  it('a legacy format-1 backup (metadata in the plain LATEST.json) is still read by the shrink guard', async () => {
+    const legacy = rewriteStored((dir) => {
+      const pub = JSON.parse(readFileSync(path.join(dir, 'LATEST.json'), 'utf8')) as LatestJson;
+      rmSync(path.join(dir, 'LATEST.meta.enc'));
+      writeFileSync(path.join(dir, 'LATEST.json'), JSON.stringify({ ...pub, format: 'radar-db-backup/1', totalRows: 1000, rowCounts: { audit_log: 1000 } }));
+    });
+    const r = run('backup.sh');
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain('refusing to replace the stored backup (1000 rows)');
+    expect(commits()).toEqual([legacy]);
   });
 });

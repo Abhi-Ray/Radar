@@ -6,13 +6,14 @@ import { desc, eq } from 'drizzle-orm';
 import { NextRequest } from 'next/server';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { auditLog, loginAttempts, sessions } from '../../src/db/schema';
-import { hashPassword } from '../../src/lib/auth/password';
+import { hashPassword, KDF_MAX_CONCURRENT, kdfPeakForTests } from '../../src/lib/auth/password';
 import {
   checkLoginGate,
   pruneLoginAttempts,
   recordLoginFailure,
   recordLoginSuccess,
   RATE_LIMIT,
+  withLoginIpLock,
 } from '../../src/lib/auth/rate-limit';
 import {
   createSession,
@@ -196,6 +197,35 @@ describe('rate limiting + lockout', () => {
     expect((await checkLoginGate(t.db, IP, at(now + 1000))).allowed).toBe(false);
   });
 
+  it('withLoginIpLock serialises one IP, runs different IPs in parallel and cleans up', async () => {
+    const order: string[] = [];
+    let inA = 0;
+    let peakA = 0;
+    const job = (ip: string, tag: string, ms: number) =>
+      withLoginIpLock(ip, async () => {
+        if (ip === 'a') peakA = Math.max(peakA, ++inA);
+        order.push(`start:${tag}`);
+        await new Promise((r) => setTimeout(r, ms));
+        order.push(`end:${tag}`);
+        if (ip === 'a') inA--;
+        return tag;
+      });
+    const started = Date.now();
+    const out = await Promise.all([job('a', 'a1', 40), job('a', 'a2', 10), job('b', 'b1', 40), job('a', 'a3', 1)]);
+    expect(out).toEqual(['a1', 'a2', 'b1', 'a3']);
+    expect(peakA).toBe(1);
+    const a = order.filter((x) => x.endsWith('a1') || x.endsWith('a2') || x.endsWith('a3'));
+    expect(a).toEqual(['start:a1', 'end:a1', 'start:a2', 'end:a2', 'start:a3', 'end:a3']);
+    // b ran alongside a1, not after the a queue.
+    expect(order.indexOf('start:b1')).toBeLessThan(order.indexOf('end:a1'));
+    expect(Date.now() - started).toBeLessThan(1_000);
+    // A throwing critical section releases the lock for the next waiter.
+    await expect(withLoginIpLock('a', async () => Promise.reject(new Error('db down')))).rejects.toThrow('db down');
+    expect(await withLoginIpLock('a', async () => 'next')).toBe('next');
+    const locks = (globalThis as Record<symbol, Map<string, unknown>>)[Symbol.for('radar.auth.loginIpLocks')];
+    expect(locks.size).toBe(0);
+  });
+
   it('adds a global delay above 30 failures/hour but never a global lock', async () => {
     for (let i = 0; i < RATE_LIMIT.globalThreshold + 1; i++) {
       await recordLoginFailure(t.db, { ip: `198.51.100.${i % 200}`, now: at(i * 60_000 + 1) });
@@ -287,6 +317,49 @@ describe('login / logout actions', () => {
     const [locked] = await t.db.select().from(loginAttempts).where(eq(loginAttempts.outcome, 'locked'));
     expect(locked).toBeTruthy();
   }, 30_000);
+
+  // AUTH-3: parallel POSTs from one IP used to all pass the gate before the first failure was
+  // recorded, giving N guesses instead of RATE_LIMIT.maxFailures.
+  it('a parallel burst from one IP gets exactly maxFailures password checks, then only lockouts', async () => {
+    const { loginAction } = await import('../../src/lib/auth/actions');
+    const burst = 21;
+    const wrong = RATE_LIMIT.maxFailures;
+    // The first `maxFailures` guesses are wrong; every later one carries the RIGHT password. Without
+    // the per-IP lock those would pass the gate before the lockout is written and log in.
+    const results = await Promise.all(
+      Array.from({ length: burst }, (_, i) =>
+        loginAction(undefined, form({ email: EMAIL, password: i < wrong ? `bad-${i}` : PASSWORD })).catch((e: unknown) => {
+          if (e instanceof RedirectSignal) return { redirected: e.url };
+          throw e;
+        }),
+      ),
+    );
+    expect(results.filter((r) => 'redirected' in r)).toHaveLength(0);
+    expect(state.jar.size).toBe(0);
+    const outcomes = (await t.db.select().from(loginAttempts).where(eq(loginAttempts.ip, IP))).map((r) => r.outcome);
+    // Every verified password leaves a 'bad_credentials' or 'success' row; a gated one only 'locked'.
+    expect(outcomes.filter((o) => o === 'bad_credentials')).toHaveLength(wrong);
+    expect(outcomes.filter((o) => o === 'success')).toHaveLength(0);
+    expect(outcomes.filter((o) => o === 'locked')).toHaveLength(burst - wrong);
+    expect(outcomes.filter((o) => o === 'lockout')).toHaveLength(1);
+    expect(await t.db.select().from(sessions)).toHaveLength(0);
+  }, 60_000);
+
+  it('caps concurrent password KDFs process-wide, across IPs', async () => {
+    const { loginAction } = await import('../../src/lib/auth/actions');
+    expect(KDF_MAX_CONCURRENT).toBe(2);
+    kdfPeakForTests(true);
+    const calls: Array<Promise<unknown>> = [];
+    for (let i = 0; i < 21; i++) {
+      // headers() is read synchronously at the start of the action, so each call keeps its own IP.
+      state.headers = new Headers({ 'x-real-ip': `198.51.100.${i + 1}`, 'user-agent': 'vitest' });
+      calls.push(loginAction(undefined, form({ email: EMAIL, password: `bad-${i}` })));
+    }
+    await Promise.all(calls);
+    expect(kdfPeakForTests()).toBe(KDF_MAX_CONCURRENT);
+    const failures = await t.db.select().from(loginAttempts).where(eq(loginAttempts.outcome, 'bad_credentials'));
+    expect(failures).toHaveLength(21);
+  }, 60_000);
 
   it('requireSession accepts a live session and redirects when revoked or missing', async () => {
     const { loginAction, logoutAction } = await import('../../src/lib/auth/actions');

@@ -1,6 +1,8 @@
 # RADAR — host nginx vhost for ${DOMAIN}
 #
-# Rendered by ops/install.sh into /etc/nginx/sites-available/radar (+ symlink in sites-enabled).
+# Rendered by ops/install.sh into /etc/nginx/sites-available/radar and enabled as the symlink
+# /etc/nginx/sites-enabled/zz-radar: with no default_server on a socket nginx picks the first
+# server in include order, and "zz-" keeps RADAR behind every other site.
 # Placeholders (dollar + braces): DOMAIN, LISTEN_HTTP2, HTTP2_DIRECTIVE. HTTP/2 is only enabled
 # when it cannot change the behaviour of the other sites on this server (see ops/install.sh).
 #

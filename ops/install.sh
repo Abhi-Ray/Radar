@@ -22,14 +22,17 @@
 #   -y, --yes          no questions (fails instead of prompting)
 #
 # Steps: packages → clone/pull DIR → .env (keep | --env-from | decrypt ops/secrets.env.enc) →
-# backup deploy key → /var/www/radar-acme → http-only vhost → certbot certonly --webroot →
-# full vhost → docker compose up -d --build (after an optional restore) → seed on first
+# SAFE_FETCH_DENY_IPS (this host's own public IPs, only if the key is absent) → backup deploy key → /var/www/radar-acme → http-only vhost → certbot certonly --webroot →
+# full vhost → docker compose build --builder radar-builder → up -d (after an optional restore) → seed on first
 # install → systemd auto-deploy timer.
 #
 # Shared-server safety: touches ONLY DIR, /var/lib/radar, /var/www/radar-acme,
-# /etc/nginx/sites-{available,enabled}/radar, the certificate for DOMAIN and the
-# radar-autodeploy systemd units. Every nginx change is `nginx -t`-checked and rolled back on
-# failure. Never edits other sites, other containers, the host MySQL or the firewall.
+# /etc/nginx/sites-available/radar + its symlink /etc/nginx/sites-enabled/zz-radar (named to sort
+# after every other site, so RADAR never becomes the implicit default server of :80/:443; an old
+# sites-enabled/radar link to the same file is removed), the certificate for DOMAIN, the
+# radar-builder buildx builder and the radar-autodeploy systemd units. Every nginx change is
+# `nginx -t`-checked and rolled back on failure. Never edits other sites, other containers, the
+# host MySQL or the firewall.
 #
 # HTTP/2: with nginx >= 1.25.1 `http2 on;` is per site. Older nginx (Ubuntu 24.04 ships 1.24)
 # applies `listen … http2` to every site on the same :443 socket, so `auto` enables it only if
@@ -62,7 +65,11 @@ YES=0
 STATE_DIR=$RADAR_STATE_DIR
 ACME_ROOT=/var/www/radar-acme
 NGINX_AVAIL=/etc/nginx/sites-available/radar
-NGINX_ENABLED=/etc/nginx/sites-enabled/radar
+# nginx makes the FIRST server of a listen socket (in include order) its default when none says
+# default_server: the "zz-" name keeps RADAR behind every other site. Older installs used
+# sites-enabled/radar; that link is replaced.
+NGINX_ENABLED=/etc/nginx/sites-enabled/zz-radar
+NGINX_ENABLED_OLD=/etc/nginx/sites-enabled/radar
 GH_REPO=Abhi-Ray/Radar
 
 usage() { radar_usage "$SELF"; }
@@ -251,6 +258,25 @@ check_env() {
   fi
 }
 
+# The fetchers must never reach this VPS's own public addresses (the other sites on host nginx,
+# anything bound to 0.0.0.0). They are detected locally (`ip -o addr` / `hostname -I`, no
+# external lookup) and written ONCE: an existing key, even an empty one, is the operator's
+# choice and is kept. On a new VPS with an old .env, delete the line and re-run.
+setup_fetch_deny_list() {
+  local ips
+  if grep -qE '^SAFE_FETCH_DENY_IPS=' "$ENV_FILE"; then
+    radar_info "keeping SAFE_FETCH_DENY_IPS from .env"
+    return 0
+  fi
+  ips=$(radar_public_ips)
+  if [ -z "$ips" ]; then
+    radar_warn "found no public address on this host; set SAFE_FETCH_DENY_IPS in .env by hand (docs/DEPLOY.md)"
+    return 0
+  fi
+  radar_env_set SAFE_FETCH_DENY_IPS "$ips" "$ENV_FILE"
+  radar_info "SAFE_FETCH_DENY_IPS=$ips written to .env (the fetchers never contact these)"
+}
+
 # ---------------------------------------------------------------------------------------------
 # 3. backup deploy key
 
@@ -304,20 +330,33 @@ deploy_key_works() {
 
 NGINX_PREV=
 
+# The pre-zz- symlink sites-enabled/radar, if it is RADAR's own (points at our file).
+nginx_old_link_is_ours() { [ -L "$NGINX_ENABLED_OLD" ] && [ "$(readlink "$NGINX_ENABLED_OLD")" = "$NGINX_AVAIL" ]; }
+
 nginx_install_vhost() { # rendered file
-  local rendered=$1
-  if [ -f "$NGINX_AVAIL" ] && cmp -s "$rendered" "$NGINX_AVAIL" && [ -L "$NGINX_ENABLED" ]; then
+  local rendered=$1 old_removed=0 had_new_link=0
+  if [ -f "$NGINX_AVAIL" ] && cmp -s "$rendered" "$NGINX_AVAIL" && [ -L "$NGINX_ENABLED" ] && ! nginx_old_link_is_ours; then
     radar_info "nginx vhost unchanged"
     return 0
   fi
   NGINX_PREV="$STATE_DIR/nginx-radar.prev"
   if [ -f "$NGINX_AVAIL" ]; then cp -p "$NGINX_AVAIL" "$NGINX_PREV"; else rm -f "$NGINX_PREV"; fi
+  [ -L "$NGINX_ENABLED" ] && had_new_link=1
   install -m 644 "$rendered" "$NGINX_AVAIL"
   ln -sfn "$NGINX_AVAIL" "$NGINX_ENABLED"
+  if nginx_old_link_is_ours; then
+    rm -f "$NGINX_ENABLED_OLD"
+    old_removed=1
+    radar_info "renamed the RADAR site link: $NGINX_ENABLED_OLD → $NGINX_ENABLED"
+  elif [ -e "$NGINX_ENABLED_OLD" ] || [ -L "$NGINX_ENABLED_OLD" ]; then
+    radar_warn "$NGINX_ENABLED_OLD exists but is not RADAR's link to $NGINX_AVAIL; leaving it alone"
+  fi
   if ! nginx -t 2>"$STATE_DIR/nginx-t.log"; then
     cat "$STATE_DIR/nginx-t.log" >&2
     if [ -f "$NGINX_PREV" ]; then
       install -m 644 "$NGINX_PREV" "$NGINX_AVAIL"
+      if [ "$old_removed" = 1 ]; then ln -sfn "$NGINX_AVAIL" "$NGINX_ENABLED_OLD"; fi
+      if [ "$had_new_link" != 1 ]; then rm -f "$NGINX_ENABLED"; fi
     else
       rm -f "$NGINX_ENABLED" "$NGINX_AVAIL"
     fi
@@ -340,7 +379,7 @@ http2_settings() { # sets LISTEN_HTTP2 / HTTP2_DIRECTIVE
     LISTEN_HTTP2=' http2'
     radar_warn "nginx $ver: 'listen 443 ssl http2' also enables HTTP/2 for the other sites on :443"
   elif grep -EHs '^[[:space:]]*listen[[:space:]][^;#]*443[^;#]*http2' /etc/nginx/sites-enabled/* /etc/nginx/conf.d/*.conf 2>/dev/null |
-    grep -v "^$NGINX_ENABLED:" | grep -q .; then
+    grep -v -e "^$NGINX_ENABLED:" -e "^$NGINX_ENABLED_OLD:" | grep -q .; then
     LISTEN_HTTP2=' http2'
   else
     radar_info "nginx $ver: HTTP/2 left off (enabling it would change the other sites on :443; --http2 on to force)"
@@ -382,6 +421,18 @@ setup_nginx() {
   http2_settings
   radar_render_nginx "$RADAR_DIR/ops/nginx/radar.conf.template" "$DOMAIN" "$LISTEN_HTTP2" "$HTTP2_DIRECTIVE" >"$tmp/radar.conf"
   nginx_install_vhost "$tmp/radar.conf"
+  nginx_default_server_check
+}
+
+# Warn (never fail) when a port RADAR listens on has no explicit default_server: nginx then uses
+# the first server in include order for unknown Host names, bare-IP and SNI-less clients. RADAR
+# sorts last, so that is another site — unless RADAR is the only one on the port.
+nginx_default_server_check() {
+  local dump="$WORK/nginx-T.txt" port
+  nginx -T >"$dump" 2>/dev/null || { radar_warn "nginx -T failed; default_server check skipped"; return 0; }
+  for port in $(radar_nginx_ports_without_default "$dump" 80 443); do
+    radar_warn "no nginx server declares default_server for port $port: requests for unknown host names (bare IP, no SNI) go to the first server in include order. RADAR is enabled as $NGINX_ENABLED so it sorts last; to make this explicit, mark one site 'listen $port default_server' (e.g. a 'return 444' catch-all)."
+  done
 }
 
 # ---------------------------------------------------------------------------------------------
@@ -415,8 +466,11 @@ start_stack() {
   cd "$RADAR_DIR"
   [ -s "$RADAR_DIR/secrets/backup_deploy_key" ] || radar_die "secrets/backup_deploy_key missing"
 
-  step "building images at ${sha:0:12}"
-  GIT_SHA=$sha radar_compose build
+  step "building images at ${sha:0:12} (buildx builder $RADAR_BUILDER: 3 GiB RAM, no swap, 1 CPU)"
+  radar_ensure_builder || radar_die "could not create the buildx builder $RADAR_BUILDER (docker buildx ls)"
+  radar_build_memory_ok ||
+    radar_die "only $(($(radar_mem_available_kb) / 1024)) MiB of memory available (MemAvailable); building RADAR needs $((RADAR_BUILD_MIN_AVAILABLE_KB / 1024)) MiB on this swapless box. Try again when the box is quieter."
+  radar_compose_build "$sha" || radar_die "image build failed"
   ensure_admin_hash
 
   if [ "$RESTORE" = 1 ]; then
@@ -498,6 +552,7 @@ main() {
   setup_env
   resolve_domain
   check_env
+  setup_fetch_deny_list
   setup_deploy_key
   setup_nginx
   start_stack

@@ -142,10 +142,12 @@ export async function getFxTable(db: DbOrTx): Promise<FxTable> {
 export type FxFetch = (url: string, opts: { timeoutMs: number; maxBytes: number; headers: Record<string, string> }) => Promise<Pick<SafeFetchResponse, 'status' | 'ok' | 'text'>>;
 
 export interface RefreshFxOptions {
-  /** Injected fetcher (tests); default is `createSafeFetch({ resolver, addressPolicy })`. */
+  /** Injected fetcher (tests); default is `createSafeFetch({ resolver, addressPolicy, allowedPorts })`. */
   fetch?: FxFetch;
   resolver?: Resolver;
   addressPolicy?: AddressPolicy;
+  /** Tests only (a local server on a random port); production stays on 80/443. */
+  allowedPorts?: readonly number[];
   url?: string;
   now?: Date;
   timeoutMs?: number;
@@ -155,7 +157,7 @@ export interface RefreshFxOptions {
 export async function refreshFxRates(db: DbOrTx, opts: RefreshFxOptions = {}): Promise<FxRatesSetting> {
   const now = opts.now ?? new Date();
   const url = opts.url ?? ECB_DAILY_URL;
-  const fetcher: FxFetch = opts.fetch ?? createSafeFetch({ resolver: opts.resolver, addressPolicy: opts.addressPolicy });
+  const fetcher: FxFetch = opts.fetch ?? createSafeFetch({ resolver: opts.resolver, addressPolicy: opts.addressPolicy, allowedPorts: opts.allowedPorts });
   const res = await fetcher(url, {
     timeoutMs: opts.timeoutMs ?? 15_000,
     maxBytes: MAX_BODY_BYTES,

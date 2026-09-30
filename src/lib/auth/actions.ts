@@ -25,8 +25,10 @@ import {
   recordLoginFailure,
   recordLoginSuccess,
   sleep,
+  withLoginIpLock,
 } from './rate-limit';
 import { clientIp, safeNextPath, userAgent } from './request';
+import { evictSessionGateBySid } from './session-gate';
 import { createSession, normalizeEmail, revokeSessionBySid } from './session-store';
 
 export interface LoginState {
@@ -36,6 +38,11 @@ export interface LoginState {
 }
 
 const BAD_CREDENTIALS = 'Wrong email or password.';
+
+type LoginAttempt =
+  | { kind: 'locked'; lockedUntil: Date }
+  | { kind: 'failed'; lockedUntil: Date | null }
+  | { kind: 'ok'; token: string };
 
 const loginSchema = z.object({
   email: z.string().trim().min(1).max(254),
@@ -69,56 +76,66 @@ export async function loginAction(_prev: LoginState | undefined, formData: FormD
     return { error: 'Enter your email and password.' };
   }
 
-  const gate = await checkLoginGate(db, ip);
-  if (gate.delayMs > 0) await sleep(gate.delayMs);
-  if (!gate.allowed) {
-    await recordLockedAttempt(db, { ip, userAgent: ua });
-    await audit(db, {
-      action: 'auth.login.locked',
-      entityType: 'auth',
-      actor: 'anonymous',
-      ip,
-      after: { lockedUntil: gate.lockedUntil },
-    });
-    await sleep(failureDelayMs());
-    return lockedMessage(gate.lockedUntil);
-  }
-
-  const adminEmail = getEnvVar('ADMIN_EMAIL');
-  const emailOk = constantTimeEqual(normalizeEmail(parsed.data.email), normalizeEmail(adminEmail));
-  // Always run the KDF, even when the email is already wrong.
-  const passwordOk = await verifyPassword(parsed.data.password, getEnvVar('ADMIN_PASSWORD_HASH'));
-
-  if (!(emailOk && passwordOk)) {
-    const result = await recordLoginFailure(db, { ip, userAgent: ua });
-    await audit(db, {
-      action: 'auth.login.failed',
-      entityType: 'auth',
-      actor: 'anonymous',
-      ip,
-      after: { failuresInWindow: result.failuresInWindow },
-    });
-    if (result.lockedUntil) {
+  // Gate → verify → record for one IP at a time (in-process), so parallel POSTs from the same IP
+  // cannot all pass the gate before the first failure is written: at most `maxFailures` guesses.
+  const attempt = await withLoginIpLock(ip, async (): Promise<LoginAttempt> => {
+    const gate = await checkLoginGate(db, ip);
+    if (gate.delayMs > 0) await sleep(gate.delayMs);
+    if (!gate.allowed) {
+      await recordLockedAttempt(db, { ip, userAgent: ua });
       await audit(db, {
-        action: 'auth.login.lockout',
+        action: 'auth.login.locked',
         entityType: 'auth',
         actor: 'anonymous',
         ip,
-        after: { lockedUntil: result.lockedUntil, level: result.lockoutLevel },
+        after: { lockedUntil: gate.lockedUntil },
       });
-      log.warn('auth: login lockout', { ip, lockoutLevel: result.lockoutLevel });
+      return { kind: 'locked', lockedUntil: gate.lockedUntil };
     }
-    await sleep(failureDelayMs());
-    return result.lockedUntil ? lockedMessage(result.lockedUntil) : { error: BAD_CREDENTIALS };
-  }
 
-  const created = await db.transaction(async (tx) => {
-    const s = await createSession(tx, { email: adminEmail, ip, userAgent: ua });
-    await recordLoginSuccess(tx, { ip, userAgent: ua });
-    await audit(tx, { action: 'auth.login.success', entityType: 'session', entityId: s.id, actor: 'admin', ip });
-    return s;
+    const adminEmail = getEnvVar('ADMIN_EMAIL');
+    const emailOk = constantTimeEqual(normalizeEmail(parsed.data.email), normalizeEmail(adminEmail));
+    // Always run the KDF, even when the email is already wrong.
+    const passwordOk = await verifyPassword(parsed.data.password, getEnvVar('ADMIN_PASSWORD_HASH'));
+
+    if (!(emailOk && passwordOk)) {
+      const result = await recordLoginFailure(db, { ip, userAgent: ua });
+      await audit(db, {
+        action: 'auth.login.failed',
+        entityType: 'auth',
+        actor: 'anonymous',
+        ip,
+        after: { failuresInWindow: result.failuresInWindow },
+      });
+      if (result.lockedUntil) {
+        await audit(db, {
+          action: 'auth.login.lockout',
+          entityType: 'auth',
+          actor: 'anonymous',
+          ip,
+          after: { lockedUntil: result.lockedUntil, level: result.lockoutLevel },
+        });
+        log.warn('auth: login lockout', { ip, lockoutLevel: result.lockoutLevel });
+      }
+      return { kind: 'failed', lockedUntil: result.lockedUntil };
+    }
+
+    const created = await db.transaction(async (tx) => {
+      const s = await createSession(tx, { email: adminEmail, ip, userAgent: ua });
+      await recordLoginSuccess(tx, { ip, userAgent: ua });
+      await audit(tx, { action: 'auth.login.success', entityType: 'session', entityId: s.id, actor: 'admin', ip });
+      return s;
+    });
+    return { kind: 'ok', token: created.token };
   });
-  (await cookies()).set(SESSION_COOKIE, created.token, sessionCookieOptions());
+
+  if (attempt.kind !== 'ok') {
+    // Outside the per-IP lock: the delay slows the caller, not the next attempt's bookkeeping.
+    await sleep(failureDelayMs());
+    if (attempt.kind === 'locked') return lockedMessage(attempt.lockedUntil);
+    return attempt.lockedUntil ? lockedMessage(attempt.lockedUntil) : { error: BAD_CREDENTIALS };
+  }
+  (await cookies()).set(SESSION_COOKIE, attempt.token, sessionCookieOptions());
 
   // redirect() throws by design — keep it outside any try/catch.
   redirect(safeNextPath(parsed.data.next));
@@ -135,6 +152,7 @@ export async function logoutAction(): Promise<void> {
       const id = await revokeSessionBySid(tx, decoded.sid, 'logout');
       if (id !== null) await audit(tx, { action: 'auth.logout', entityType: 'session', entityId: id, actor: 'admin', ip });
     });
+    evictSessionGateBySid(decoded.sid);
   }
   jar.set(SESSION_COOKIE, '', clearedSessionCookieOptions());
   redirect('/login');

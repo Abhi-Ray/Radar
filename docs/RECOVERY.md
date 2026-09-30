@@ -19,9 +19,10 @@ What is where:
 - **Configuration:** `ops/secrets.env.enc` on `main` = the production `.env`, encrypted with
   `openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -md sha256` and `BACKUP_PASSPHRASE`.
 - **Data:** branch `db-backups` = ONE orphan commit with `radar-db.sql.gz.enc` (or
-  `radar-db.sql.gz.enc.part-aaa`, `-aab`, … when > 45 MiB) and `LATEST.json` (time, sizes,
-  sha256, per-table row counts, last migration). Replaced every night at 21:00 UTC. Same cipher
-  and passphrase.
+  `radar-db.sql.gz.enc.part-aaa`, `-aab`, … when > 45 MiB), `LATEST.json` (plain, only what
+  fetching and verifying need: format, time, file names/parts, size, sha256, cipher) and
+  `LATEST.meta.enc` (encrypted: database name, per-table row counts, last migration, run id —
+  the repo is public). Replaced every night at 21:00 UTC. Same cipher and passphrase for all.
 - **Not backed up, re-created on demand:** the backup deploy key, the TLS certificate, the nginx
   vhost, Docker images.
 
@@ -50,7 +51,7 @@ systemctl is-active nginx docker radar-autodeploy.timer
 sudo docker compose exec backup radar-backup-scheduler status
 ```
 
-If something is not running: `cd /opt/radar && sudo docker compose up -d`. If `mysql` restarts
+If something is not running: `cd /opt/radar && sudo docker compose up -d --no-build`. If `mysql` restarts
 in a loop, go to (c). If the whole box is unreachable, go to (d).
 
 ## (b) A container is broken
@@ -67,7 +68,11 @@ in a loop, go to (c). If the whole box is unreachable, go to (d).
    ```
 
 2. Restart just that service: `sudo docker compose restart app`.
-3. Recreate it from a clean image: `sudo docker compose up -d --build --force-recreate app`.
+3. Recreate it (fresh container, current image): `sudo docker compose up -d --no-build
+   --force-recreate app`. To rebuild the image as well, run `sudo /opt/radar/ops/deploy.sh
+   --no-pull`: it builds in RADAR's capped `radar-builder` ([DEPLOY.md §4.1](DEPLOY.md#41-builds-on-the-shared-swapless-vps)).
+   Never `docker compose up --build` by hand: that builds in dockerd's unlimited default builder
+   next to the other sites on this swapless box.
 4. A bad commit? Auto-deploy already rolls back when the health check fails. To pin a known-good
    revision by hand:
 
@@ -81,33 +86,59 @@ in a loop, go to (c). If the whole box is unreachable, go to (d).
    - **worker logs "waiting for migrations":** the app has not applied them yet: check `app` logs.
    - **app exits with `Invalid environment configuration`:** the listed keys are wrong in
      `.env` (values are never printed). Fix, then `sudo ops/deploy.sh --no-pull`.
-   - **Disk full:** `sudo docker image prune -f --filter label=com.radar.project=radar` and
-     `sudo docker builder prune -f --filter until=168h` (RADAR's images/cache only), then check
-     other projects with their owners before deleting anything else.
+   - **Disk full:** see what uses it: `sudo docker system df` (whole host) and
+     `sudo docker buildx du --builder radar-builder` (RADAR's build cache). RADAR-only clean-up:
+     - `sudo docker image prune -f --filter label=com.radar.project=radar` deletes RADAR's
+       *dangling* images (untagged leftovers of earlier builds). Tagged and running images stay.
+     - `sudo docker buildx prune --builder radar-builder -f` empties RADAR's own build cache (it
+       lives in the `radar-builder` container). The next deploy then builds from scratch: slower,
+       same memory cap. The other projects' caches are in dockerd's default builder and are not
+       touched.
+
+     Do **not** run `docker system prune`, `docker builder prune` or `docker image prune -a`:
+     they act on every project on this host (the other sites' images and build caches, whatever
+     the filter says about age). Check other projects with their owners before deleting anything
+     else.
    - **nginx shows 502:** the app is down (steps above); nginx itself is fine if other sites work.
    - **Certificate expired:** `sudo certbot renew --cert-name <DOMAIN>`; if HTTP-01 fails, check
-     that `/etc/nginx/sites-enabled/radar` still exists and `sudo nginx -t` passes.
+     that `/etc/nginx/sites-enabled/zz-radar` still exists (installs before that name used
+     `sites-enabled/radar`; re-running `sudo ops/install.sh` switches it) and `sudo nginx -t`
+     passes.
 
 ## (c) The database is corrupted (or data was destroyed)
 
 Symptoms: `mysql` restarts in a loop with InnoDB errors, `/api/health` says `"db":"down"`, or
 data is visibly wrong/missing.
 
-1. Stop the writers: `cd /opt/radar && sudo docker compose stop app worker`.
+1. Pause auto-deploy: `sudo systemctl stop radar-autodeploy.timer`.
 2. **If MySQL still starts**, restore the latest backup over the live database. The restore takes
    an encrypted safety copy of the current database first (kept in the `radar_backup_work` volume
    under `pre-restore/`, newest two), verifies the backup's sha256 and decryption, drops and
-   re-creates the database, imports, and compares every table's row count with `LATEST.json`:
+   re-creates the database, imports, and compares every table's row count with the counts in
+   the encrypted `LATEST.meta.enc`.
+
+   Run stop → restore → start as ONE command under the deploy lock. While it is held no deploy
+   can restart the app/worker against a half-imported database or recreate the backup container
+   (auto-deploy skips, `ops/deploy.sh` and `ops/install.sh` wait). If the restore fails the
+   chain stops there and app + worker stay stopped:
 
    ```sh
-   sudo docker compose run --rm backup radar-restore --yes-i-know
-   sudo docker compose up -d
+   cd /opt/radar
+   sudo flock /var/lib/radar/deploy.lock sh -c \
+     'docker compose stop app worker && docker compose run --rm backup radar-restore --yes-i-know && docker compose up -d --no-build'
    curl -s http://127.0.0.1:3100/api/health
+   sudo systemctl start radar-autodeploy.timer
    ```
+
+   Backup jobs (the scheduler's backup / restore test, this restore) also exclude each other
+   with their own lock in the `radar_backup_work` volume. A lock left behind by a job container
+   that died is taken over after 6 hours at the latest, or at once when its own scheduler
+   restarts; temp dirs of dead jobs are deleted when they are older than 6 hours.
 
    An older copy: download it (`git clone --single-branch --branch db-backups
    https://github.com/Abhi-Ray/Radar.git /tmp/radar-backup` shows the latest only; older copies
-   exist only as safety dumps) and pass `--file /path/to/folder`.
+   exist only as safety dumps) and pass `--file /path/to/folder` (the folder holds the dump,
+   `LATEST.json` and `LATEST.meta.enc`).
 
 3. **If MySQL no longer starts**, keep the broken files and start from an empty volume:
 
@@ -118,7 +149,8 @@ data is visibly wrong/missing.
    sudo docker run --rm -v radar_mysql:/from:ro -v /root/radar-mysql-broken:/to \
      --entrypoint cp mysql:8.4 -a /from/. /to/    # raw copy, for forensics
    sudo docker volume rm radar_mysql
-   sudo /opt/radar/ops/install.sh --restore       # new empty DB + restore + start (type RESTORE)
+   sudo /opt/radar/ops/install.sh --restore       # new empty DB + restore + start (type RESTORE); holds the deploy lock itself
+   sudo systemctl start radar-autodeploy.timer
    ```
 
 4. Verify (see the final checklist), then delete `/root/radar-mysql-broken` when you are sure.
@@ -141,6 +173,7 @@ sslip.io needs no DNS setup: the name resolves to the IP inside it.
    ops/secrets.sh check                  # lists the key names; proves the passphrase is right
    ops/secrets.sh decrypt                # ops/secrets.env.enc → .env (mode 600)
    unset BACKUP_PASSPHRASE
+   sed -i '/^SAFE_FETCH_DENY_IPS=/d' .env  # the old server's IPs; the installer writes this one's
    ops/install.sh --fresh-box --restore --domain auto
    ```
 
@@ -183,7 +216,9 @@ sudo docker compose exec backup radar-backup-scheduler run-now backup
 ```
 
 Delete the `.old-*` files once the backup succeeded. A leaked key could have overwritten the
-`db-backups` branch: after rotating, check `LATEST.json` on GitHub looks like tonight's backup.
+`db-backups` branch: after rotating, check that `LATEST.json` on GitHub looks like tonight's
+backup (`createdAt`) and that `sudo docker compose exec backup radar-backup-scheduler run-now
+restore-test` passes (it decrypts `LATEST.meta.enc` and compares every table).
 
 ## (f) OpenRouter key rotated
 
@@ -208,11 +243,14 @@ cd /tmp/radar-bk && cat LATEST.json            # createdAt should be < 24 h old
 # 2. Verify integrity: prints the sha256 to compare with LATEST.json's "sha256"
 cat $(ls radar-db.sql.gz.enc* | sort) | shasum -a 256
 
-# 3. Decrypt + decompress (passphrase from the password manager, never on the command line)
+# 3. Decrypt + decompress (passphrase from the password manager, never on the command line),
+#    and decrypt the metadata (row counts, last migration; its "sha256" equals LATEST.json's)
 read -rsp 'BACKUP_PASSPHRASE: ' BACKUP_PASSPHRASE && export BACKUP_PASSPHRASE && echo
 cat $(ls radar-db.sql.gz.enc* | sort) |
   openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -md sha256 -pass env:BACKUP_PASSPHRASE |
   gunzip > /tmp/radar-restore.sql
+openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -md sha256 -pass env:BACKUP_PASSPHRASE \
+  -in LATEST.meta.enc > /tmp/radar-meta.json && cat /tmp/radar-meta.json
 unset BACKUP_PASSPHRASE
 tail -n 1 /tmp/radar-restore.sql                 # "-- Dump completed on …"
 
@@ -221,10 +259,10 @@ docker run -d --name radar-restore-check -e MYSQL_ROOT_PASSWORD=check -e MYSQL_D
 sleep 30
 docker exec -i radar-restore-check sh -c 'MYSQL_PWD=check mysql -uroot radar' < /tmp/radar-restore.sql
 docker exec radar-restore-check sh -c 'MYSQL_PWD=check mysql -uroot radar -e "SELECT COUNT(*) FROM jobs; SELECT COUNT(*) FROM applications; SELECT MAX(at) FROM audit_log;"'
-#    compare with "rowCounts" in LATEST.json
+#    compare with "rowCounts" in /tmp/radar-meta.json
 
 # 5. Clean up (the dump holds personal data)
-docker rm -f radar-restore-check && rm -rf /tmp/radar-bk /tmp/radar-restore.sql
+docker rm -f radar-restore-check && rm -rf /tmp/radar-bk /tmp/radar-restore.sql /tmp/radar-meta.json
 ```
 
 No Docker on the laptop? Run step 4 on the VPS instead:
@@ -241,7 +279,7 @@ Also check once a month: `ops/secrets.sh check` with the passphrase from the pas
 
 - [ ] `curl -s http://127.0.0.1:3100/api/health` → `"ok":true`, `"db":"up"`, `"version"` = the commit on `main`
 - [ ] `https://<DOMAIN>` loads with a valid certificate; `http://<DOMAIN>` redirects to https
-- [ ] Log in works; the jobs list and your applications look complete (compare counts with `LATEST.json`)
+- [ ] Log in works; the jobs list and your applications look complete (compare counts with `rowCounts` in the decrypted `LATEST.meta.enc`, see (g) step 3)
 - [ ] `sudo docker compose ps` → app (healthy), worker, mysql (healthy), backup all Up
 - [ ] `systemctl list-timers radar-autodeploy.timer` shows the next run; `certbot.timer` is active
 - [ ] The backup deploy key works: `sudo docker compose exec backup radar-backup-scheduler run-now backup` succeeds and `db-backups` on GitHub shows a new commit

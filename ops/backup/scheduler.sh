@@ -96,6 +96,7 @@ run_job() { # backup|restore-test → exit code
     restore-test) script="$RB_HOME/restore-test.sh" ;;
     *) return 2 ;;
   esac
+  rb_prune_stale_tmp
   rb_info "starting $1"
   "$script" &
   JOB_PID=$!
@@ -129,10 +130,15 @@ sleep_until() { # epoch — in chunks of <= 1 h so clock jumps are noticed; inte
 loop() {
   local now next_b next_r b_retried=0 r_retried=0 last_ok last_attempt rt_ok due
   trap on_term TERM INT
-  # No job can be running when the container starts: clear the lock and temp dirs (decrypted
-  # material never lands there, but partial encrypted dumps can) left by a killed container.
-  rm -rf "$BACKUP_WORK_DIR/locks/db-job.lock"
-  rm -rf "${TMPDIR:-/tmp}"/radar-backup.* 2>/dev/null || true
+  # The work volume (job lock, TMPDIR) is shared with one-off `docker compose run` containers that
+  # may be running right now, so nothing is deleted blindly: only a lock this container's previous
+  # run left behind (its jobs died with it) and temp dirs older than 6 h (decrypted material never
+  # lands there, but partial encrypted dumps can). Other locks expire in rb_lock.
+  local prev_host
+  prev_host=$(cat "$RB_STATE_DIR/scheduler-host" 2>/dev/null || true)
+  rb_break_own_stale_lock "$prev_host"
+  rb_host >"$RB_STATE_DIR/scheduler-host" 2>/dev/null || rb_warn "cannot record the scheduler host"
+  rb_prune_stale_tmp
   now=$(date -u +%s)
   next_b=$(next_daily "$now" "$BACKUP_HOUR_UTC" "$BACKUP_MINUTE_UTC")
   next_r=$(next_monthly "$now" "$RESTORE_TEST_DAY" "$RESTORE_TEST_HOUR_UTC" "$RESTORE_TEST_MINUTE_UTC")

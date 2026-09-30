@@ -28,22 +28,43 @@ export function userAgent(headers: HeaderLike): string | null {
   return clean ? clean.slice(0, 512) : null;
 }
 
+const NEXT_BASE = 'http://radar.invalid';
+
+/** True for a path the browser resolves against our own origin (not '//host' or '/\\host'). */
+function isSameOriginPath(path: string): boolean {
+  if (!path.startsWith('/') || path.startsWith('//') || path.startsWith('/\\')) return false;
+  try {
+    return new URL(path, NEXT_BASE).origin === NEXT_BASE;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Percent-encoded control characters or backslashes anywhere in the path, or an encoded slash that
+ * would make the path start with '//' once some proxy or later redirect decodes it once.
+ */
+const ENCODED_TRICK_RE = /%(?:[01][0-9a-f]|7f|5c)/i;
+const ENCODED_LEADING_SLASH_RE = /^\/(?:%2f|%5c)/i;
+
 /**
  * Safe post-login redirect target: only same-origin relative paths. Anything else ('//evil',
- * '/\\evil', absolute URLs, control characters, the login page itself) falls back to '/'.
+ * '/\\evil', absolute URLs, raw or percent-encoded control characters and backslashes, the login
+ * page itself) falls back to '/'.
+ *
+ * The NORMALISED output is re-validated too: URL parsing collapses dot segments, so an input like
+ * '/.//evil.com' or '/%2e%2e//evil.com' would otherwise come out as '//evil.com' — a
+ * protocol-relative URL that the browser sends to another host.
  */
 export function safeNextPath(next: unknown, fallback = '/'): string {
   if (typeof next !== 'string' || next.length === 0 || next.length > 2048) return fallback;
-  if (!next.startsWith('/') || next.startsWith('//') || next.startsWith('/\\')) return fallback;
+  if (!isSameOriginPath(next)) return fallback;
   if (/[\u0000-\u001f\u007f\\]/.test(next)) return fallback;
-  let url: URL;
-  try {
-    url = new URL(next, 'http://radar.invalid');
-  } catch {
-    return fallback;
-  }
-  if (url.origin !== 'http://radar.invalid') return fallback;
+  const url = new URL(next, NEXT_BASE);
   if (url.pathname === '/login' || url.pathname.startsWith('/login/')) return fallback;
   if (url.pathname.startsWith('/api/')) return fallback;
-  return `${url.pathname}${url.search}${url.hash}`;
+  if (ENCODED_TRICK_RE.test(url.pathname) || ENCODED_LEADING_SLASH_RE.test(url.pathname)) return fallback;
+  const out = `${url.pathname}${url.search}${url.hash}`;
+  if (!isSameOriginPath(out)) return fallback;
+  return out;
 }

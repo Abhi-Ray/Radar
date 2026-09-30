@@ -31,7 +31,7 @@ flowchart LR
 
     nginx -- "127.0.0.1:3100" --> app
     certbot -. "HTTP-01 files" .- nginx
-    timer -- "git fetch · compose up -d --build" --> compose
+    timer -- "git fetch · compose build --builder radar-builder<br/>(3 GiB, 1 CPU) · up -d --no-build" --> compose
     app -- "radar_internal" --> mysql
     worker -- "radar_internal" --> mysql
     backup -- "radar_internal" --> mysql
@@ -133,7 +133,7 @@ the rule's verified date. Code: `src/lib/visa/` (`signals.ts`, `decide.ts`, `eli
 | Seed data | `src/db/seed/`, `src/data/seed/`, `scripts/seed.ts` | countries, rules, sources, companies |
 | UI | `src/app/(app)/**`, `src/components/**`, `src/lib/queries/*`, `src/lib/actions/*` | pages, server actions (each starts with `requireSession()`) |
 | Tracker | `src/lib/tracker/`, `src/app/(app)/applications/**`, `src/app/api/export/` | append-only timeline, apply-time snapshots, export |
-| Health | `src/app/api/health/` | `{ ok, db, lastRunAgeHours, version }`, 2 s DB timeout, no secrets |
+| Health | `src/app/api/health/` | `{ ok, db }` through nginx (X-Real-IP set); `{ ok, db, lastRunAgeHours, version }` only for loopback probes; 2 s DB timeout, no secrets |
 | Infra | `Dockerfile`, `docker-compose.yml`, `scripts/build-worker.mjs`, `ops/**`, `.github/workflows/ci.yml` | images, compose, bundles, install/deploy/backup, CI |
 
 `ops/` in detail:
@@ -190,8 +190,8 @@ sequenceDiagram
     Note over S: gzip -9 · openssl aes-256-cbc pbkdf2 600k · sha256
     S->>M: row counts (after) → volatile tables
     S->>S: decrypt + gunzip self-check, "Dump completed" marker
-    S->>G: ls-remote + LATEST.json of the stored copy (shrink guard)
-    S->>G: force-push ONE orphan commit (dump + LATEST.json)
+    S->>G: ls-remote + LATEST.json/LATEST.meta.enc of the stored copy (shrink guard; unreadable = refuse)
+    S->>G: force-push ONE orphan commit (dump + plain LATEST.json + encrypted LATEST.meta.enc)
     S->>G: ls-remote: remote head == pushed commit
     S->>M: backup_runs row (ok / failed) · alert on failure
 ```

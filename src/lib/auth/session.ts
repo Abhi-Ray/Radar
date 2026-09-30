@@ -1,7 +1,9 @@
 /**
- * Server-side session helpers (spec §4). `src/proxy.ts` does the fast JWT check; these add the DB
- * check (row exists, not revoked, belongs to ADMIN_EMAIL). Every Server Action, Route Handler and
- * protected layout calls `requireSession()` first.
+ * Server-side session helpers (spec §4). `src/proxy.ts` is the DB-backed gate for every non-public
+ * request (session-gate.ts, ≤5 s cache); these repeat the DB check (row exists, not revoked,
+ * belongs to ADMIN_EMAIL) per render. Every Server Action, Route Handler, page and data-reading
+ * generateMetadata calls `requireSession()` itself — a layout check alone is not enough, because
+ * partial (RSC) renders can skip the layout.
  */
 import 'server-only';
 import { cookies, headers } from 'next/headers';
@@ -13,6 +15,7 @@ import { getEnvVar } from '../env';
 import { log } from '../log';
 import { SESSION_COOKIE } from './jwt';
 import { clientIp, PATH_HEADER, safeNextPath } from './request';
+import { clearSessionGateCache, evictSessionGateById } from './session-gate';
 import {
   listSessionRows,
   revokeAllSessionsExcept,
@@ -75,13 +78,16 @@ export async function revokeSession(id: number | string): Promise<boolean> {
   if (!Number.isSafeInteger(sessionId) || sessionId <= 0) return false;
   const ip = clientIp(await headers());
   const db = getDb();
-  return db.transaction(async (tx) => {
-    const done = await revokeSessionById(tx, sessionId, sessionId === me.id ? 'self_revoked' : 'revoked');
-    if (done) {
+  const done = await db.transaction(async (tx) => {
+    const revoked = await revokeSessionById(tx, sessionId, sessionId === me.id ? 'self_revoked' : 'revoked');
+    if (revoked) {
       await audit(tx, { action: 'auth.session.revoke', entityType: 'session', entityId: sessionId, ip, actor: 'admin' });
     }
-    return done;
+    return revoked;
   });
+  // The proxy's positive cache must not outlive the revocation in this process.
+  evictSessionGateById(sessionId);
+  return done;
 }
 
 /** Revokes every session except the current one. Returns how many were revoked. */
@@ -89,7 +95,7 @@ export async function revokeOtherSessions(): Promise<number> {
   const me = await requireSession();
   const ip = clientIp(await headers());
   const db = getDb();
-  return db.transaction(async (tx) => {
+  const revoked = await db.transaction(async (tx) => {
     const n = await revokeAllSessionsExcept(tx, me.id, 'revoked_others');
     await audit(tx, {
       action: 'auth.session.revoke_others',
@@ -101,4 +107,6 @@ export async function revokeOtherSessions(): Promise<number> {
     });
     return n;
   });
+  clearSessionGateCache();
+  return revoked;
 }
