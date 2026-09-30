@@ -84,7 +84,13 @@ export interface DedupTitle {
 }
 
 const ROMAN: Readonly<Record<string, string>> = { i: '1', ii: '2', iii: '3', iv: '4', v: '5', vi: '6' };
-const LEVEL_RE = /(?:^|[\s,(/-])(?:(?:level|lvl|stufe|niveau)\s*([1-6])|l([1-6])|(i{1,3}|iv|v|vi)|([1-6]))(?=$|[\s,)/-])/giu;
+/**
+ * A single-letter "I" / "V" counts only where a level stands: at the end of the title or of a
+ * part of it ("Engineer I", "Engineer V - Remote"), never mid-phrase, where it is the Polish /
+ * Croatian "i" (and) or the Czech / Slovak "v" (in): "Inżynier bezpieczeństwa i chmury".
+ */
+const LEVEL_RE =
+  /(?:^|[\s,(/-])(?:(?:level|lvl|stufe|niveau)\s*([1-6])|l([1-6])|(i{2,3}|iv|vi|[iv](?=\s*(?:$|[,;:()/|\-–—])))|([1-6]))(?=$|[\s,)/-])/giu;
 
 /** "m/w/d", "(m/v)", "H/F", "f/m/x": gender markers whose letters would read as roman levels. */
 const SLASH_MARKER_RE = /\p{L}{1,4}(?:\s*\/\s*\p{L}{1,4})+/gu;

@@ -30,7 +30,7 @@ import {
 } from '../../data/places';
 import { collapseWhitespace, fold, normalizePunctuation, titleCase } from './text';
 
-export const LOCATION_LOGIC_VERSION = 'location@2026-09-29.1';
+export const LOCATION_LOGIC_VERSION = 'location@2026-09-30.1';
 
 export interface LocationCityMatch {
   name: string;
@@ -543,9 +543,18 @@ export function normalizeLocation(raw: string, hints?: LocationHints): LocationD
     if (r) region = r.code;
   }
 
+  let offsetCount = 0;
   for (const m of text.matchAll(UTC_OFFSET_RE)) {
+    offsetCount++;
     const sign = m[1] === '-' ? '-' : m[1] === '±' ? '±' : '+';
     pushUnique(timezones, `UTC${sign}${Number(m[2])}${m[3] && m[3] !== '00' ? ':' + m[3] : ''}`);
+  }
+  // "UTC-5 to UTC+1": the "UTC" inside each offset is not a zone of its own.
+  if (offsetCount) {
+    for (const [key, bare] of BARE_ZONE_RES) {
+      const idx = timezones.indexOf(key);
+      if (idx >= 0 && !bare.test(text)) timezones.splice(idx, 1);
+    }
   }
 
   // Confidence.
@@ -555,7 +564,11 @@ export function normalizeLocation(raw: string, hints?: LocationHints): LocationD
   else if (countrySource === 'remote') confidence = macroRegions.length || timezones.length ? 'medium' : 'low';
   else if (countrySource === 'hint') confidence = 'medium';
   else if (countrySource === 'city') confidence = cityAmbiguous || resolvedCities.some((c) => c.ambiguous) ? 'medium' : 'high';
-  else confidence = 'high';
+  else if (countrySource === 'region' && !city && regionAlsoCountry(regionMentions, regionsFromPhrase, countryIso2)) {
+    // "Georgia" alone: the US state or the country; the state is the likelier reading, not a certain one.
+    confidence = 'medium';
+    evidence.push(`"${regionMentions.find((r) => r.country === countryIso2)?.name ?? ''}" is also a country name`);
+  } else confidence = 'high';
   if (confidence === 'high' && city && !cityKnown) confidence = 'medium';
 
   const remoteScopeRaw = workplaceType === 'remote' ? original.slice(0, 255) || null : null;
@@ -611,6 +624,20 @@ function unknownCityCandidate(tokens: Token[], segments: string[], matches: Matc
     return (allSameCase ? titleCase(segText) : segText).slice(0, 128);
   }
   return null;
+}
+
+/** Zones that also appear as the prefix of a "UTC+1" offset, with a pattern for their bare use. */
+const BARE_ZONE_RES: readonly [string, RegExp][] = [
+  ['UTC', /\b(?:UTC(?!\s?[+\-±]\s?\d)|coordinated universal time|zulu)\b/i],
+  ['GMT', /\b(?:GMT(?!\s?[+\-±]\s?\d)|greenwich mean time|uk time)\b/i],
+];
+
+const COUNTRY_NAMES_FOLDED = new Set([...COUNTRY_BY_ISO2.values()].map((c) => fold(c.name)));
+
+/** Every region named in words for this country is also a country's name ("Georgia"). */
+function regionAlsoCountry(mentions: readonly RegionInfo[], fromPhrase: ReadonlySet<RegionInfo>, countryIso2: string | null): boolean {
+  const named = mentions.filter((r) => r.country === countryIso2 && fromPhrase.has(r));
+  return named.length > 0 && named.every((r) => COUNTRY_NAMES_FOLDED.has(fold(r.name)));
 }
 
 /** Region display name for a stored region code ("CA" in US → "California"). */

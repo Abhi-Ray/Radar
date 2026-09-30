@@ -606,6 +606,15 @@ describe('mapTitle — language, matched text and family', () => {
     expect(mapTitle('Sicherheitsingenieur').matched).toBeNull();
   });
 
+  it('reports the title itself for whole-title non-target matches', () => {
+    for (const title of ['Accountant', 'Senior Accountant', 'Nurse']) {
+      const r = mapTitle(title);
+      expect(r.roleKey, title).toBe('other');
+      expect(r.unknown, title).toBe(false);
+      expect(r.matched, title).toBe(title.replace(/^Senior /, '').toLowerCase());
+    }
+  });
+
   it('assigns families from DEFAULT_TARGET_ROLES', () => {
     expect(mapTitle('Cloud Security Engineer').roleFamily).toBe('primary');
     expect(mapTitle('Cloud Security Analyst').roleFamily).toBe('secondary');
