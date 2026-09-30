@@ -241,6 +241,9 @@ async function persistInTx(tx: Tx, ctx: RunContext, input: PersistInput): Promis
         domain: p.job.companyDomain ?? null,
         countryIso2: p.countryIso2,
         atsSlug: input.atsSlug,
+        atsPlatform: input.atsSlug ? input.source.platformKey : null,
+        descriptionText: p.descriptionText,
+        evidenceSource: `${input.source.sourceKey}:${input.externalId}`.slice(0, 512),
       })
     ).companyId;
 
