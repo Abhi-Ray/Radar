@@ -1,0 +1,57 @@
+{
+  "_note": "Documented-shape sample, NOT a live capture: rest.arbeitsagentur.de answered HTTP 403 to every request from the build machine (2026-09-30). Field names/types follow the published Jobsuche API spec (https://jobsuche.api.bund.dev/, pc/v4/jobs). Values are illustrative.",
+  "stellenangebote": [
+    {
+      "beruf": "Informatiker/in",
+      "titel": "IT Security Engineer (m/w/d)",
+      "refnr": "10000-1201234567-S",
+      "arbeitsort": {
+        "plz": "10115",
+        "ort": "Berlin",
+        "region": "Berlin",
+        "land": "Deutschland",
+        "koordinaten": { "lat": 52.5323, "lon": 13.3846 }
+      },
+      "arbeitgeber": "Beispiel Cloud GmbH",
+      "aktuelleVeroeffentlichungsdatum": "2026-09-25",
+      "modifikationsTimestamp": "2026-09-25T08:12:44.321",
+      "eintrittsdatum": "2026-11-01"
+    },
+    {
+      "beruf": "IT-Sicherheitsberater/in",
+      "titel": "Cloud Security Architect (w/m/d)",
+      "refnr": "12345-0001122334-S",
+      "arbeitsort": {
+        "plz": "80331",
+        "ort": "München",
+        "region": "Bayern",
+        "land": "Deutschland",
+        "koordinaten": { "lat": 48.1374, "lon": 11.5755 }
+      },
+      "arbeitgeber": "Muster Systems AG",
+      "aktuelleVeroeffentlichungsdatum": "2026-09-27",
+      "modifikationsTimestamp": "2026-09-28T14:02:10.100",
+      "eintrittsdatum": "2026-10-15",
+      "externeUrl": "https://karriere.muster-systems.example/jobs/cloud-security-architect"
+    },
+    {
+      "beruf": "Softwareentwickler/in",
+      "titel": "Full-Stack Entwickler Node.js / Next.js (m/w/d)",
+      "refnr": "10001-1209876543-S",
+      "arbeitsort": {
+        "plz": "20095",
+        "ort": "Hamburg",
+        "region": "Hamburg",
+        "land": "Deutschland"
+      },
+      "arbeitgeber": "Hanse Digital GmbH",
+      "aktuelleVeroeffentlichungsdatum": "2026-09-29",
+      "modifikationsTimestamp": "2026-09-29T09:30:00.000",
+      "eintrittsdatum": "2026-10-01"
+    }
+  ],
+  "maxErgebnisse": "3",
+  "page": "1",
+  "size": "50",
+  "facetten": {}
+}

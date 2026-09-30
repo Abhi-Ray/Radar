@@ -1,0 +1,140 @@
+{
+ "id": "744000152535489",
+ "name": "Sr Safety & Security Manager",
+ "uuid": "b3c53bbe-373a-45ee-bc3d-b21bf6457f70",
+ "jobId": "cea18d92-5fff-42fc-8fcf-5b0f74cd25f6",
+ "jobAdId": "07486293-c8be-4d90-87ea-b8aa26f51d98",
+ "defaultJobAd": true,
+ "refNumber": "JB0075618",
+ "company": {
+  "name": "ServiceNow",
+  "identifier": "ServiceNow"
+ },
+ "location": {
+  "city": "Santa Clara",
+  "region": "California",
+  "country": "us",
+  "address": "Building A,B,C 2225 Lawson Lane",
+  "postalCode": "95054",
+  "remote": false,
+  "hybrid": true,
+  "fullLocation": "Santa Clara, California, United States"
+ },
+ "customField": [
+  {
+   "fieldId": "60345fa28b4ba8595bef1863",
+   "fieldLabel": "Recruiting Team",
+   "valueId": "professional",
+   "valueLabel": "Professional"
+  },
+  {
+   "fieldId": "60345e1a0b24a127cbdfa148",
+   "fieldLabel": "Employee Type",
+   "valueId": "0082f6cbe6154da19322cbab1f6aa5af",
+   "valueLabel": "Regular"
+  },
+  {
+   "fieldId": "5f63a78f1dae5c5c4e54ba2b",
+   "fieldLabel": "Department",
+   "valueId": "6479931",
+   "valueLabel": "Global Safety and Security"
+  },
+  {
+   "fieldId": "COUNTRY",
+   "fieldLabel": "Country/Region",
+   "valueId": "us",
+   "valueLabel": "United States"
+  },
+  {
+   "fieldId": "5f63a78f1dae5c5c4e54ba2a",
+   "fieldLabel": "Brands",
+   "valueId": "default",
+   "valueLabel": "ServiceNow"
+  },
+  {
+   "fieldId": "60345d5c5165a31b17288279",
+   "fieldLabel": "Region",
+   "valueId": "722a833b93e4437798309f43c0d25990",
+   "valueLabel": "AMS - North America and Canada"
+  },
+  {
+   "fieldId": "603462175165a31b1728827d",
+   "fieldLabel": "Cost Center",
+   "valueId": "CC5506",
+   "valueLabel": "5506 Safety & Security"
+  },
+  {
+   "fieldId": "6034601b43915a29a4b3389b",
+   "fieldLabel": "Job Location",
+   "valueId": "L_SJC005",
+   "valueLabel": "2225 Lawson Lane, Santa Clara, California, 95054, United States of America(L_SJC005)"
+  },
+  {
+   "fieldId": "618ed92b8f5e5f110e5bfb95",
+   "fieldLabel": "Work Persona",
+   "valueId": "bf7551c6-9b06-4e7c-8217-3baf43edd060",
+   "valueLabel": "Flexible"
+  },
+  {
+   "fieldId": "690cc0e8c682c3dbadaa7d73",
+   "fieldLabel": "Job Posting Type",
+   "valueId": "professional",
+   "valueLabel": "Professional"
+  }
+ ],
+ "releasedDate": "2026-09-29T20:59:52.727Z",
+ "creator": {
+  "name": "",
+  "avatarUrl": ""
+ },
+ "postingUrl": "https://jobs.smartrecruiters.com/ServiceNow/744000152535489-sr-safety-security-manager",
+ "applyUrl": "https://jobs.smartrecruiters.com/ServiceNow/744000152535489-sr-safety-security-manager?oga=true",
+ "referralUrl": "https://jobs.smartrecruiters.com/external-referrals/company/ServiceNow/publication/b3c53bbe-373a-45ee-bc3d-b21bf6457f70?dcr_ci=ServiceNow",
+ "jobAd": {
+  "sections": {
+   "companyDescription": {
+    "title": "Company Description",
+    "text": "<p>It all started when engineer Fred Luddy wrote code that automated a tedious task for his coworker, Phyllis. She cried tears of joy. That moment inspired Fred to build a company that could do that for everyone—freeing people from busywork so they could focus on meaningful work. Today, ServiceNow is the AI control tower for business reinvention. Our ServiceNow AI platform brings together any AI, any data, and any workflow— helping 85% of the Fortune 500® work smarter, faster, and better. We're building an AI-native culture where technology and talent are unstoppable together. And we're just getting started.</p><p>Join us to put AI to work for people.</p><p>&#xa0;</p>"
+   },
+   "jobDescription": {
+    "title": "Job Description",
+    "text": "<p>Manage physical security workforce service providers across the region, driving service quality and efficiency through clear KPIs and SLAs.&#xa0;</p><p>Own the risk profile at regional locations and implement tailored mitigation measures in alignment with the global risk framework.</p><p>Build and sustain a strong security culture by partnering with site stakeholders and business owners and seeking out value-adds for security partnerships.&#xa0;</p><p>Develop, rehearse, and&#xa0;maintain&#xa0;regional security, crisis, and emergency plans; partner with the BCM program office on a Regional Crisis Management Plan aligned to ServiceNow’s corporate crisis and resiliency framework.&#xa0;</p><p>Support first response to security and safety incidents at regional sites — including CCTV review and documentation — and coordinate with Global Investigations for formal investigations.&#xa0;</p><p>"
+   },
+   "qualifications": {
+    "title": "Qualifications",
+    "text": "<p>&#xa0;</p><p>Bachelor’s degree or equivalent experience managing physical security operations in a corporate environment. 7+ years in security management, with a major portion of that experience leading security programs. Demonstrable experience in corporate security management and managing large-scale projects with multiple deadlines and stakeholders. Experience designing security for new buildings or facilities, including placement of access control, cameras, and visitor management systems. Experience managing service providers and guard-force partners to performance standards and KPIs. Exceptional writing, research, and analytical skills.&#xa0;</p><p>For positions in this location, we offer a base pay of $155,400 - $213,700, plus equity (when applicable), variable/incentive compensation and benefits. Sales positions generally offer a competitive On Target Earnings (OTE) incentive c"
+   },
+   "additionalInformation": {
+    "title": "Additional Information",
+    "text": "<p><strong>Work Personas</strong></p><p>We approach our distributed world of work with flexibility and trust. Work personas (flexible, remote, or required in office) are categories that are assigned to ServiceNow employees depending on the nature of their work and their assigned work location. <a href=\"https://careers.servicenow.com/life-at-servicenow#workpersonas\" rel=\"noopener noreferrer\"><u>Learn more here</u></a>. To determine eligibility for a work persona, ServiceNow may confirm the distance between your primary residence and the closest ServiceNow office using a third-party service.</p><p><strong>Equal Opportunity Employer</strong></p><p>ServiceNow is an equal opportunity employer. All qualified applicants will receive consideration for employment without regard to race, color, religion, sex, sexual orientation, national origin, age, disability, gender identity,&#xa0; veteran stat"
+   }
+  }
+ },
+ "active": true,
+ "visibility": "PUBLIC",
+ "industry": {
+  "id": "it_and_services",
+  "label": "Information Technology And Services"
+ },
+ "function": {
+  "id": "finance",
+  "label": "Finance"
+ },
+ "department": {
+  "id": 6479931,
+  "label": "Global Safety and Security"
+ },
+ "experienceLevel": {
+  "id": "not_applicable",
+  "label": "Not Applicable"
+ },
+ "typeOfEmployment": {
+  "id": "permanent",
+  "label": "Full-time"
+ },
+ "language": {
+  "code": "en",
+  "label": "English",
+  "labelNative": "English (US)"
+ }
+}

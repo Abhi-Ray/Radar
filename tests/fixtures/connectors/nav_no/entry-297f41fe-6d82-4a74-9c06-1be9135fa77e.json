@@ -1,0 +1,70 @@
+{
+ "uuid": "297f41fe-6d82-4a74-9c06-1be9135fa77e",
+ "ad_content": {
+  "uuid": "297f41fe-6d82-4a74-9c06-1be9135fa77e",
+  "published": "2026-09-30T05:15:05+02:00",
+  "expires": "2026-10-21T00:00:00+02:00",
+  "updated": "2026-09-30T05:15:49.085448+02:00",
+  "workLocations": [
+   {
+    "country": "NORGE",
+    "address": "oslo",
+    "city": "OSLO",
+    "postalCode": "0171",
+    "county": "OSLO",
+    "municipal": "OSLO"
+   }
+  ],
+  "contactList": [],
+  "title": "Kitchen Staff Needed",
+  "description": "<section id=\"arb-aapningstekst\">\n<p>Need a team player for our food journey.\nif you are eager to learn and work with energetic fun loving hardworking team come join us.</p>\n</section>\n<section id=\"arb-serEtter\">\n<h2>Hva vi ser etter</h2>\n<p>Looking for team player.</p>\n</section>\n<section id=\"arb-arbeidsoppgaver\">\n<h2>Arbeidsoppgaver</h2>\n<p>Run the kitchen. food preparation, cleanliness, hygiene. Share and learn together.</p>\n</section>\n<section id=\"arb-tilbyr\">\n<h2>Vi tilbyr</h2>\n<p>Salary of course.</p>\n<p>share the knowledge and trainings whenever required.</p>\n<p>a fun work team.</p>\n</section>\n",
+  "sourceurl": "",
+  "source": "Stillingsregistrering",
+  "applicationUrl": "",
+  "applicationDue": "Snarest",
+  "occupationCategories": [
+   {
+    "level1": "Reiseliv og mat",
+    "level2": "Kokk"
+   }
+  ],
+  "categoryList": [
+   {
+    "categoryType": "ESCO",
+    "code": "http://data.europa.eu/esco/occupation/90f75f67-495d-49fa-ab57-2f320e251d7e",
+    "name": "Kokk",
+    "description": "",
+    "score": 1
+   },
+   {
+    "categoryType": "JANZZ",
+    "code": "21814",
+    "name": "Kokk",
+    "description": "",
+    "score": 1
+   },
+   {
+    "categoryType": "STYRK08",
+    "code": "5120",
+    "name": "Kokker",
+    "description": "",
+    "score": 1
+   }
+  ],
+  "jobtitle": "Kokk",
+  "link": "https://arbeidsplassen.nav.no/stillinger/stilling/297f41fe-6d82-4a74-9c06-1be9135fa77e",
+  "employer": {
+   "name": "Momo Chhe As",
+   "orgnr": "929433092",
+   "description": "<p>Working with sustainability and local produces while sharing the food and flavours from home.</p>\n<p>Food feeds, Good food shares stories.</p>\n",
+   "homepage": "https://www.momochhe.com"
+  },
+  "engagementtype": "Fast",
+  "extent": "Heltid",
+  "starttime": "2026-09-30",
+  "positioncount": "1",
+  "sector": "Privat"
+ },
+ "sistEndret": "2026-09-30T05:15:49.085+02:00",
+ "status": "ACTIVE"
+}

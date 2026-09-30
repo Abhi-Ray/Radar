@@ -1,0 +1,72 @@
+{
+ "version": "1.0",
+ "title": "Stillingsfeeden fra arbeidsplassen.no",
+ "home_page_url": "https://arbeidsplassen.nav.no",
+ "feed_url": "/api/v1/feed/48dc2fa3-a3b5-47c2-b8e5-db8dfe438586",
+ "description": "Feed med stillinger fra arbeidsplassen.no - En av Norges største oversikter over utlyste stillinger",
+ "next_url": "/api/v1/feed/cca18557-9d76-462e-b62b-0b36536593d5",
+ "id": "48dc2fa3-a3b5-47c2-b8e5-db8dfe438586",
+ "next_id": "cca18557-9d76-462e-b62b-0b36536593d5",
+ "items": [
+  {
+   "id": "3961f849-f41c-40c6-9701-90bcc5509443",
+   "url": "/api/v1/feedentry/3961f849-f41c-40c6-9701-90bcc5509443",
+   "title": "Sikkerhetspost A1 Sykepleier/Vernepleier Fast 100% D/A med hver 4. helg. ",
+   "content_text": "Stillingsannonse",
+   "date_modified": "2026-09-28T08:03:34.091538+02:00",
+   "_feed_entry": {
+    "uuid": "3961f849-f41c-40c6-9701-90bcc5509443",
+    "status": "ACTIVE",
+    "title": "Sikkerhetspost A1 Sykepleier/Vernepleier Fast 100% D/A med hver 4. helg. ",
+    "businessName": "Klinikk psykisk helsevern voksne, Sikkerhetspost A1, Helse Stavanger HF",
+    "municipal": "STAVANGER",
+    "sistEndret": "2026-09-28T08:03:34.091538+02:00"
+   }
+  },
+  {
+   "id": "ac04b689-84d2-4e88-b849-8d910aea588f",
+   "url": "/api/v1/feedentry/ac04b689-84d2-4e88-b849-8d910aea588f",
+   "title": "Vil du bygge noe fra starten? / BN Marine søker co-founder/medgründer",
+   "content_text": "Stillingsannonse",
+   "date_modified": "2026-09-28T02:02:58.225143+02:00",
+   "_feed_entry": {
+    "uuid": "ac04b689-84d2-4e88-b849-8d910aea588f",
+    "status": "ACTIVE",
+    "title": "Vil du bygge noe fra starten? / BN Marine søker co-founder/medgründer",
+    "businessName": "BN Marine - Større utvalg!",
+    "municipal": "KRISTIANSAND",
+    "sistEndret": "2026-09-28T02:02:58.225143+02:00"
+   }
+  },
+  {
+   "id": "736b70eb-7af7-4333-84d4-b677cedfa9e8",
+   "url": "/api/v1/feedentry/736b70eb-7af7-4333-84d4-b677cedfa9e8",
+   "title": "Renholdsmedarbeider ",
+   "content_text": "Stillingsannonse",
+   "date_modified": "2026-09-28T04:48:46.434828+02:00",
+   "_feed_entry": {
+    "uuid": "736b70eb-7af7-4333-84d4-b677cedfa9e8",
+    "status": "ACTIVE",
+    "title": "Renholdsmedarbeider ",
+    "businessName": "Favn Eiendomsdrift AS",
+    "municipal": "ASKER",
+    "sistEndret": "2026-09-28T04:48:46.434828+02:00"
+   }
+  },
+  {
+   "id": "afc8cb8b-7409-41dd-b3ca-4a438a732cd4",
+   "url": "/api/v1/feedentry/afc8cb8b-7409-41dd-b3ca-4a438a732cd4",
+   "title": "...",
+   "content_text": "Stillingsannonse",
+   "date_modified": "2026-09-28T02:45:54.893435+02:00",
+   "_feed_entry": {
+    "uuid": "afc8cb8b-7409-41dd-b3ca-4a438a732cd4",
+    "status": "INACTIVE",
+    "title": "...",
+    "businessName": "",
+    "municipal": "OSLO",
+    "sistEndret": "2026-09-28T02:45:54.893435+02:00"
+   }
+  }
+ ]
+}
