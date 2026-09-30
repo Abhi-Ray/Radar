@@ -3,7 +3,7 @@
  * `pipeline_runs` row with status 'queued'; the worker polls and executes queued rows in order
  * (respecting the single-run lock). Real implementation provided by foundation; PIPELINE owns it.
  */
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import { pipelineRuns } from '../../db/schema';
 import { RUN_KINDS } from '../../db/schema/_enums';
 import { withTransaction, type DbOrTx } from '../db';
@@ -32,6 +32,12 @@ export class EnqueueRunError extends Error {
 }
 
 const MAX_SOURCE_IDS = 1000;
+/**
+ * Serialises enqueue calls. Without it, concurrent `SELECT … FOR UPDATE` on an empty range take
+ * compatible gap locks and the following INSERTs deadlock each other (ER_LOCK_DEADLOCK).
+ */
+const ENQUEUE_LOCK_NAME = 'radar_enqueue_run';
+const ENQUEUE_LOCK_TIMEOUT_SEC = 10;
 
 function normaliseSourceIds(ids: number[] | undefined): number[] | undefined {
   if (ids === undefined) return undefined;
@@ -65,25 +71,41 @@ export async function enqueueRun(db: DbOrTx, input: EnqueueRunInput): Promise<{ 
   const requestedBy: RunRequester = input.requestedBy ?? 'ui';
 
   return withTransaction(db, async (tx) => {
-    const queued = await tx
-      .select({ id: pipelineRuns.id, statsJson: pipelineRuns.statsJson })
-      .from(pipelineRuns)
-      .where(and(eq(pipelineRuns.status, 'queued'), eq(pipelineRuns.kind, input.kind), eq(pipelineRuns.dryRun, dryRun)))
-      .orderBy(asc(pipelineRuns.id))
-      .for('update');
-    const wanted = canonicalJson(params);
-    const same = queued.find((r) => {
-      const p = queuedRunParams(r.statsJson);
-      return p !== null && canonicalJson(p) === wanted;
-    });
-    if (same) return { runId: same.id, created: false };
-    const [res] = await tx.insert(pipelineRuns).values({
-      kind: input.kind,
-      status: 'queued',
-      requestedBy,
-      dryRun,
-      statsJson: { params },
-    });
-    return { runId: Number(res.insertId), created: true };
+    const [lockRows] = (await tx.execute(sql`SELECT GET_LOCK(${ENQUEUE_LOCK_NAME}, ${ENQUEUE_LOCK_TIMEOUT_SEC}) AS got`)) as unknown as [{ got: number | string | null }[]];
+    if (Number(lockRows[0]?.got) !== 1) throw new EnqueueRunError('the run queue is busy; try again');
+    try {
+      return await enqueueLocked(tx, input.kind, dryRun, requestedBy, params);
+    } finally {
+      await tx.execute(sql`SELECT RELEASE_LOCK(${ENQUEUE_LOCK_NAME})`);
+    }
   });
+}
+
+async function enqueueLocked(
+  tx: DbOrTx,
+  kind: RunKind,
+  dryRun: boolean,
+  requestedBy: RunRequester,
+  params: QueuedRunParams,
+): Promise<{ runId: number; created: boolean }> {
+  const queued = await tx
+    .select({ id: pipelineRuns.id, statsJson: pipelineRuns.statsJson })
+    .from(pipelineRuns)
+    .where(and(eq(pipelineRuns.status, 'queued'), eq(pipelineRuns.kind, kind), eq(pipelineRuns.dryRun, dryRun)))
+    .orderBy(asc(pipelineRuns.id))
+    .for('update');
+  const wanted = canonicalJson(params);
+  const same = queued.find((r) => {
+    const p = queuedRunParams(r.statsJson);
+    return p !== null && canonicalJson(p) === wanted;
+  });
+  if (same) return { runId: same.id, created: false };
+  const [res] = await tx.insert(pipelineRuns).values({
+    kind,
+    status: 'queued',
+    requestedBy,
+    dryRun,
+    statsJson: { params },
+  });
+  return { runId: Number(res.insertId), created: true };
 }

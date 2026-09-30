@@ -37,7 +37,7 @@ import {
 import type { RoleKey } from '../../data/titles/roles';
 import { fold, foldVariants, foldedTokens, normalizePunctuation } from './text';
 
-export const TITLE_LOGIC_VERSION = 'title@2026-09-29.1';
+export const TITLE_LOGIC_VERSION = 'title@2026-09-30.1';
 /** Length of title_review_queue.normalized (and of override keys). */
 export const TITLE_KEY_MAX = 191;
 
@@ -846,7 +846,8 @@ export function mapTitle(title: string, overrides?: TitleOverrides | null, targe
   }
   const a = new Analysis(p, key);
   const d = decide(a);
-  const matched = d.unknown ? null : matchedText(d.basis);
+  // Whole-title matches ("Accountant" in the non-target list) have no lexicon tags: the title key is the match.
+  const matched = d.unknown ? null : (matchedText(d.basis) ?? (key ? key.slice(0, TITLE_KEY_MAX) : null));
   return {
     roleKey: d.roleKey,
     roleFamily: familyForRole(d.roleKey, targetRoles ?? DEFAULT_TARGET_ROLES),

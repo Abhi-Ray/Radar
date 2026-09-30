@@ -15,7 +15,7 @@ import {
   type SalaryFlag,
 } from '@/lib/normalize/salary';
 import { SALARY_ESTIMATES, estimateTrackFor } from '@/data/salary/estimates';
-import { INSTALLMENTS_BY_COUNTRY, installmentRule } from '@/data/salary/installments';
+import { INSTALLMENTS_BY_COUNTRY, INSTALLMENTS_VARY_BY_COUNTRY, installmentRule, installmentsVaryNote } from '@/data/salary/installments';
 import { CURRENCIES, AMBIGUOUS_SYMBOLS } from '@/data/salary/currencies';
 import { COUNTRIES } from '@/data/places';
 
@@ -551,5 +551,102 @@ describe('salary data', () => {
     expect(installmentRule('at')?.count).toBe(14);
     expect(installmentRule('DE')).toBeNull();
     expect(installmentRule(null)).toBeNull();
+  });
+});
+
+// Local-language job boards for the Tier 2 countries (spec §4) and the Japanese / Korean pay words.
+describe('parseSalary — Tier 2 languages and CJK postings', () => {
+  const cases: [string, string, { min: number | null; max: number | null; currency: string; period: SalaryPeriod; grossNet?: string; installments?: number; flags?: SalaryFlag[] }][] = [
+    ['Μισθός 1.800€ μικτά το μήνα', 'GR', { min: 1800, max: 1800, currency: 'EUR', period: 'month', grossNet: 'gross', installments: 14, flags: ['installments_customary'] }],
+    ['Μισθός: από 1.500 έως 2.000 € μικτά μηνιαίως', 'GR', { min: 1500, max: 2000, currency: 'EUR', period: 'month', grossNet: 'gross', installments: 14 }],
+    ['ΜΙΣΘΟΣ 25.000€ ΜΙΚΤΑ ΕΤΗΣΙΩΣ', 'GR', { min: 25000, max: 25000, currency: 'EUR', period: 'year', grossNet: 'gross' }],
+    ['Αποδοχές: 1.400€ καθαρά', 'CY', { min: 1400, max: 1400, currency: 'EUR', period: 'month', grossNet: 'net', flags: ['net_amount'] }],
+    ['14 μισθοί, μισθός 1.800€ μικτά το μήνα', 'GR', { min: 1800, max: 1800, currency: 'EUR', period: 'month', installments: 14, flags: ['installments_stated'] }],
+    ['Plaća: 2.000 € bruto mjesečno', 'HR', { min: 2000, max: 2000, currency: 'EUR', period: 'month', grossNet: 'gross', installments: 12 }],
+    ['Plaća od 1.800 do 2.500 EUR neto', 'HR', { min: 1800, max: 2500, currency: 'EUR', period: 'month', grossNet: 'net' }],
+    ['Plača: 3.000 EUR bruto mesečno', 'SI', { min: 3000, max: 3000, currency: 'EUR', period: 'month', grossNet: 'gross' }],
+    ['Mzda (brutto): 2 500 EUR/mesiac', 'SK', { min: 2500, max: 2500, currency: 'EUR', period: 'month', grossNet: 'gross' }],
+    ['Základná zložka mzdy: od 2000 EUR/mesiac', 'SK', { min: 2000, max: null, currency: 'EUR', period: 'month', flags: ['open_min'] }],
+    ['Заплата: 3000 - 4000 лв. бруто месечно', 'BG', { min: 3000, max: 4000, currency: 'BGN', period: 'month', grossNet: 'gross' }],
+    ['Заплата от 2 500 до 3 500 € бруто', 'BG', { min: 2500, max: 3500, currency: 'EUR', period: 'month', grossNet: 'gross' }],
+    ['Palk 2500 - 3500 € kuus bruto', 'EE', { min: 2500, max: 3500, currency: 'EUR', period: 'month', grossNet: 'gross' }],
+    ['Alga: no 2000 līdz 3000 EUR mēnesī (bruto)', 'LV', { min: 2000, max: 3000, currency: 'EUR', period: 'month', grossNet: 'gross' }],
+    ['Atlyginimas: nuo 3000 iki 4500 EUR/mėn. (neatskaičius mokesčių)', 'LT', { min: 3000, max: 4500, currency: 'EUR', period: 'month', grossNet: 'gross' }],
+    ['年収600万円', 'JP', { min: 6000000, max: 6000000, currency: 'JPY', period: 'year' }],
+    ['年収：600万円〜900万円', 'JP', { min: 6000000, max: 9000000, currency: 'JPY', period: 'year' }],
+    ['年収600万円〜', 'JP', { min: 6000000, max: null, currency: 'JPY', period: 'year', flags: ['open_min'] }],
+    ['月給30万円以上', 'JP', { min: 300000, max: null, currency: 'JPY', period: 'month', flags: ['open_min'] }],
+    ['연봉5000만원', 'KR', { min: 50000000, max: 50000000, currency: 'KRW', period: 'year' }],
+  ];
+  it.each(cases)('%s [%s]', (text, country, exp) => {
+    const r = analyze(text, country);
+    expect(r, text).not.toBeNull();
+    const v = r!.fact.value;
+    expect({ min: v.min, max: v.max, currency: v.currency, period: v.period }).toEqual({ min: exp.min, max: exp.max, currency: exp.currency, period: exp.period });
+    if (exp.grossNet) expect(v.grossNet).toBe(exp.grossNet);
+    if (exp.installments !== undefined) expect(v.installments).toBe(exp.installments);
+    for (const f of exp.flags ?? []) expect(r!.flags, `${text} flags`).toContain(f);
+    expect(r!.flags).not.toContain('currency_inferred');
+  });
+
+  it('does not read the Estonian number "kuus" (six) as "per month"', () => {
+    const r = analyze('Kuus aastat kogemust, palk 4000 €', 'EE')!;
+    expect(r.fact.value.period).toBe('month');
+    expect(r.flags).toContain('period_inferred');
+    expect(r.fact.confidence).not.toBe('high');
+  });
+
+  it('still needs a pay signal for a bare CJK amount', () => {
+    expect(parseSalary({ text: '600万円', countryIso2: 'JP' }, FX)).toBeNull();
+  });
+});
+
+describe('installments where extra payments are common but not universal', () => {
+  it('annualises Spanish, Swiss and Luxembourg monthly figures at 12 and says the total may be higher', () => {
+    for (const [text, country] of [['Salario: 2.500 € brutos al mes', 'ES'], ['Salary: CHF 9,000 per month', 'CH'], ['Salaire: 5 000 € brut par mois', 'LU']] as const) {
+      const r = analyze(text, country)!;
+      expect(r.fact.value.installments, text).toBe(12);
+      expect(r.flags, text).toContain('installments_uncertain');
+      expect(r.flags, text).not.toContain('installments_customary');
+      expect(r.installmentsLabel, text).toMatch(/12 payments assumed.*may be higher/);
+    }
+  });
+
+  it('a stated count still wins over the uncertainty note', () => {
+    const r = analyze('Salario: 2.500 € brutos al mes en 14 pagas', 'ES')!;
+    expect(r.fact.value.installments).toBe(14);
+    expect(r.flags).not.toContain('installments_uncertain');
+  });
+
+  it('annual figures carry no installment note', () => {
+    const r = analyze('Salario: 30.000 € brutos anuales', 'ES')!;
+    expect(r.installmentsLabel).toBeNull();
+    expect(r.flags).not.toContain('installments_uncertain');
+  });
+
+  it('labels the Dutch holiday allowance as included when the posting says so', () => {
+    const r = analyze('Salaris € 4.000 per maand inclusief vakantiegeld', 'NL')!;
+    expect(r.fact.value.installments).toBe(12);
+    expect(r.installmentsLabel).toMatch(/already included/);
+  });
+
+  it('Brazil and Mexico mandatory extra pay is applied and labelled', () => {
+    const br = analyze('Salário: R$ 12.000 por mês', 'BR')!;
+    expect(br.fact.value.installments).toBe(13);
+    expect(br.installmentsLabel).toMatch(/13th salary/);
+    const brStated = analyze('Salário: R$ 12.000 por mês + 13º salário', 'BR')!;
+    expect(brStated.flags).toContain('installments_stated');
+    const mx = analyze('Sueldo: $40,000 MXN mensuales', 'MX')!;
+    expect(mx.fact.value.installments).toBe(12.5);
+    expect(mx.fact.value.annualEurMin).toBe(Math.round((40000 * 12.5) / 21.5));
+  });
+
+  it('vary notes are defined only for countries without a customary rule', () => {
+    for (const iso of Object.keys(INSTALLMENTS_VARY_BY_COUNTRY)) {
+      expect(installmentRule(iso), iso).toBeNull();
+      expect(installmentsVaryNote(iso.toLowerCase()), iso).toMatch(/12 payments assumed/);
+    }
+    expect(installmentsVaryNote('DE')).toBeNull();
+    expect(installmentsVaryNote(null)).toBeNull();
   });
 });

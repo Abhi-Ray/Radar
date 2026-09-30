@@ -9,6 +9,7 @@
  *     matches come back as "possible" with a score and reasons.
  *  3. A different company with the same or a near-identical description (agency / aggregator
  *     repost) → "possible" only, never merged.
+ *  Under a placeholder company ("Confidential", "Hiring company") stage 2 only proposes pairs.
  *
  * Pairs I dismissed or split (duplicate_candidates status 'dismissed' / 'split') are never
  * proposed again for the job being re-checked (`jobIdToIgnore`).
@@ -20,6 +21,7 @@
 import { and, desc, eq, gte, inArray, isNull, ne, or } from 'drizzle-orm';
 import { duplicateCandidates, jobSources, jobs } from '../../db/schema';
 import { DUPLICATE_STATUSES, ROLE_FAMILIES } from '../../db/schema/_enums';
+import { isPlaceholderCompany } from '../company/resolve';
 import type { DedupCandidate, DedupResult } from '../contracts/jobs';
 import { withTransaction, type DbOrTx } from '../db';
 import { mapTitle } from '../normalize/title';
@@ -38,7 +40,7 @@ import {
 } from './score';
 import { compareDescriptions, dedupTitle, round3, shingles, type DedupTitle } from './similarity';
 
-export const DEDUP_LOGIC_VERSION = 'dedup@2026-09-29.1';
+export const DEDUP_LOGIC_VERSION = 'dedup@2026-09-30.1';
 
 /** `DedupCandidate` plus optional context that makes the decision safer. */
 export interface DedupCandidateInput extends DedupCandidate {
@@ -331,6 +333,9 @@ async function sameCompanyMatches(
     pre.map((p) => p.row.id),
   );
 
+  // "Confidential" / "Hiring company" is many employers under one record: same title + city there
+  // is no evidence of the same job, so nothing is merged on it (review only).
+  const placeholder = await isPlaceholderCompany(db, input.companyId);
   const out: Scored[] = [];
   for (const p of pre) {
     let score = p.score;
@@ -343,6 +348,7 @@ async function sameCompanyMatches(
     if (sameSource.has(p.row.id)) {
       score = { ...score, mergeable: false, reasons: [...score.reasons, 'the same source lists it as another posting'] };
     }
+    if (placeholder) score = { ...score, mergeable: false, reasons: [...score.reasons, 'company name is a placeholder'] };
     out.push({ jobId: p.row.id, score });
   }
   return out;
