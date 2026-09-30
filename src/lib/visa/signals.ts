@@ -14,18 +14,36 @@
  *    stopping at a comma except for noun lists like "we don't offer relocation, visa sponsorship
  *    or …") and right after them ("… is not available"). Negated offers become not_offered
  *    ("without" → right to work required); negated relocation / right-to-work phrases are dropped.
- * 5. Hedged offers ("may be available", "case by case", "nach Absprache") stay offered but drop to
+ *    The after-check also runs across a label separator ("Visa sponsorship - we're unable to offer
+ *    this", "Visa sponsorship (not available)"). A negation followed by "required/needed"
+ *    ("Visa sponsorship is not required for EU citizens") is a need statement: no signal.
+ * 5. Job-duty context ("you will manage visa sponsorship", "experience with immigration support",
+ *    a "Responsibilities" section) drops a hit: it describes the work, not the employer's offer.
+ * 6. Hedged offers ("may be available", "case by case", "nach Absprache") stay offered but drop to
  *    low confidence, which the decision engine reads as "likely", never "confirmed".
- * 6. Question sentences (application forms) yield at most a low-confidence right_to_work_required.
+ * 7. A bare mention ("visa sponsorship") keeps its confidence only in a benefit context (a
+ *    "Benefits" / "What we offer" section or label, an offer verb before it, "… included" after
+ *    it). Anywhere else it becomes a low-confidence mention (`#mention`): likely at most.
+ * 8. Question sentences (application forms) yield at most a low-confidence right_to_work_required.
  */
 import type { VisaSignal, VisaSignalKind } from '../contracts/jobs';
 import type { Confidence } from '../contracts/provenance';
 import { confidenceRank, minConfidence } from '../contracts/provenance';
 import { foldWithMap } from '../normalize/text';
 import {
+  BENEFIT_HEADINGS,
+  BENEFIT_VERBS,
   CONDITION_CUES,
+  DUTY_CUES,
+  DUTY_HEADINGS,
+  DUTY_SUBJECTS,
+  DUTY_VERBS,
+  EMPLOYER_SUBJECTS,
   HEDGE_CUES,
   LABEL_POSITIVE_RE,
+  OFFER_VERBS,
+  POST_BENEFIT_CUES,
+  POST_DUTY_CUES,
   POST_FILLERS,
   POST_NEGATORS,
   PSEUDO_NEGATIONS,
@@ -38,13 +56,17 @@ import {
   type VisaPhraseRule,
 } from '../../data/visa/phrases';
 
-export const VISA_SIGNALS_LOGIC_VERSION = 'visa-signals@2026-09-30.1';
+export const VISA_SIGNALS_LOGIC_VERSION = 'visa-signals@2026-09-30.2';
 export { VISA_PHRASES_VERSION };
 
 /** Longest quote we store around a hit (the whole sentence when shorter). */
 const MAX_QUOTE = 240;
 /** Words before a hit that are searched for a negation / condition cue. */
 const PRE_WINDOW_WORDS = 10;
+/** Words before a bare hit (whole clause, across commas) searched for duty / offer context. */
+const CLAUSE_WINDOW_WORDS = 15;
+/** A line under a section heading counts as a list item of that section up to this many words. */
+const SECTION_ITEM_MAX_WORDS = 14;
 
 const L = '[\\p{L}\\p{N}]';
 
@@ -118,10 +140,35 @@ const PSEUDO_RE = boundedRe(alternation(PSEUDO_NEGATIONS));
 const HEDGE_RE = new RegExp(`(?<!${L})(?:${alternation(HEDGE_CUES)})(?!${L})`, 'u');
 const CONDITION_RE = new RegExp(`(?<!${L})(?:${alternation(CONDITION_CUES)})(?!${L})`, 'u');
 const REQUIREMENT_RE = new RegExp(`(?<!${L})(?:${alternation(REQUIREMENT_CUES)})(?!${L})`, 'u');
-const POST_NEG_RE = new RegExp(
-  `^[\\s:]*(?:(?:${alternation(POST_FILLERS)})\\s+){0,3}(?:${alternation(POST_NEGATORS)})(?!${L}|-)`,
+/** Coordinated noun right after a hit: "visa sponsorship and relocation are not offered". */
+const POST_COORD =
+  '(?:(?:and|or|nor|und|oder|sowie|et|ou|en|of|y|o|e|och|eller|og|ja|tai|i|lub|a|nebo)\\s+|[&/]\\s*)[\\p{L}-]+(?:\\s+[\\p{L}-]+)?\\s+';
+const POST_NEG_SRC = `^[\\s:(\\-]*(?:${POST_COORD})?(?:(?:${alternation(POST_FILLERS)})\\s+){0,5}(?:${alternation(POST_NEGATORS)})(?!${L}|-)`;
+const POST_NEG_RE = new RegExp(POST_NEG_SRC, 'u');
+/** "… is not required / not needed": the negation belongs to a need, not to an offer. */
+const POST_NEG_NEED_RE = new RegExp(
+  `${POST_NEG_SRC}\\s+(?:(?:be|currently|strictly|necessarily|always)\\s+)?(?:required|needed|necessary|a requirement|mandatory|erforderlich|notwendig|notig|benotigt|nodig|vereist|requise?|necessaire|necesario|requerido|necessario|richiesto)(?!${L})`,
   'u',
 );
+const HEAD_ONLY_RE = /^[\s\-*•·▪●◦>\d.)(]*$/u;
+const LABEL_SEP_RE = /^\s*(?::|\(|-\s|–)/u;
+const DUTY_CUE_RE = boundedRe(alternation(DUTY_CUES), 'u');
+const DUTY_VERB_RE = boundedRe(alternation(DUTY_VERBS), 'u');
+const EMPLOYER_SUBJECT_RE = boundedRe(alternation(EMPLOYER_SUBJECTS), 'u');
+const DUTY_SUBJECT_RE = boundedRe(alternation(DUTY_SUBJECTS), 'gu');
+const BENEFIT_VERB_START_RE = new RegExp(`^\\s*(?:(?:also|then|now)\\s+)?(?:${alternation(BENEFIT_VERBS)})(?!${L})`, 'u');
+const OFFER_VERB_RE = boundedRe(alternation(OFFER_VERBS), 'u');
+const POST_DUTY_RE = new RegExp(`^[\\s:]*(?:${alternation(POST_DUTY_CUES)})(?!${L})`, 'u');
+const POST_BENEFIT_RE = new RegExp(
+  `^[\\s:(\\-]*(?:(?:is|are|ist|sind|wird|est|es|e|zijn|wordt)\\s+)?(?:${alternation(POST_BENEFIT_CUES)})(?!${L})`,
+  'u',
+);
+const HEADING_LABEL = (list: readonly string[]) =>
+  new RegExp(`^[\\s\\-*•·▪●◦>\\d.)(#]*(?:${alternation(list)})\\s*(?:[:\\-–]|$)`, 'u');
+const BENEFIT_HEADING_RE = HEADING_LABEL(BENEFIT_HEADINGS);
+const DUTY_HEADING_RE = HEADING_LABEL(DUTY_HEADINGS);
+/** Any short "Something:" line is a heading that ends the previous section. */
+const GENERIC_HEADING_RE = /^[\s\-*•·▪●◦>\d.)(#]*[\p{L}][^:]{0,50}:\s*$/u;
 const POST_REQUIREMENT_RE =
   /^[\s:]*(?:(?:is|are|ist|est|es|e|is|wordt|jest|je)\s+)?(?:required|needed|necessary|erforderlich|notwendig|notig|benotigt|requise?|necessaire|nodig|vereist|necesario|requerido|necessario|richiesto|kravs|kraeves|kreves|vaaditaan|wymagane|nutne)(?![\p{L}\p{N}])/u;
 const QUESTION_START_RE = new RegExp(`^(?:${alternation(QUESTION_STARTERS)})(?!${L})`, 'u');
@@ -271,15 +318,39 @@ function resolveOverlaps(hits: Hit[]): { claims: Hit[]; positives: Hit[] } {
 
 type Negation = 'none' | 'strong' | 'weak';
 
+/** Section of the posting a line belongs to (from the nearest heading or an inline label). */
+export type PostingSection = 'benefit' | 'duty' | null;
+
 interface Context {
   negation: Negation;
   conditional: boolean;
   requirement: boolean;
+  /** A negation that belongs to a need ("… is not required for EU citizens"). */
+  negatedNeed: boolean;
   /** "may be available", "case by case", "nach Absprache" … anywhere in the clause. */
   hedged: boolean;
+  /** Local job-duty context ("you will manage …", "experience with …", "… processes"). */
+  duty: boolean;
+  /** The line sits under a duty / requirements heading. */
+  dutySection: boolean;
+  /** Benefit context for a bare mention (benefit section or label, offer verb, "… included"). */
+  benefit: boolean;
 }
 
-function contextOf(sentence: string, starts: number[], hit: Hit): Context {
+/** True when the words before a hit describe the candidate's work rather than the employer's offer. */
+function dutyBefore(pre: string): boolean {
+  if (DUTY_VERB_RE.test(pre) && !EMPLOYER_SUBJECT_RE.test(pre)) return true;
+  DUTY_SUBJECT_RE.lastIndex = 0;
+  let last: RegExpExecArray | null = null;
+  let m: RegExpExecArray | null;
+  while ((m = DUTY_SUBJECT_RE.exec(pre)) !== null) last = m;
+  if (!last) return false;
+  const rest = pre.slice(last.index + last[0].length);
+  if (EMPLOYER_SUBJECT_RE.test(rest)) return false;
+  return !BENEFIT_VERB_START_RE.test(rest);
+}
+
+function contextOf(sentence: string, starts: number[], hit: Hit, section: PostingSection): Context {
   const clause = clauseOf(starts, hit.start, sentence.length);
   const before = sentence.slice(clause.start, hit.start);
   // Stop at the last comma unless this is a noun list distributed by a negated verb.
@@ -294,23 +365,41 @@ function contextOf(sentence: string, starts: number[], hit: Hit): Context {
     window = distributes ? before : tail;
   }
   const pre = stripPseudo(lastWords(window, PRE_WINDOW_WORDS));
+  const clausePre = stripPseudo(lastWords(before, CLAUSE_WINDOW_WORDS));
 
   const clauseEnd = clause.end;
   let after = sentence.slice(hit.end, clauseEnd);
   const cut = after.indexOf(',');
   if (cut !== -1) after = after.slice(0, cut);
   after = stripPseudo(after);
+  // "Visa sponsorship - we're unable to offer this" / "Visa sponsorship (not available)": a hit that
+  // opens the line and is followed by a label separator is checked across the separator too.
+  let labelAfter = '';
+  const rest = sentence.slice(hit.end);
+  if (HEAD_ONLY_RE.test(sentence.slice(0, hit.start)) && LABEL_SEP_RE.test(rest)) {
+    labelAfter = rest;
+    const c = labelAfter.search(/[,;]/u);
+    if (c !== -1) labelAfter = labelAfter.slice(0, c);
+    labelAfter = stripPseudo(labelAfter);
+  }
 
   let negation: Negation = 'none';
-  if (STRONG_NEG_RE.test(pre) || POST_NEG_RE.test(after)) negation = 'strong';
+  if (STRONG_NEG_RE.test(pre) || POST_NEG_RE.test(after) || (labelAfter !== '' && POST_NEG_RE.test(labelAfter))) negation = 'strong';
   else if (WEAK_NEG_RE.test(pre)) negation = 'weak';
 
+  const bare = hit.rule.kind === 'bare';
+  const postRequirement = POST_REQUIREMENT_RE.test(after);
   const matched = sentence.slice(hit.start, hit.end);
   return {
     negation,
     conditional: CONDITION_RE.test(pre),
-    requirement: REQUIREMENT_RE.test(pre) || POST_REQUIREMENT_RE.test(after),
+    requirement: REQUIREMENT_RE.test(pre) || postRequirement,
+    negatedNeed:
+      negation !== 'none' && (postRequirement || POST_NEG_NEED_RE.test(after) || (labelAfter !== '' && POST_NEG_NEED_RE.test(labelAfter))),
     hedged: HEDGE_RE.test(`${pre} ${matched} ${after}`),
+    duty: dutyBefore(pre) || (bare && (DUTY_CUE_RE.test(clausePre) || POST_DUTY_RE.test(after))),
+    dutySection: section === 'duty',
+    benefit: bare && (section === 'benefit' || OFFER_VERB_RE.test(clausePre) || POST_BENEFIT_RE.test(after)),
   };
 }
 
@@ -319,6 +408,17 @@ interface Emitted {
   confidence: Confidence;
   ruleId: string;
 }
+
+const NEUTRAL: Context = {
+  negation: 'none',
+  conditional: false,
+  requirement: false,
+  negatedNeed: false,
+  hedged: false,
+  duty: false,
+  dutySection: false,
+  benefit: false,
+};
 
 function interpret(hit: Hit, ctx: Context | null, question: boolean): Emitted | null {
   const { rule } = hit;
@@ -334,18 +434,26 @@ function interpret(hit: Hit, ctx: Context | null, question: boolean): Emitted | 
     if (rule.signal === 'offered') out = { signal: positive ? 'offered' : 'not_offered', confidence: rule.confidence, ruleId: rule.id };
     else out = positive ? { signal: rule.signal, confidence: rule.confidence, ruleId: rule.id } : null;
   } else {
-    const c: Context = ctx ?? { negation: 'none', conditional: false, requirement: false, hedged: false };
-    if (rule.kind === 'bare' && c.conditional) return null;
-    if (rule.kind === 'bare' && rule.signal === 'offered' && c.requirement) return null;
+    const c: Context = ctx ?? NEUTRAL;
+    const bare = rule.kind === 'bare';
+    // The text is about the job's work ("you will manage visa sponsorship"), not the employer's offer.
+    if (c.duty && rule.signal !== 'right_to_work_required') return null;
+    if (bare && c.conditional) return null;
+    if (bare && rule.signal === 'offered' && c.requirement) return null;
     if (rule.signal === 'right_to_work_required' && c.conditional) return null;
+    if (c.negatedNeed) return null;
     if (c.negation !== 'none') {
       if (rule.signal !== 'offered') return null;
       out =
         c.negation === 'strong'
           ? { signal: 'not_offered', confidence: rule.confidence, ruleId: `${rule.id}#negated` }
           : { signal: 'right_to_work_required', confidence: minConfidence(rule.confidence, 'medium'), ruleId: `${rule.id}#without` };
+    } else if (bare && rule.signal === 'offered' && c.dutySection) {
+      return null;
     } else if (rule.signal === 'offered' && c.hedged) {
       out = { signal: 'offered', confidence: 'low', ruleId: `${rule.id}#hedged` };
+    } else if (bare && rule.signal === 'offered' && !c.benefit) {
+      out = { signal: 'offered', confidence: 'low', ruleId: `${rule.id}#mention` };
     } else {
       out = { signal: rule.signal, confidence: rule.confidence, ruleId: rule.id };
     }
@@ -356,6 +464,31 @@ function interpret(hit: Hit, ctx: Context | null, question: boolean): Emitted | 
     return { signal: 'right_to_work_required', confidence: 'low', ruleId: `${out.ruleId}#question` };
   }
   return out;
+}
+
+function wordCount(s: string): number {
+  return s.split(/\s+/u).filter((w) => /[\p{L}\p{N}]/u.test(w)).length;
+}
+
+/** Heading kind of a line that is only a heading ("Benefits:", "What we offer"), else undefined. */
+function headingOf(sentence: string): PostingSection | undefined {
+  const t = sentence.trim();
+  if (!t || wordCount(t) > 7) return undefined;
+  const onlyLabel = (re: RegExp) => {
+    const m = re.exec(t);
+    return m !== null && /^[\s:\-–]*$/u.test(t.slice(m[0].length));
+  };
+  if (onlyLabel(BENEFIT_HEADING_RE)) return 'benefit';
+  if (onlyLabel(DUTY_HEADING_RE)) return 'duty';
+  if (GENERIC_HEADING_RE.test(t)) return null;
+  return undefined;
+}
+
+/** Section of one line: its own inline label ("Benefits: …") or the current heading for short items. */
+function sectionOf(sentence: string, current: PostingSection): PostingSection {
+  if (BENEFIT_HEADING_RE.test(sentence)) return 'benefit';
+  if (DUTY_HEADING_RE.test(sentence)) return 'duty';
+  return wordCount(sentence) <= SECTION_ITEM_MAX_WORDS ? current : null;
 }
 
 /** Original-text index just past the folded index range ending at `fEnd`. */
@@ -403,17 +536,24 @@ export function detectVisaSignals(text: string): VisaSignal[] {
   const { folded, map } = foldWithMap(text);
   const found: (VisaSignal & { pos: number })[] = [];
 
+  let current: PostingSection = null;
   for (const sent of splitSentences(folded)) {
     const sentence = folded.slice(sent.start, sent.end);
     if (!/[\p{L}]/u.test(sentence)) continue;
+    const heading = headingOf(sentence);
+    if (heading !== undefined) {
+      current = heading;
+      continue;
+    }
     const hits = collectHits(sentence);
     if (hits.length === 0) continue;
+    const section = sectionOf(sentence, current);
     const { claims, positives } = resolveOverlaps(hits);
     const question = isQuestion(sentence);
     const starts = clauseStarts(sentence);
 
     for (const hit of [...claims, ...positives]) {
-      const ctx = hit.rule.kind === 'statement' || hit.rule.kind === 'bare' ? contextOf(sentence, starts, hit) : null;
+      const ctx = hit.rule.kind === 'statement' || hit.rule.kind === 'bare' ? contextOf(sentence, starts, hit, section) : null;
       const emitted = interpret(hit, ctx, question);
       if (!emitted) continue;
       const oSentStart = map[sent.start];

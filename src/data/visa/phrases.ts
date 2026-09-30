@@ -11,8 +11,12 @@
  * - `statement`: a positive statement (offered / relocation / right-to-work required). It is
  *   checked for negation in its clause ("we can't offer … visa sponsorship" → not offered) and,
  *   for right-to-work, for conditions ("if you don't have the right to work …" → dropped).
- * - `bare`: a noun-phrase mention ("visa sponsorship", "Visa-Sponsoring") that counts as an offer
- *   only in a neutral context (benefit lists). Dropped after "require/need/if"; negation applies.
+ * - `bare`: a noun-phrase mention ("visa sponsorship", "Visa-Sponsoring"). Negation applies; it is
+ *   dropped after "require/need/if" and in job-duty context ("you will manage visa sponsorship",
+ *   "experience with immigration support", a "Responsibilities" section). It keeps its confidence
+ *   only in a benefit context (a "Benefits" / "What we offer" section or label, an offer verb
+ *   before it, "… included" after it); anywhere else it is a low-confidence mention (`#mention`),
+ *   which the decision engine reads as "likely" at most, never "confirmed".
  * - `negative`: an explicit refusal or restriction that already contains its negation ("no visa
  *   sponsorship", "EU citizens only"). Never negation-checked.
  * - `form`: an application-form question ("Will you now or in the future require sponsorship?").
@@ -24,7 +28,7 @@
 import type { Confidence } from '../../lib/contracts/provenance';
 import type { VisaSignalKind } from '../../lib/contracts/jobs';
 
-export const VISA_PHRASES_VERSION = 'visa-phrases@2026-09-30.1';
+export const VISA_PHRASES_VERSION = 'visa-phrases@2026-09-30.2';
 
 export const VISA_SIGNAL_LANGS = ['en', 'de', 'fr', 'nl', 'es', 'pt', 'it', 'sv', 'da', 'no', 'fi', 'pl', 'cs'] as const;
 export type VisaSignalLang = (typeof VISA_SIGNAL_LANGS)[number];
@@ -54,7 +58,7 @@ const r = (
 const EN_VISA_OBJ =
   '(?:visas?|work visas?|work permits?|employment visas?|skilled worker visas?|(?:eu )?blue cards?|h-?1b(?: visas?)?|visa applications?|immigration|work authori[sz]ations?|residence permits?|employment pass(?:es)?|critical skills employment permits?|employment permits?)';
 const EN_NEG_AUX =
-  "(?:do not|don't|does not|doesn't|cannot|can't|can not|will not|won't|are unable to|is unable to|are not able to|aren't able to|is not able to|isn't able to|unable to|not able to|are not in a position to|is not in a position to|not in a position to|no longer|are not currently able to|currently cannot|unfortunately cannot|unfortunately can't|unfortunately do not|unfortunately don't)";
+  "(?:(?:unfortunately|currently|presently|sadly|regrettably|regretfully|still) )?(?:do not|don't|does not|doesn't|cannot|can't|can not|will not|won't|would not|wouldn't|will never|never|do not ever|are unable to|is unable to|am unable to|are not able to|aren't able to|is not able to|isn't able to|unable to|not able to|are not in a position to|is not in a position to|not in a position to|no longer|are not currently able to|is not currently able to)(?: (?:currently|presently|yet|normally|usually|generally|typically|ever|always|unfortunately))?";
 const EN_RTW_OBJ =
   '(?:right to work|work permit|work authori[sz]ation|work visa|working visa|work rights|working rights|residence permit|permission to work|authori[sz]ation to work)';
 const EN_PLACES =
@@ -64,7 +68,7 @@ export const VISA_PHRASE_RULES: readonly VisaPhraseRule[] = [
   // ── English ─────────────────────────────────────────────────────────────────────────────────
   // Labelled fields.
   r('en.label.sponsorship', 'en', 'labelled', 'offered', 'high',
-    '(?:visa |work permit |immigration |employer )?sponsorship(?: available| offered| provided| possible| support| supported)?\\s*(?::|=|\\s-)\\s*(?<v>yes|no|none|n/?a|available|not available|unavailable|provided|not provided|possible|not possible|offered|not offered|supported|not supported|true|false)'),
+    '(?:visa |work permit |immigration |employer )?sponsorship(?: available| offered| provided| possible| support| supported)?\\s*(?::|=|\\s-)\\s*(?<v>yes|no|none|n/?a|available|not available|unavailable|provided|not provided|possible|not possible|offered|not offered|supported|not supported|included|not included|true|false)'),
   r('en.label.visa_support', 'en', 'labelled', 'offered', 'high',
     '(?:visa|work permit|immigration) (?:support|assistance|help)\\s*(?::|=|\\s-)\\s*(?<v>yes|no|none|n/?a|available|not available|provided|not provided|possible|not possible|offered|not offered|included|not included)'),
   r('en.label.relocation', 'en', 'labelled', 'relocation', 'high',
@@ -80,15 +84,15 @@ export const VISA_PHRASE_RULES: readonly VisaPhraseRule[] = [
     '(?:requires?|need|needs|required) (?:visa |work permit |immigration )?sponsorship\\s*(?::|\\?)'),
   // Explicit refusals.
   r('en.neg.no_sponsorship', 'en', 'negative', 'not_offered', 'high',
-    "(?:no|zero) (?:visa |work permit |immigration |employer |work visa |h-?1b |relocation or visa |relocation and visa |relocation/visa )?sponsorships?(?! (?:needed|required|necessary))"),
+    "(?:no|zero) (?:visa |work permit |immigration |employer |work visa |h-?1b |relocation or visa |relocation and visa |relocation/visa )?sponsorships?(?! (?:is |are |will be )?(?:needed|required|necessary))"),
   r('en.neg.aux_sponsor', 'en', 'negative', 'not_offered', 'high',
     '(?:we |company |employer |client |the company |the client |[a-z]+ )?' + EN_NEG_AUX + ' (?:offer |provide |support |consider |accept )?(?:any )?(?:visa |work permit |immigration )?(?:sponsor(?:ship|ing)?|to sponsor)'),
   r('en.neg.sponsorship_not_available', 'en', 'negative', 'not_offered', 'high',
-    "(?:visa |work permit |immigration |employer )?sponsorship (?:for this (?:role|position|job|vacancy) |for these roles |in this case |at this time |currently |unfortunately )?(?:is |are |will |would |can )?(?:not|n't|no longer|unfortunately not|currently not) (?:be )?(?:available|offered|provided|possible|supported|an option|given|considered|granted)"),
+    "(?:visa |work permit |immigration |employer )?sponsorship (?:of (?:visas?|work permits?) )?(?:for this (?:role|position|job|vacancy) |for these roles |in this case |at this time |currently |unfortunately )?(?:(?:is |are |will |would |can )?(?:not|no longer|unfortunately not|currently not)|isn't|aren't|won't|wouldn't|can't|cannot) (?:be )?(?:currently |presently )?(?:available|offered|provided|possible|supported|an option|given|considered|granted)"),
   r('en.neg.sponsorship_unavailable', 'en', 'negative', 'not_offered', 'high',
     '(?:visa |work permit |immigration )?sponsorship (?:is |are )?(?:unavailable|not on offer|off the table)'),
   r('en.neg.not_eligible', 'en', 'negative', 'not_offered', 'high',
-    "(?:this (?:role|position|job|vacancy) )?(?:is not|isn't|are not|aren't|not) (?:eligible|open) (?:for|to) (?:visa |work permit )?sponsorship"),
+    "(?:this (?:role|position|job|vacancy) )?(?:(?:is not|isn't|are not|aren't|not) (?:eligible|open)|(?:is |are )?ineligible|(?:does not|doesn't|do not|don't|will not|won't) qualify) (?:for|to) (?:visa |work permit )?sponsorship"),
   r('en.neg.requiring_not_considered', 'en', 'negative', 'not_offered', 'high',
     "(?:require|requiring|requires|need|needing|needs) (?:a |any )?(?:current or future )?(?:visa |work permit |employer |immigration |h-?1b )?sponsorship[^.\\n]{0,60}(?:will not|won't|cannot|can't|can not|will be unable to|are not|is not|will be not) (?:be )?(?:considered|eligible|accepted|welcome|able to be considered|progressed)"),
   r('en.neg.cannot_consider', 'en', 'negative', 'not_offered', 'high',
@@ -107,6 +111,17 @@ export const VISA_PHRASE_RULES: readonly VisaPhraseRule[] = [
     '(?:only|exclusively) (?:open to |accepting |considering |for |hiring )?(?:applicants from |candidates from )?(?:eu|eea|eu/eea|uk|us|u\\.s\\.|usa|european|british|american) (?:citizens|nationals|passport holders|residents|applicants|candidates)'),
   r('en.neg.must_be_citizen', 'en', 'negative', 'right_to_work_required', 'high',
     '(?:must|need to|required to|have to) (?:be|hold) (?:an? )?(?:eu|eea|uk|us|u\\.s\\.|british|american|european|german|french|dutch|irish|swiss|canadian|australian|[a-z]+) (?:citizen|national|citizenship|passport holder|permanent resident|green card holder)'),
+  r('en.neg.not_sponsoring', 'en', 'negative', 'not_offered', 'high',
+    "(?:we are not|we're not|are not|is not|am not|aren't|isn't)(?: currently| presently| yet| able to| in a position to)? (?:sponsoring|(?:offering|providing|supporting|considering|accepting) (?:any )?(?:visa |work permit |immigration |employer )?sponsorships?|(?:offering|providing|supporting) (?:any )?(?:relocation (?:or|and|/) )?" + EN_VISA_OBJ + " (?:sponsorship|support|assistance))"),
+  r('en.neg.not_licensed_sponsor', 'en', 'negative', 'not_offered', 'high',
+    "(?:(?:are not|aren't|is not|isn't|not) (?:an? )?(?:uk |home office )?(?:(?:licensed|registered|approved|recogni[sz]ed|ind[- ]recogni[sz]ed) (?:visa |immigration )?|(?:visa|immigration|skilled worker) )sponsors?|(?:do not|don't|does not|doesn't) (?:hold|have) (?:an? |the )?(?:uk |home office )?(?:visa )?sponsor(?:ship)? licen[cs]e)"),
+  r('en.neg.do_not_apply_if_sponsorship', 'en', 'negative', 'not_offered', 'high',
+    "(?:do not|don't|please don't|please do not) apply if you (?:will )?(?:now or in the future )?(?:require|need)[^.\\n]{0,30}(?:sponsorship|visa|work permit)"),
+  r('en.neg.no_h1b_transfer', 'en', 'negative', 'not_offered', 'high', 'no h-?1b (?:transfers?|visas?)'),
+  r('en.neg.only_apply_with_rtw', 'en', 'negative', 'right_to_work_required', 'high',
+    '(?:only apply|apply only) if you (?:already )?(?:have|hold|possess) (?:the |a |an |full |valid |existing |current |unrestricted |permanent |legal )*(?:[a-z]+ )?' + EN_RTW_OBJ),
+  r('en.neg.citizenship_required', 'en', 'negative', 'right_to_work_required', 'high',
+    '(?!(?:no|not|without|any) )(?:eu|eea|uk|us|u\\.s\\.|british|american|european|german|french|dutch|irish|swiss|canadian|australian|[a-z]+) citizenship (?:is )?(?:required|mandatory|essential|a must|a requirement|needed)'),
   // Positive statements.
   r('en.offer.sponsorship_available', 'en', 'statement', 'offered', 'high',
     '(?:visa |work permit |immigration |employer |skilled worker |h-?1b |work visa |tier 2 |tier-2 |skilled worker visa )sponsorships? (?:is |are |will be |can be |may be )?(?:available|offered|provided|possible|supported|included|an option|on offer)'),
@@ -130,6 +145,8 @@ export const VISA_PHRASE_RULES: readonly VisaPhraseRule[] = [
     '(?:we are|we\'re|is|are) (?:an? )?(?:uk visa |home office |licensed |registered |approved |recognised |recognized |ind[- ]recognised |ind[- ]recognized )(?:licensed |registered )?(?:visa )?sponsors?'),
   r('en.offer.requiring_welcome', 'en', 'statement', 'offered', 'high',
     '(?:candidates|applicants|those|people|you) (?:who )?(?:require|requiring|need|needing) (?:visa |work permit )?sponsorship[^.\\n]{0,40}(?:are (?:also )?welcome|are encouraged|can (?:still )?apply|may (?:still )?apply|should (?:still )?apply|will be considered|are considered)'),
+  r('en.offer.welcome_requiring', 'en', 'statement', 'offered', 'high',
+    '(?:welcome|encourage|consider) (?:applications from )?(?:candidates|applicants|those|people|anyone) (?:who )?(?:require|requiring|need|needing) (?:visa |work permit )?sponsorship'),
   r('en.offer.open_to_sponsoring', 'en', 'statement', 'offered', 'high',
     '(?:open to|happy to|able to|willing to) (?:consider(?:ing)? )?(?:candidates |applicants )?(?:who )?(?:require|requiring|need|needing) (?:visa |work permit )?sponsorship'),
   r('en.offer.bare_visa_sponsorship', 'en', 'bare', 'offered', 'medium',
@@ -147,7 +164,7 @@ export const VISA_PHRASE_RULES: readonly VisaPhraseRule[] = [
   r('en.reloc.30_ruling', 'en', 'statement', 'relocation', 'medium', '30 ?% (?:tax )?(?:ruling|rule|regulation)'),
   // Right to work required.
   r('en.rtw.must_have', 'en', 'statement', 'right_to_work_required', 'high',
-    '(?:must|will need to|need to|needs to|required to|have to|should) (?:already |currently )?(?:have|hold|possess|be in possession of|be able to provide|provide proof of|demonstrate) (?:the |a |an |full |valid |existing |current |unrestricted |permanent |existing and |legal |your own |own )*' + EN_RTW_OBJ),
+    '(?:must|will need to|need to|needs to|required to|have to|should) (?:already |currently )?(?:have|hold|possess|be in possession of|be able to provide|provide proof of|demonstrate) (?:the |a |an |full |valid |existing |current |unrestricted |permanent |existing and |legal |your own |own )*(?:(?:uk|us|u\\.s\\.|eu|eea|swiss|german|dutch|irish|canadian|australian|british|american|european|[a-z]+) )?' + EN_RTW_OBJ),
   r('en.rtw.required', 'en', 'statement', 'right_to_work_required', 'high',
     '(?:existing |current |valid |full |unrestricted |permanent |legal )?' + EN_RTW_OBJ + '(?: (?:in|for|within) ' + EN_PLACES + ')? (?:is |are )?(?:required|mandatory|essential|a must|necessary|a requirement|compulsory|needed)'),
   r('en.rtw.must_be_authorised', 'en', 'statement', 'right_to_work_required', 'high',
@@ -158,6 +175,8 @@ export const VISA_PHRASE_RULES: readonly VisaPhraseRule[] = [
     '(?:existing|current|valid|full|unrestricted|permanent) (?:uk |eu |us |eea |swiss )?(?:right to work|work authori[sz]ation|work permit|working rights|work rights)'),
   r('en.rtw.only_with_rtw', 'en', 'statement', 'right_to_work_required', 'high',
     '(?:only )?(?:candidates|applicants|those|people|individuals) (?:with|who have|holding|who hold|who already have|who already hold) (?:the |a |an |full |valid |existing |current |unrestricted |permanent |legal )*' + EN_RTW_OBJ + '[^.\\n]{0,60}(?:will be considered|can be considered|may apply|should apply|need apply|are eligible|will be eligible)'),
+  r('en.rtw.need_right_to_work', 'en', 'statement', 'right_to_work_required', 'high',
+    "(?:you(?:'ll| will)? need|you need) (?:to have )?(?:the |an? )?(?:existing |valid |full |current |unrestricted )?(?:legal )?right to work"),
   r('en.rtw.eligible_to_work', 'en', 'bare', 'right_to_work_required', 'medium',
     '(?:legally )?(?:authori[sz]ed|eligible|entitled) to work in ' + EN_PLACES),
 
@@ -180,8 +199,8 @@ export const VISA_PHRASE_RULES: readonly VisaPhraseRule[] = [
     '(?:visa|visum|visums)[- ]?(?:sponsoring|sponsorship|unterstutzung) (?:ist |wird )?(?:leider |derzeit |aktuell |momentan |bei dieser stelle |fur diese stelle )?(?:nicht|kein) (?:moglich|verfugbar|vorgesehen|angeboten|gegeben|vorhanden|moglich)'),
   r('de.neg.nur_eu', 'de', 'negative', 'right_to_work_required', 'high',
     '(?:nur|ausschliesslich|lediglich) (?:fur )?(?:(?:bewerber(?:innen)?|bewerbungen|kandidat(?:inn)?en) (?:aus der |aus dem |mit )?(?:eu|ewr|europaischen union|eu-staatsburgerschaft|eu-staatsangehorigkeit)|(?:eu|ewr)[- ]?(?:burger(?:innen)?|staatsburger(?:innen)?|staatsangehorige|staatsangehorigkeit|burgerschaft))'),
-  r('de.offer.visa_unterstutzung', 'de', 'statement', 'offered', 'high',
-    '(?:visa|visum|visums|aufenthaltstitel|arbeitserlaubnis|einwanderungs|blue[- ]card|blaue[- ]karte)[- ]?(?:unterstutzung|hilfe|service|support|begleitung)'),
+  r('de.offer.visa_unterstutzung', 'de', 'bare', 'offered', 'medium',
+    '(?:visa|visum|visums|aufenthaltstitel|arbeitserlaubnis|einwanderungs|blue[- ]card|blaue[- ]karte)[- ]?(?:unterstutzung|hilfe|begleitung)|(?:visa|visum|visums)-?service'),
   r('de.offer.unterstutzung_beim_visum', 'de', 'statement', 'offered', 'high',
     '(?:unterstutzung|hilfe|begleitung|beratung) (?:bei|beim|mit|fur|im|in) (?:dem |der |deinem |ihrem |deiner |ihrer |allen |den )?(?:visum|visa|visumsantrag|visumsprozess|visaprozess|visa-prozess|visaverfahren|visumsverfahren|aufenthaltstitel|aufenthaltserlaubnis|arbeitserlaubnis|arbeitsgenehmigung|blue card|blauen karte|einwanderung|einwanderungsprozess|behordengangen|formalitaten rund um (?:das |dein |ihr )?visum)'),
   r('de.offer.wir_unterstutzen', 'de', 'statement', 'offered', 'high',
@@ -522,21 +541,26 @@ export const WEAK_NEGATORS: readonly string[] = [
 
 /** Phrases that look negative but are not ("not only", "no matter where"). Removed before the check. */
 export const PSEUDO_NEGATIONS: readonly string[] = [
-  'no matter', 'not only', 'not just', 'no doubt', 'no problem', 'no-brainer', 'without a doubt', 'without doubt', 'no questions asked',
+  'no matter', 'not only', 'not just', 'no doubt', 'no problem', 'not a problem', 'no-brainer', 'never (?:be )?an? (?:issue|problem|obstacle|barrier)',
+  "(?:won't|will not|is not|isn't) (?:be )?an? (?:issue|problem|obstacle|barrier)", 'not an? (?:issue|obstacle|barrier)', 'no (?:issue|obstacle|barrier)', 'without a doubt', 'without doubt', 'no questions asked',
   'nicht nur', 'ohne zweifel', 'non seulement', 'pas seulement', 'sans doute', 'niet alleen', 'zonder twijfel', 'no solo', 'no solamente',
   'sin duda', 'nao so', 'nao apenas', 'sem duvida', 'non solo', 'senza dubbio', 'inte bara', 'inte endast', 'ikke kun', 'ikke bare',
   'ei vain', 'ei ainoastaan', 'nie tylko', 'bez watpienia', 'nejen', 'bez ohledu',
 ];
 
 /**
- * Negation right AFTER a hit ("Visa sponsorship is not available", "Visa-Sponsoring ist leider
- * nicht möglich"): up to three filler words (copulas/adverbs) and then a negator.
+ * Negation right AFTER a hit ("Visa sponsorship is not available", "Visa sponsorship is something
+ * we cannot offer", "Ein Visa-Sponsoring können wir leider nicht anbieten"): optionally a
+ * coordinated noun ("… and relocation are not …"), up to five filler words (copulas, pronouns,
+ * modals, adverbs) and then a negator. The same check runs across a label separator
+ * ("Visa sponsorship - we're unable to offer this", "Visa sponsorship (not available)").
  */
 export const POST_FILLERS: readonly string[] = [
   'is', 'are', 'was', 'were', 'will', 'would', 'be', 'can', 'could', 'may', 'unfortunately', 'currently', 'sadly', 'at this time', 'for this role',
-  'ist', 'sind', 'wird', 'werden', 'leider', 'derzeit', 'aktuell', 'momentan', 'hier',
+  'something', 'that', 'this', 'it', 'we', "we're", "we've", 'we are', 'do', 'does', 'they', 'i', 'still', 'also', 'simply', 'sadly',
+  'ist', 'sind', 'wird', 'werden', 'leider', 'derzeit', 'aktuell', 'momentan', 'hier', 'konnen', 'kann', 'durfen', 'wir', 'bieten', 'ubernehmen', 'gibt', 'es', 'ein', 'etwas',
   'est', 'sont', 'sera', 'malheureusement', 'actuellement',
-  'wordt', 'worden', 'helaas', 'momenteel',
+  'wordt', 'worden', 'helaas', 'momenteel', 'kunnen', 'kan', 'wij', 'bieden', 'zijn',
   'es', 'esta', 'son', 'sera', 'lamentablemente', 'actualmente', 'desafortunadamente',
   'e', 'sao', 'infelizmente', 'atualmente',
   'sono', 'purtroppo', 'attualmente',
@@ -545,7 +569,8 @@ export const POST_FILLERS: readonly string[] = [
 ];
 
 export const POST_NEGATORS: readonly string[] = [
-  'not', "[a-z]+n't", 'no longer', 'unavailable', 'impossible', 'nicht', 'kein', 'keine', 'ausgeschlossen', 'entfallt',
+  'not', "[a-z]+n't", 'cannot', 'can not', 'unable', 'never', 'no longer', 'unavailable', 'impossible', 'out of scope', 'off the table', 'excluded',
+  'nicht', 'kein', 'keine', 'ausgeschlossen', 'entfallt',
   'pas', "n'est pas", 'non', 'niet', 'geen', 'no', 'nao', 'inte', 'ej', 'ikke', 'ei', 'nie', 'niedostepn[a-z]*', 'neni', 'nelze',
 ];
 
@@ -586,6 +611,104 @@ export const HEDGE_CUES: readonly string[] = [
   'segun perfil', 'segun el perfil', 'dependiendo', 'a valorar', 'eventualmente', 'dependendo', 'a combinar', 'da valutare', 'in base al profilo',
   'eventuellt', 'beroende pa', 'eventuelt', 'afhaengigt af', 'avhengig av', 'mahdollisesti', 'tapauskohtaisesti', 'w zaleznosci od', 'ewentualnie',
   'v zavislosti na', 'pripadne',
+];
+
+/**
+ * Section headings / inline labels that make a bare mention a benefit ("Benefits:", "What we
+ * offer", "Wir bieten") or a job duty / requirement ("Responsibilities", "Your profile"). Matched
+ * at the start of a line (bullets stripped), followed by ":" / "-" or the end of the line.
+ */
+export const BENEFIT_HEADINGS: readonly string[] = [
+  'benefits', 'our benefits', 'perks', 'perks and benefits', 'perks & benefits', 'benefits and perks', 'benefits & perks', 'what we offer', 'we offer',
+  'our offer', 'what we provide', 'we provide', 'what you get', "what you'll get", 'what you will get', "what's in it for you", 'what is in it for you',
+  'why join us', 'why us', 'why you will love working here', 'compensation and benefits', 'compensation & benefits', 'package', 'the package', 'our package',
+  'you get', "you'll get", 'you will get', 'what we can offer', 'what can we offer', 'what can you expect', 'what you can expect',
+  'wir bieten', 'was wir bieten', 'das bieten wir', 'das bieten wir dir', 'das bieten wir ihnen', 'unser angebot', 'deine vorteile', 'ihre vorteile', 'vorteile', 'deine benefits', 'ihre benefits',
+  'nous offrons', 'nous proposons', 'ce que nous offrons', 'ce que nous proposons', 'avantages', 'nos avantages', 'vos avantages',
+  'wij bieden', 'wat wij bieden', 'wat bieden wij', 'wat bieden we', 'ons aanbod', 'arbeidsvoorwaarden', 'wat we bieden',
+  'ofrecemos', 'que ofrecemos', 'beneficios', 'te ofrecemos', 'oferecemos', 'o que oferecemos', 'offriamo', 'cosa offriamo', 'vantaggi', 'benefit',
+  'vi erbjuder', 'formaner', 'vi tilbyder', 'fordele', 'vi tilbyr', 'fordeler', 'goder', 'tarjoamme', 'edut', 'tarjoamme sinulle',
+  'oferujemy', 'benefity', 'co oferujemy', 'nabizime', 'co nabizime', 'co ti nabizime',
+];
+
+export const DUTY_HEADINGS: readonly string[] = [
+  'responsibilities', 'your responsibilities', 'key responsibilities', 'main responsibilities', 'duties', 'your duties', 'tasks', 'your tasks',
+  'what you will do', "what you'll do", 'what you will be doing', "what you'll be doing", 'your role', 'the role', 'role', 'your mission', 'about the role',
+  'requirements', 'qualifications', 'what you bring', "what you'll bring", 'what we are looking for', "what we're looking for", 'about you', 'your profile',
+  'profile', 'skills', 'must have', 'must-have', 'nice to have', 'nice-to-have', 'who you are', 'you have', 'experience',
+  'aufgaben', 'deine aufgaben', 'ihre aufgaben', 'dein profil', 'ihr profil', 'anforderungen', 'qualifikationen', 'das bringst du mit', 'das bringen sie mit', 'deine rolle',
+  'missions', 'vos missions', 'votre mission', 'profil recherche', 'votre profil', 'taken', 'jouw taken', 'jouw profiel', 'functie-eisen', 'wat ga je doen', 'wie ben jij',
+  'responsabilidades', 'requisitos', 'tu perfil', 'funciones', 'responsabilita', 'requisiti', 'mansioni', 'il tuo profilo',
+  'arbetsuppgifter', 'kvalifikationer', 'arbejdsopgaver', 'kvalifikasjoner', 'arbeidsoppgaver', 'tehtavat', 'vaatimukset', 'obowiazki', 'wymagania', 'napln prace', 'pozadujeme',
+];
+
+/**
+ * Job-duty context before a hit: the posting talks about visa work as part of the job or the
+ * product ("you will manage visa sponsorship", "experience with immigration support", "our
+ * platform automates visa sponsorship"), not about what the employer offers. Always applies.
+ */
+export const DUTY_CUES: readonly string[] = [
+  'experience (?:with|in|of|handling|managing)', 'hands-on experience', 'knowledge (?:of|in|about)', 'familiar(?:ity)? with', 'understanding of', 'expertise in', 'background in',
+  'responsible for', 'responsibilities', 'accountable for', 'automat[a-z]*', 'streamlin[a-z]*', 'digitali[sz][a-z]*', 'simplif(?:y|ies|ying)',
+  'helps? (?:companies|businesses|employers|clients|customers|organi[sz]ations|hr teams|teams|people)', 'helping (?:companies|businesses|employers|clients|customers|organi[sz]ations|hr teams|teams|people)',
+  'our (?:product|platform|software|app|solution|tool|customers|clients)', 'for (?:our )?(?:clients|customers|employers)',
+  'erfahrung (?:mit|im|in|bei)', 'kenntnisse (?:im|in|uber|von|der|des)', 'verantwortlich fur', 'verantwortung fur', 'zustandig fur',
+  'experience (?:en|avec|dans)', 'connaissances? (?:de|des|en)', 'responsable de', 'ervaring (?:met|in)', 'kennis van', 'verantwoordelijk voor',
+  'experiencia (?:en|con)', 'conocimientos? de', 'experiencia (?:em|com)', 'conhecimentos? de', 'responsavel por', 'esperienza (?:in|con|nella|nel|di)', 'conoscenza (?:di|della|del)',
+  'erfarenhet av', 'kunskap om', 'erfaring med', 'kendskab til', 'kokemusta', 'doswiadczenie w', 'znajomosc', 'zkusenost[a-z]* s',
+];
+
+/**
+ * Duty verbs ("coordinate visa sponsorship"): a duty only when the employer is not the subject
+ * ("we manage your visa sponsorship" stays an offer; see EMPLOYER_SUBJECTS).
+ */
+export const DUTY_VERBS: readonly string[] = [
+  'manage', 'managing', 'coordinate', 'coordinating', 'oversee', 'overseeing', 'administer', 'administering', 'own', 'owning', 'run', 'running',
+  'handle', 'handling', 'arrange', 'arranging', 'advise on', 'advising on', 'process', 'processing', 'track', 'tracking', 'liaise', 'liaising',
+  'prepare', 'preparing', 'drive', 'driving', 'deliver', 'delivering', 'support our', 'supporting our',
+  'koordinierst', 'koordinieren', 'verwaltest', 'betreust', 'bearbeitest', 'gerez', 'coordonnez', 'coordineer', 'beheer', 'gestionar', 'coordinar', 'gerir', 'gestire', 'coordinare',
+];
+
+/** The employer as the subject ("we", "our team", "wir" …): duty verbs then describe an offer. */
+export const EMPLOYER_SUBJECTS: readonly string[] = [
+  'we', "we'll", "we're", 'our team', 'our people team', 'our hr team', 'the company', 'our company', 'wir', 'nous', 'wij', 'we zullen', 'nosotros', 'nos', 'noi', 'vi', 'me', 'my',
+];
+
+/**
+ * The candidate / role as the subject ("you will …", "the role involves …"): what follows is a
+ * duty unless it is a benefit verb ("you will get", "you'll receive", "du erhältst").
+ */
+export const DUTY_SUBJECTS: readonly string[] = [
+  'you will', "you'll", 'you would', "you'd", 'you are going to', 'the candidate will', 'the successful candidate will', 'this role involves', 'the role involves',
+  'du wirst', 'sie werden', 'vous allez', 'vous serez', 'je gaat', 'je zal', 'u gaat',
+];
+
+export const BENEFIT_VERBS: readonly string[] = [
+  'get', 'receive', 'enjoy', 'benefit from', 'have access to', 'be offered', 'be provided with', 'be eligible for', 'be supported', 'be given', 'be sponsored', 'also get', 'also receive',
+  'erhaltst', 'erhalten', 'bekommst', 'bekommen', 'profitierst', 'profitieren', 'beneficierez', 'recevrez', 'krijg', 'krijgt', 'ontvang', 'ontvangt',
+];
+
+/** Words after a bare hit that make it a topic, not an offer ("visa sponsorship processes", "… is a plus"). */
+export const POST_DUTY_CUES: readonly string[] = [
+  'process', 'processes', 'procedures?', 'rules', 'regulations?', 'laws?', 'legislation', 'compliance', 'cases?', 'casework', 'specialists?', 'advisors?', 'advisers?',
+  'consultants?', 'experts?', 'platform', 'software', 'tools?', 'workflows?', 'requests', 'is a plus', 'would be a plus', 'a plus', 'is an advantage', 'an advantage',
+  'experience', 'knowledge', 'for (?:our )?(?:employers|companies|clients|customers|businesses)',
+  'prozesse', 'prozess', 'erfahrung', 'kenntnisse', 'von vorteil', 'wunschenswert', 'est un plus', 'un plus', 'is een pre', 'een pluspunt', 'es un plus', 'valorable', 'e um diferencial', 'costituisce un plus',
+];
+
+/** Offer verbs before a bare hit in the same clause ("we provide relocation support and visa sponsorship"). */
+export const OFFER_VERBS: readonly string[] = [
+  'offer', 'offers', 'offering', 'provide', 'provides', 'providing', 'include', 'includes', 'including', 'cover', 'covers', 'covering', 'plus', 'enjoy',
+  'receive', "you(?:'ll| will)? get", 'supported with', 'support with', 'help with', 'assistance with', 'we help with', 'we (?:handle|arrange|manage|organi[sz]e|sort out|pay for|take care of)', 'take care of', 'full',
+  'bieten', 'bietet', 'anbieten', 'ubernehmen', 'inklusive', 'inkl', 'offrons', 'proposons', 'fournissons', 'incluant', 'bieden', 'inclusief',
+  'ofrecemos', 'ofrece', 'incluye', 'oferecemos', 'oferece', 'inclui', 'offriamo', 'forniamo', 'incluso', 'erbjuder', 'tilbyder', 'tilbyr', 'tarjoamme',
+  'oferujemy', 'zapewniamy', 'nabizime', 'poskytujeme',
+];
+
+/** Words right after a bare hit that make it an offer ("Visa-Unterstützung inklusive", "visa support included"). */
+export const POST_BENEFIT_CUES: readonly string[] = [
+  'included', 'inclusive', 'provided', 'offered', 'available', 'guaranteed', 'on us', 'covered', 'paid', 'for you', 'for the right candidate', 'for successful candidates',
+  'inklusive', 'inbegriffen', 'moglich', 'vorhanden', 'angeboten', 'garantiert', 'inclus', 'incluse', 'inbegrepen', 'incluido', 'incluida', 'incluso', 'incluido', 'inclusa', 'ingar', 'inkluderet', 'inkludert', 'sisaltyy',
 ];
 
 /** Values of `labelled` rules that mean "yes". Everything else matched by the rule means "no". */

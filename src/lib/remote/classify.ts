@@ -39,7 +39,7 @@ import { normalizeLocation } from '../normalize/location';
 import { escapeRegExp, fold, foldWithMap, normalizePunctuation } from '../normalize/text';
 import { compilePatternSource, exactQuote, origEnd, splitSentences } from '../visa/signals';
 
-export const REMOTE_LOGIC_VERSION = 'remote@2026-09-30.1';
+export const REMOTE_LOGIC_VERSION = 'remote@2026-09-30.2';
 export const REMOTE_SOURCE = 'posting text';
 
 /** Where I would work from. */
@@ -105,6 +105,14 @@ function wordListRe(words: readonly string[], flags = 'u'): RegExp {
 }
 
 const NEGATOR_RE = wordListRe(REGION_NEGATORS);
+/**
+ * "(any country) where we have an entity / can legally employ": a limit to the employer's
+ * countries, not "worldwide" (read on the folded text right after a worldwide hit).
+ */
+const EMPLOYER_COUNTRIES_RE =
+  /^\s*(?:,?\s*(?:where|in which|that)\s+(?:we|the company|our company|[\p{L}\d&.'-]+)|we)\s+(?:[\p{L}']+\s+){0,3}?(?:(?:have|has)\s+(?:an?\s+|any\s+)?(?:legal\s+|local\s+|registered\s+)?(?:entity|entities|presence|office|offices|payroll|subsidiar\w*|employer of record|eor)|operate|are registered|is registered|are (?:legally )?(?:set up|established)|can (?:legally |currently )?(?:employ|hire|pay)|(?:employ|hire) (?:people|staff|employees)|(?:supports?|allows?|enables?) (?:employment|hiring|us to (?:hire|employ)))\b/u;
+/** A list intro after the employer-countries phrase: "(US, UK)", ": US, UK", "such as US, UK". */
+const LIST_INTRO_RE = /^[\s,]*(?:[(\[:]|[-–—](?=\s)|such as\b|e\.?\s?g\.?|including\b|namely\b|currently\b|i\.e\.)?[\s(:]*/i;
 const CONDITION_RE = wordListRe(REGION_CONDITIONS);
 const SUPPORT_RE = wordListRe(REGION_SUPPORT_CUES);
 
@@ -755,6 +763,35 @@ export function analyzeRemoteText(text: string, home: RemoteHome = DEFAULT_REMOT
               const r = readCapture(orig(he + within[0].length, s.end), { strict: false });
               if (r.found && !r.places.macros.includes('WORLDWIDE')) break; // "anywhere in the EU" → region rules
             }
+            // "work from anywhere (EU)", "anywhere - Europe": the bracket names the real limit.
+            const bracket = /^\s*(?:[(\[]|[-–—:](?=\s))\s*/.exec(after);
+            if (bracket) {
+              let content = orig(he + bracket[0].length, s.end);
+              if (/[(\[]/.test(bracket[0])) content = content.split(/[)\]]/)[0];
+              const r = readCapture(content, { strict: true });
+              if (r.found && !r.places.macros.includes('WORLDWIDE')) {
+                // Only a list that is read in full is a limit; "Europe, Africa or Asia" with an
+                // unknown part is a limit the posting doesn't state in a way I can read.
+                if (r.usedLength >= content.replace(/[\s.!?;,]+$/u, '').length) {
+                  out.restrictions.push({ places: placeCodes(r.places), confidence: rule.confidence, quote: q(), ruleId: `${rule.id}#bracket` });
+                } else {
+                  out.vague.push({ ruleId: `${rule.id}#bracket`, confidence: 'medium', quote: q() });
+                }
+                break;
+              }
+            }
+            // "from any country where we have an entity": limited to the employer's countries.
+            const employer = EMPLOYER_COUNTRIES_RE.exec(after);
+            if (employer) {
+              const rest = orig(he + employer.index + employer[0].length, s.end).replace(LIST_INTRO_RE, '');
+              const r = readCapture(rest, { strict: true });
+              if (r.found && !r.places.macros.includes('WORLDWIDE')) {
+                out.restrictions.push({ places: placeCodes(r.places), confidence: 'medium', quote: q(), ruleId: `${rule.id}#employer_countries` });
+              } else {
+                out.vague.push({ ruleId: `${rule.id}#employer_countries`, confidence: 'medium', quote: q() });
+              }
+              break;
+            }
             if (NEGATOR_RE.test(preWindow(s.text, rel, 4))) {
               out.vague.push({ ruleId: `${rule.id}#negated`, confidence: 'medium', quote: q() });
               break;
@@ -1080,11 +1117,12 @@ function remoteScope(a: RemoteTextAnalysis, scope: LocationScope, home: RemoteHo
     );
   }
   // 5. Places that include home ("Remote - APAC", "hiring in: India, Germany").
-  if (inc.length) {
+  // "Anywhere in the world where we have an entity" is a limit, not worldwide (see step 8).
+  const onlyWorld = allPlaces.length === 1 && allPlaces[0] === 'WORLDWIDE';
+  if (inc.length && !(onlyWorld && a.vague.length)) {
     const explicit = inc.filter((r) => namesHomeExplicitly(r.places, home));
     const top = strongest(explicit.length ? explicit : inc)!;
     const conf: Confidence = explicit.length ? top.confidence : lowerConfidence(top.confidence);
-    const onlyWorld = allPlaces.length === 1 && allPlaces[0] === 'WORLDWIDE';
     return make(
       'worldwide',
       uniq([...allPlaces, ...excludedTags]),

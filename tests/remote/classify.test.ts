@@ -166,6 +166,29 @@ describe('false positives', () => {
   ]);
 });
 
+describe('"anywhere" with a stated limit (audit regressions)', () => {
+  check([
+    ['Remote', 'Work from anywhere (EU).', 'region_limited', ['EU'], 'high'],
+    ['Remote', 'Work remotely from any country where we have an entity (US, UK, Germany).', 'region_limited', ['US', 'GB', 'DE'], 'medium'],
+    ['Remote', 'Work from any country in which we have a legal entity: US, Canada.', 'region_limited', ['US', 'CA'], 'medium'],
+    ['Remote', 'Work remotely from any country where we have an entity, such as India or Poland.', 'worldwide', ['IN', 'PL'], 'medium'],
+    ['Remote', 'Remote from any country where we can legally employ you.', 'unclear', [], 'medium'],
+    ['Remote', 'You can work from any country we operate in.', 'unclear', [], 'medium'],
+    ['Remote', 'Work from anywhere in the world where we have an entity.', 'unclear', [], 'medium'],
+    ['Remote', 'Work from anywhere: Europe, Africa or Asia.', 'unclear', [], 'medium'],
+    ['Remote', 'Work from anywhere - we are async-first.', 'worldwide', ['WORLDWIDE'], 'high'],
+    ['Remote', 'Work from anywhere (seriously!).', 'worldwide', ['WORLDWIDE'], 'high'],
+    ['Remote', 'Work from any location that suits you.', 'worldwide', ['WORLDWIDE'], 'high'],
+    ['Remote', 'Work from anywhere, we hire people everywhere.', 'worldwide', ['WORLDWIDE'], 'high'],
+    ['Remote', 'We hire across Europe.', 'region_limited', ['EUROPE'], 'medium'],
+    ['Remote', 'We hire throughout the US and Canada.', 'region_limited', ['US', 'CA'], 'medium'],
+    ['Remote', 'We hire across APAC.', 'worldwide', ['APAC'], 'low'],
+    // A negated hire is an exclusion only, never also a region the role is open to.
+    ['Remote', 'We cannot hire in India.', 'region_limited', ['-IN'], 'high'],
+    ['Remote', 'We can’t hire in the US.', 'unclear', ['-US'], 'low'],
+  ]);
+});
+
 describe('workplace', () => {
   it('a hybrid posting is not remote, even with a "work from anywhere" perk', () => {
     const f = run('London', 'This role is based in London. Hybrid working: 2 days per week in the office.');

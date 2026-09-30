@@ -136,6 +136,25 @@ describe('checkEligibility: salary threshold', () => {
     const other = checkEligibility({ salary: salary(60_000), rule: r, profile, now: NOW });
     expect(other.value.result).toBe('cant_tell');
   });
+
+  it('the local threshold wins over a stale EUR conversion when the job pays in that currency', () => {
+    // £41,700 was stored as €48,500 when the rule was entered; the pound has since weakened.
+    const r = rule({ salaryThresholdEur: 48_500, salaryThresholdLocal: 41_700, currency: 'GBP' });
+    // £45,000 at 0.95 GBP/EUR = €47,368: under the stale EUR figure, but 7.9% over £41,700.
+    const gbp = salary(47_368, 47_368, { currency: 'GBP', min: 45_000, max: 45_000, fxRate: 0.95 });
+    const f = checkEligibility({ salary: gbp, rule: r, profile, now: NOW });
+    expect(f.value.result).toBe('borderline');
+    expect(f.value.reason).toContain('GBP 41,700');
+    expect(f.value.reason).toContain('thin margin');
+    expect(f.value.marginPct).toBeCloseTo(7.9, 1);
+    // A salary in another currency still uses the EUR threshold.
+    const eur = checkEligibility({ salary: salary(60_000), rule: r, profile, now: NOW });
+    expect(eur.value.result).toBe('meets');
+    expect(eur.value.reason).toContain('threshold €48.5k');
+    // No FX rate on the salary → the EUR threshold.
+    const noFx = checkEligibility({ salary: salary(47_368, 47_368, { currency: 'GBP', min: 45_000, max: 45_000, fxRate: null }), rule: r, profile, now: NOW });
+    expect(noFx.value.result).toBe('doesnt_meet');
+  });
 });
 
 describe('checkEligibility: stale rules', () => {

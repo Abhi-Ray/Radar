@@ -364,15 +364,21 @@ export async function ensureOfficialPageWatches(db: DbOrTx, now: Date = new Date
     const rule = ruleInEffect(list, now);
     if (rule?.officialSourceUrl) wanted.set(rule.officialSourceUrl.trim(), routeId);
   }
+  // mysql2 connects with CLIENT_FOUND_ROWS, so an untouched duplicate also reports 1 affected row:
+  // count against the watches that already exist instead.
+  const existing = new Set((await db.select({ urlHash: officialPageWatches.urlHash }).from(officialPageWatches)).map((w) => w.urlHash));
   let added = 0;
   for (const [url, routeId] of wanted) {
     if (!/^https?:\/\//i.test(url)) continue;
-    const [res] = await db
+    const urlHash = sha256Hex(url);
+    if (existing.has(urlHash)) continue;
+    // Race-safe: a watch inserted concurrently is left as it is.
+    await db
       .insert(officialPageWatches)
-      .values({ url: url.slice(0, 2048), urlHash: sha256Hex(url), routeId })
+      .values({ url: url.slice(0, 2048), urlHash, routeId })
       .onDuplicateKeyUpdate({ set: { urlHash: sql`${officialPageWatches.urlHash}` } });
-    // MySQL reports 1 affected row for an insert, 0 for an untouched duplicate.
-    if (res.affectedRows === 1) added++;
+    existing.add(urlHash);
+    added++;
   }
   return added;
 }

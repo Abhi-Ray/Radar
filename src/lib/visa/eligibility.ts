@@ -10,7 +10,8 @@
  *   verified / verified over 90 days ago). A stale rule keeps "doesn't meet" only when the salary is
  *   more than 10% under the threshold.
  * - Thresholds in local currency (salary_threshold_local + currency) are compared when the job
- *   salary is in the same currency and carries its FX rate.
+ *   salary is in the same currency and carries its FX rate (preferred over the stored EUR figure,
+ *   which drifts with the exchange rate); otherwise the EUR threshold is used.
  *
  * Degree / experience: read from the rule's structured keys in other_rules_json —
  *   { minDegreeLevel: 'none'|'bachelor'|'master'|'phd', minYearsExperience: number,
@@ -25,7 +26,7 @@ import type { Profile } from '../contracts/settings';
 import { utcDay } from '../time';
 import { describeRule, ruleFreshness } from './rules';
 
-export const ELIGIBILITY_LOGIC_VERSION = 'eligibility@2026-09-30.1';
+export const ELIGIBILITY_LOGIC_VERSION = 'eligibility@2026-09-30.2';
 export const ELIGIBILITY_SOURCE = 'eligibility check';
 /** A margin below this (in %) is "thin" → borderline. */
 export const THIN_MARGIN_PCT = 10;
@@ -128,11 +129,16 @@ function round1(n: number): number {
   return Math.round(n * 10) / 10;
 }
 
+/**
+ * The threshold in annual EUR. A local-currency threshold is preferred when the job pays in that
+ * currency: converting both at the job's FX rate compares them exactly as published (the stored
+ * EUR figure was converted when the rule was entered and drifts with the exchange rate).
+ */
 function thresholdEur(rule: VisaRuleVersionRow, salary: SalaryValue | null): { eur: number; note: string | null } | null {
-  if (rule.salaryThresholdEur !== null && rule.salaryThresholdEur > 0) return { eur: rule.salaryThresholdEur, note: null };
   if (rule.salaryThresholdLocal && rule.currency && salary && salary.currency.toUpperCase() === rule.currency.toUpperCase() && salary.fxRate) {
     return { eur: rule.salaryThresholdLocal / salary.fxRate, note: `${rule.currency} ${rule.salaryThresholdLocal.toLocaleString('en-GB')} at the job's FX rate` };
   }
+  if (rule.salaryThresholdEur !== null && rule.salaryThresholdEur > 0) return { eur: rule.salaryThresholdEur, note: null };
   return null;
 }
 

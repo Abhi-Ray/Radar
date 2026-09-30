@@ -29,7 +29,7 @@
  */
 import type { Confidence } from '../../lib/contracts/provenance';
 
-export const REMOTE_PHRASES_VERSION = 'remote-phrases@2026-09-30.1';
+export const REMOTE_PHRASES_VERSION = 'remote-phrases@2026-09-30.2';
 
 export type RemoteRuleKind =
   | 'worldwide'
@@ -132,7 +132,7 @@ export const REMOTE_PHRASE_RULES: readonly RemotePhraseRule[] = [
   r('en.rg.who_based', 'en', 'region', 'high', `${WHO} (?:who are |that are |currently |already )?(?:must be |should be |need to be |are required to be |have to be )?(?:${LIVE}) (?:in|within|inside) {P}`, { vague: true }),
   r('en.rg.open_to', 'en', 'region', 'high', `(?:only |exclusively )?(?:open|available) (?:only |exclusively )?(?:to|for) ${WHO.replace('you|', '')}? ?(?:who are |that are |currently )?(?:${LIVE} )?(?:in|from|within) {P}`, { vague: true }),
   r('en.rg.only_hire', 'en', 'region', 'high', `(?:we )?(?:can |are able to |are only able to |currently )?only (?:${HIRE_VERB}) (?:${WHO} )?(?:who (?:are |live |reside )?)?(?:${LIVE} )?(?:in|from|within) {P}`, { vague: true }),
-  r('en.rg.hiring_in', 'en', 'region', 'medium', '(?:we(?:\'re| are)? )?(?:only |currently |exclusively )?(?:hiring|recruiting) (?:only |exclusively )?(?:in|from|within) {P}'),
+  r('en.rg.hiring_in', 'en', 'region', 'medium', '(?:we(?:\'re| are)? )?(?:only |currently |exclusively )?(?:hiring|recruiting|hire|recruit|employ) (?:only |exclusively )?(?:in|from|within|across|throughout) {P}'),
   r('en.rg.legal_entity', 'en', 'region', 'medium', '(?:legal |local )?entit(?:y|ies) (?:in|within) {P}'),
   r('en.rg.eor', 'en', 'region', 'medium', '(?:payroll|employer of record|eor) (?:in|within) {P}'),
   r('en.rg.authorized', 'en', 'region', 'high', `${RTW} to (?:legally )?(?:work|be employed|live and work) (?:in|within|for) {P}`),
@@ -250,6 +250,7 @@ export const REGION_NEGATORS: readonly string[] = [
   'no', 'not', 'never', "don't", 'dont', 'do not', "doesn't", 'does not', "needn't", 'no need', 'not required', 'not necessary', 'not necessarily',
   "isn't", 'is not', "aren't", 'are not', 'without', 'regardless', 'irrespective', 'nor', 'neither', 'kein', 'keine', 'nicht', 'ohne', 'pas', 'sans',
   'sin', 'niet', 'geen', 'zonder', 'non', 'senza', 'nie', 'inte', 'ikke', 'nao', 'yet',
+  'cannot', "can't", 'unable', "won't", "wouldn't", "couldn't",
 ];
 
 /** Words before a region hit that make it conditional ("if you are based in …"). */

@@ -340,8 +340,41 @@ describe('decideVisaStatus: end to end with detected signals', () => {
     ['Will you now or in the future require sponsorship?', 'unknown'],
     ['We are a fast-growing fintech.', 'unknown'],
     ['Candidates must already have the right to work in the UK.', 'not_offered'],
+    // Audit regressions: none of these may ever come out as "confirmed".
+    ['Visa sponsorship is something we cannot offer.', 'not_offered'],
+    ['Ein Visa-Sponsoring können wir leider nicht anbieten.', 'not_offered'],
+    ['Visa sponsorship - we’re unable to offer this.', 'not_offered'],
+    ['You will manage visa sponsorship processes for our employees.', 'unknown'],
+    ['We are an HR tech company automating visa sponsorship for employers.', 'unknown'],
+    ['Visa sponsorship is not required for EU citizens.', 'unknown'],
+    ['visa sponsorship', 'likely'],
+    ['Benefits: visa sponsorship, 30 days holiday.', 'confirmed'],
+    ['We are an HR platform for visa sponsorship.\nWe cannot sponsor visas for this role.', 'not_offered'],
   ];
   it.each(cases)('%s → %s', (text, status) => {
     expect(decide({ postingSignals: detectVisaSignals(text) }).value.status).toBe(status);
+  });
+});
+
+describe('decideVisaStatus: bare mentions', () => {
+  const mention: VisaSignal = { signal: 'offered', quote: 'Visa sponsorship', lang: 'en', ruleId: 'en.offer.bare_visa_sponsorship#mention', confidence: 'low' };
+
+  it('a bare mention alone → likely (low) with an honest reason, never confirmed', () => {
+    const f = decide({ postingSignals: [mention] });
+    expect(f.value.status).toBe('likely');
+    expect(f.confidence).toBe('low');
+    expect(f.value.reasons[0]).toContain('does not clearly offer');
+  });
+
+  it('a bare mention does not turn a refusal into a conflict', () => {
+    const f = decide({ postingSignals: [mention, sig('not_offered', 'We cannot sponsor visas.')] });
+    expect(f.value.status).toBe('not_offered');
+    expect(f.value.reasons.some((r) => r.startsWith('Overridden by the posting') && r.includes('does not clearly offer'))).toBe(true);
+  });
+
+  it('a bare mention plus a confirmed register → confirmed by the register, not the posting', () => {
+    const f = decide({ postingSignals: [mention], companyEvidence: [register()] });
+    expect(f.value.status).toBe('confirmed');
+    expect(f.method).toBe('official');
   });
 });

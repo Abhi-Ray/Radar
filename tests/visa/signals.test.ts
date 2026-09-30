@@ -130,6 +130,62 @@ const CASES: Case[] = [
   { text: 'Oferujemy pomoc w uzyskaniu wizy oraz pakiet relokacyjny.', expect: [O, R], lang: 'pl' },
   { text: 'Nenabízíme sponzorování víz.', expect: [N], lang: 'cs' },
   { text: 'Pomůžeme vám s vízem a nabízíme relokační balíček.', expect: [O, R], lang: 'cs' },
+  // ── Audit regressions: refusals written after the noun ("X is something we cannot offer") ──
+  { text: 'Visa sponsorship is something we cannot offer.', expect: [N], lang: 'en' },
+  { text: 'Visa sponsorship - we’re unable to offer this.', expect: [N], lang: 'en' },
+  { text: 'Visa sponsorship: we do not offer it.', expect: [N], lang: 'en' },
+  { text: 'Visa sponsorship (not available)', expect: [N], lang: 'en' },
+  { text: 'Visa sponsorship is out of scope for this role.', expect: [N], lang: 'en' },
+  { text: 'Visa sponsorship and relocation are not available for this position.', expect: [N], lang: 'en' },
+  { text: 'Relocation package: not included. Visa sponsorship: not included.', expect: [N], lang: 'en', confidence: 'high' },
+  { text: 'Ein Visa-Sponsoring können wir leider nicht anbieten.', expect: [N], lang: 'de' },
+  { text: 'Visa-Sponsoring bieten wir nicht an.', expect: [N], lang: 'de' },
+  // ── Audit regressions: English refusals that were missed ──
+  { text: 'We are not currently sponsoring visas.', expect: [N], lang: 'en', confidence: 'high' },
+  { text: 'We are not offering sponsorship.', expect: [N], lang: 'en', confidence: 'high' },
+  { text: 'We do not currently provide sponsorship.', expect: [N], lang: 'en', confidence: 'high' },
+  { text: 'We never sponsor visas.', expect: [N], lang: 'en', confidence: 'high' },
+  { text: "Sponsorship isn't available.", expect: [N], lang: 'en', confidence: 'high' },
+  { text: 'Sponsorship of visas is not possible for this role.', expect: [N], lang: 'en', confidence: 'high' },
+  { text: 'This role is ineligible for sponsorship.', expect: [N], lang: 'en', confidence: 'high' },
+  { text: 'This position does not qualify for visa sponsorship.', expect: [N], lang: 'en', confidence: 'high' },
+  { text: 'We are not a licensed sponsor.', expect: [N], lang: 'en', confidence: 'high' },
+  { text: 'We do not hold a sponsor licence.', expect: [N], lang: 'en', confidence: 'high' },
+  { text: 'Please do not apply if you require sponsorship.', expect: [N], lang: 'en', confidence: 'high' },
+  { text: 'No H-1B transfers.', expect: [N], lang: 'en' },
+  // ── Audit regressions: right to work ──
+  { text: 'Please only apply if you have the right to work in the UK.', expect: [W], lang: 'en', confidence: 'high' },
+  { text: 'You will need the right to work in Germany.', expect: [W], lang: 'en', confidence: 'high' },
+  { text: 'US citizenship is required.', expect: [W], lang: 'en', confidence: 'high' },
+  { text: 'No citizenship required.', expect: [] },
+  { text: 'Must hold a valid UK work visa.', expect: [W], lang: 'en', confidence: 'high' },
+  // ── Audit regressions: need statements are not refusals ──
+  { text: 'Visa sponsorship is not required for EU citizens.', expect: [] },
+  { text: 'No visa sponsorship is required for EU citizens.', expect: [] },
+  { text: 'Visa sponsorship is not needed if you are an EU citizen.', expect: [] },
+  { text: 'Visa sponsorship will never be an issue.', expect: [O], lang: 'en', confidence: 'low' },
+  // ── Audit regressions: job duties and product talk are not offers ──
+  { text: 'You will manage visa sponsorship processes for our employees.', expect: [] },
+  { text: 'Experience with immigration support is a plus.', expect: [] },
+  { text: 'Responsibilities: coordinate visa sponsorship and relocation for new hires.', expect: [] },
+  { text: 'Knowledge of work permit sponsorship rules in the UK.', expect: [] },
+  { text: 'We are an HR tech company automating visa sponsorship for employers.', expect: [] },
+  { text: 'Our product helps companies with immigration support.', expect: [] },
+  { text: 'Du bist verantwortlich für die Visa-Unterstützung unserer Mitarbeitenden.', expect: [] },
+  { text: 'Responsibilities:\n- Visa sponsorship for new hires\n- Payroll', expect: [] },
+  // ── Audit regressions: bare mentions keep confidence only in a benefit context ──
+  { text: 'Benefits: Visa sponsorship, 30 days holiday', expect: [O], lang: 'en', confidence: 'medium' },
+  { text: 'Benefits:\n• Visa sponsorship\n• 30 days holiday', expect: [O], lang: 'en', confidence: 'medium' },
+  { text: 'What we offer: relocation package, visa support', expect: [O, R], lang: 'en' },
+  { text: 'We offer a great salary, visa sponsorship and a gym.', expect: [O], lang: 'en', confidence: 'medium' },
+  { text: "You'll get visa sponsorship.", expect: [O], lang: 'en', confidence: 'medium' },
+  { text: 'Visa-Unterstützung inklusive.', expect: [O], lang: 'de', confidence: 'medium' },
+  { text: 'Wir bieten: Visa-Unterstützung, Umzugshilfe', expect: [O, R], lang: 'de' },
+  { text: 'visa sponsorship', expect: [O], lang: 'en', confidence: 'low' },
+  { text: '• Visa sponsorship', expect: [O], lang: 'en', confidence: 'low' },
+  { text: 'This role offers visa sponsorship.', expect: [O], lang: 'en', confidence: 'high' },
+  { text: 'Please note: this role does not include visa sponsorship.', expect: [N], lang: 'en' },
+  { text: 'We welcome applicants who need visa sponsorship.', expect: [O], lang: 'en', confidence: 'high' },
 ];
 
 function kinds(text: string): VisaSignalKind[] {
@@ -232,6 +288,42 @@ describe('detectVisaSignals: behaviour', () => {
   it('"without" turns an offer mention into a right-to-work requirement, not a refusal', () => {
     const s = detectVisaSignals('This role is open to people who can work without visa sponsorship.');
     expect(s.map((x) => x.signal)).toEqual(['right_to_work_required']);
+  });
+
+  it('a bare mention is never a firm offer outside a benefit context', () => {
+    const texts = [
+      'visa sponsorship',
+      'Visa sponsorship is something we are proud to offer.',
+      'About us: we care about visa sponsorship.',
+    ];
+    for (const t of texts) {
+      for (const s of detectVisaSignals(t)) {
+        if (s.signal === 'offered') {
+          expect(s.confidence).toBe('low');
+          expect(s.ruleId).toMatch(/#mention$/);
+        }
+      }
+    }
+  });
+
+  it('a section heading carries over to its short list items only', () => {
+    const text = [
+      'Benefits:',
+      '- Visa sponsorship',
+      'About the company:',
+      '- Visa sponsorship',
+    ].join('\n');
+    const s = detectVisaSignals(text);
+    // Same quote twice: dedup keeps the highest confidence (the benefit item).
+    expect(s).toHaveLength(1);
+    expect(s[0].confidence).toBe('medium');
+    const later = detectVisaSignals('About the company:\n- Visa sponsorship');
+    expect(later[0].confidence).toBe('low');
+  });
+
+  it('the German Visa-Unterstützung rule does not fire on English "visa support"', () => {
+    const s = detectVisaSignals('What we offer: relocation package, visa support');
+    expect(s.find((x) => x.signal === 'offered')?.ruleId).toBe('en.offer.bare_visa_support');
   });
 
   it('"non-EU" is not a negation', () => {

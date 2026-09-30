@@ -5,7 +5,8 @@
  * 1. My own note (manual, from a recruiter): the latest note decides — yes → confirmed, no →
  *    not offered. It is the only thing that outranks an explicit "not offered" in the posting.
  * 2. The posting argues both ways (an offer AND a refusal / right-to-work requirement) →
- *    conflicting, with both sides listed.
+ *    conflicting, with both sides listed. A bare low-confidence mention ("#mention": "visa
+ *    sponsorship" outside a benefit context) is not a side: it never creates a conflict.
  * 3. The posting refuses (not_offered, or a high/medium right-to-work requirement) → not offered.
  *    This overrides register matches, relocation mentions and AI; they are listed as overridden.
  * 4. The posting explicitly offers (high/medium offered signal) → confirmed (method posting).
@@ -14,7 +15,8 @@
  *    confirmed (method official).
  * 6. Likely: sponsorship history (IE DETE, CA LMIA registers, other postings of the company), a
  *    possible register match ("Possible match — verify"), a licensed sponsor in another country,
- *    a relocation mention, or a hedged offer ("may be available") in the posting.
+ *    a relocation mention, a hedged offer ("may be available") or a bare mention of visa
+ *    sponsorship in the posting.
  * 7. AI only: an AI "offered" gives likely with LOW confidence (method ai); an AI "not offered"
  *    gives unknown with a note (method ai). AI alone NEVER yields confirmed or not offered.
  * 8. Otherwise unknown (low confidence). Application-form questions ("Will you require
@@ -27,7 +29,7 @@ import { confidenceRank, lowerConfidence, minConfidence } from '../contracts/pro
 import { DAY_MS } from '../time';
 import { isActiveEvidence, parseRegisterMatch, parseSponsorsFlag, type RegisterMatchValue } from './types';
 
-export const VISA_DECIDE_LOGIC_VERSION = 'visa-decide@2026-09-30.1';
+export const VISA_DECIDE_LOGIC_VERSION = 'visa-decide@2026-09-30.2';
 /** `source` of every visa_status fact written by this engine. */
 export const VISA_ENGINE_SOURCE = 'visa engine';
 /** A register snapshot older than this lowers the confidence of a register-based verdict. */
@@ -83,9 +85,15 @@ function day(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** A bare mention outside a benefit context (signals.ts marks it `#mention`): not a statement. */
+function isMention(s: VisaSignal): boolean {
+  return s.signal === 'offered' && s.ruleId.includes('#mention');
+}
+
 function describeSignal(s: VisaSignal): string {
   switch (s.signal) {
     case 'offered':
+      if (isMention(s)) return `Posting mentions visa sponsorship but does not clearly offer it: ${quoted(s)}`;
       return s.confidence === 'low' ? `Posting hedges on sponsorship: ${quoted(s)}` : `Posting offers sponsorship: ${quoted(s)}`;
     case 'not_offered':
       return `Posting refuses sponsorship: ${quoted(s)}`;
@@ -150,6 +158,7 @@ export function decideVisaStatus(input: DecideVisaInput): Fact<VisaDecisionValue
   const offered = posting.filter((s) => s.signal === 'offered');
   const offeredFirm = offered.filter((s) => s.confidence !== 'low');
   const offeredHedged = offered.filter((s) => s.confidence === 'low');
+  const offeredStated = offered.filter((s) => !isMention(s));
   const refusals = posting.filter((s) => s.signal === 'not_offered');
   const rtwFirm = posting.filter((s) => s.signal === 'right_to_work_required' && s.confidence !== 'low');
   const formQuestions = posting.filter((s) => s.signal === 'right_to_work_required' && s.confidence === 'low');
@@ -254,8 +263,8 @@ export function decideVisaStatus(input: DecideVisaInput): Fact<VisaDecisionValue
   }
 
   // 2. The posting argues both ways.
-  if (against.length && offered.length) {
-    const forSide = offered.map(describeSignal);
+  if (against.length && offeredStated.length) {
+    const forSide = offeredStated.map(describeSignal);
     const againstSide = against.map(describeSignal);
     const confidence: Confidence = offeredFirm.length && (refusals.some((s) => s.confidence !== 'low') || rtwFirm.length) ? 'medium' : 'low';
     return make(
@@ -263,7 +272,7 @@ export function decideVisaStatus(input: DecideVisaInput): Fact<VisaDecisionValue
       'posting',
       confidence,
       ['The posting says both things — judge it yourself.', ...forSide, ...againstSide, ...registerSupport(), ...aiNotes()],
-      [...offered, ...against].map((s) => s.quote).join(' | '),
+      [...offeredStated, ...against].map((s) => s.quote).join(' | '),
       { for: [...forSide, ...confirmedRegisters.map((r) => `Official register: ${describeRegister(r.value)}`)], against: againstSide },
     );
   }
