@@ -39,7 +39,7 @@ import { normalizeLocation } from '../normalize/location';
 import { escapeRegExp, fold, foldWithMap, normalizePunctuation } from '../normalize/text';
 import { compilePatternSource, exactQuote, origEnd, splitSentences } from '../visa/signals';
 
-export const REMOTE_LOGIC_VERSION = 'remote@2026-09-30.2';
+export const REMOTE_LOGIC_VERSION = 'remote@2026-09-30.3';
 export const REMOTE_SOURCE = 'posting text';
 
 /** Where I would work from. */
@@ -287,6 +287,18 @@ function cutAt(s: string, re: RegExp): string {
   return m ? s.slice(0, m.index) : s;
 }
 
+/** The longest run of 1-3 leading words of `part` that is a known capitalised place, else null. */
+function leadingPlace(part: string): { places: PlaceSet; text: string } | null {
+  const words = part.trim().split(/\s+/);
+  for (let k = Math.min(3, words.length - 1); k >= 1; k--) {
+    const text = words.slice(0, k).join(' ');
+    if (!/^\p{Lu}/u.test(text)) continue;
+    const r = resolvePlacePart(text);
+    if (r && !r.tz && (r.countries.length > 0 || r.macros.length > 0)) return { places: r, text };
+  }
+  return null;
+}
+
 /**
  * Places in a phrase capture (original text). `strict`: only the leading parts that are all
  * places ("Remote - Germany / Austria | Senior"); otherwise parts are read until the first part
@@ -317,6 +329,16 @@ function readCapture(capture: string, opts: { strict: boolean; exclusion?: boole
       continue;
     }
     if (opts.strict) break;
+    if (!found && words > 1) {
+      // Verb-final word order puts a word after the place ("remote innerhalb Deutschlands möglich").
+      const lead = leadingPlace(part);
+      if (lead) {
+        mergeInto(places, lead.places);
+        found = true;
+        lastPart = lead.text;
+        break;
+      }
+    }
     if (!found && skipped + words <= 8) {
       skipped += words;
       continue;

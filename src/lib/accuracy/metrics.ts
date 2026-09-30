@@ -221,3 +221,19 @@ export function scoreSamples(samples: EvalSample[], errors: { id: string; messag
     errors,
   };
 }
+
+/**
+ * Every measured number of a report as one flat map (`<field>.accuracy|precision|recall`, plus
+ * the key metrics) — what the thresholds file and the CLI table read.
+ */
+export function flatMetrics(r: AccuracyReport): KeyMetrics {
+  const out: KeyMetrics = {};
+  for (const f of GOLDEN_FIELDS) {
+    const m = r.fields[f];
+    if (!m) continue;
+    out[`${f}.accuracy`] = m.accuracy;
+    out[`${f}.precision`] = m.precision;
+    out[`${f}.recall`] = m.recall;
+  }
+  return { ...out, ...r.keyMetrics };
+}

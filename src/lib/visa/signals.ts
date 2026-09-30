@@ -68,7 +68,7 @@ import {
   type VisaPhraseRule,
 } from '../../data/visa/phrases';
 
-export const VISA_SIGNALS_LOGIC_VERSION = 'visa-signals@2026-09-30.3';
+export const VISA_SIGNALS_LOGIC_VERSION = 'visa-signals@2026-09-30.4';
 export { VISA_PHRASES_VERSION };
 
 /** Longest quote we store around a hit (the whole sentence when shorter). */
@@ -521,10 +521,12 @@ function interpret(hit: Hit, ctx: Context | null, question: boolean): Emitted | 
         c.negation === 'strong'
           ? { signal: 'not_offered', confidence: rule.confidence, ruleId: `${rule.id}#negated` }
           : { signal: 'right_to_work_required', confidence: minConfidence(rule.confidence, 'medium'), ruleId: `${rule.id}#without` };
+    } else if (rule.signal === 'offered' && c.hedged) {
+      // Checked before the duty-section drop: "Visa sponsorship may be considered" is a hedged
+      // employer statement even when the last heading was "Your profile" (low = likely at most).
+      out = { signal: 'offered', confidence: 'low', ruleId: `${rule.id}#hedged` };
     } else if (bare && rule.signal === 'offered' && c.dutySection) {
       return null;
-    } else if (rule.signal === 'offered' && c.hedged) {
-      out = { signal: 'offered', confidence: 'low', ruleId: `${rule.id}#hedged` };
     } else if (bare && rule.signal === 'offered' && !c.benefit) {
       out = { signal: 'offered', confidence: 'low', ruleId: `${rule.id}#mention` };
     } else {
