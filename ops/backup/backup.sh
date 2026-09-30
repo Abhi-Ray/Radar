@@ -195,6 +195,8 @@ CREATED_AT=$(rb_now_iso)
   printf '  "volatileTables": {%s},\n' "$VOLATILE_JSON"
   printf '  "lastMigration": %s,\n' "$LASTMIG_JSON"
   printf '  "migrationsApplied": %s,\n' "$MIG_COUNT"
+  # The backup_runs row of this run is inside the dump as 'running'; radar-restore finishes it.
+  printf '  "runId": %s,\n' "$(rb_is_uint "$RUN_ID" && printf '%s' "$RUN_ID" || printf null)"
   printf '  "tool": "radar-backup/1"\n'
   printf '}\n'
 } >"$PUB/LATEST.json"

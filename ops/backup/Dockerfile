@@ -34,7 +34,8 @@ RUN set -eux; \
     ln -s /opt/radar-backup/radar-alert.sh /usr/local/bin/radar-alert; \
     mkdir -p /work; \
     for s in /opt/radar-backup/*.sh; do bash -n "$s"; done; \
-    radar-backup-scheduler next-slots 0 >/dev/null
+    radar-backup-scheduler next-slots 0 >/dev/null; \
+    for s in radar-backup radar-restore radar-restore-test radar-alert; do "$s" --help >/dev/null; done
 
 WORKDIR /work
 LABEL com.radar.project="radar" \

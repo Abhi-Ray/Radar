@@ -38,8 +38,18 @@ rb_die() {
 }
 
 # Prints a script's header comment (line 2 up to the first non-comment line) as its usage text.
+# Pure bash: the mysql:8.4 image has no awk.
 rb_usage() { # file
-  awk 'NR == 1 { next } /^#/ { sub(/^# ?/, ""); print; next } { exit }' "$1"
+  local line n=0
+  while IFS= read -r line || [ -n "$line" ]; do
+    n=$((n + 1))
+    [ "$n" = 1 ] && continue
+    case "$line" in
+      '# '*) printf '%s\n' "${line#'# '}" ;;
+      '#'*) printf '%s\n' "${line#'#'}" ;;
+      *) break ;;
+    esac
+  done <"$1"
 }
 
 rb_need() {
@@ -254,6 +264,9 @@ rb_write_mycnf() {
       printf 'password="%s"\n' "$(rb_option_escape "$BACKUP_DB_PASSWORD")"
       printf 'protocol=TCP\n'
       printf 'default-character-set=utf8mb4\n'
+      # [client] is read by mysqldump too, which rejects options it does not know (such as
+      # connect-timeout): client-specific options go into their own group.
+      printf '[mysql]\n'
       printf 'connect-timeout=15\n'
     } >"$RB_MYCNF"
   )

@@ -169,5 +169,20 @@ if [ -n "$META" ] && [ "$COUNT_CHECK" = 1 ]; then
   fi
   rb_info "row counts match LATEST.json for all $RB_TABLES_COMPARED tables"
 fi
+# ---------------------------------------------------------------------------------------------
+# 5. The dump was taken while its own backup_runs row still said 'running'. That backup did
+#    succeed (it was pushed), so finish the row the way backup.sh did — otherwise the next
+#    backup's stale-run cleanup would report it as interrupted.
+if [ -n "$META" ] && rb_table_exists "$TARGET" backup_runs; then
+  run_id=$(rb_json_get "$META" '$.runId' 2>/dev/null || true)
+  if rb_is_uint "$run_id"; then
+    printf "UPDATE backup_runs SET status = 'ok', finished_at = STR_TO_DATE(%s, %s), size_bytes = %s, sha256 = %s, details_json = JSON_OBJECT('format', %s, 'createdAt', %s, 'finishedBy', 'radar-restore') WHERE id = %s AND kind = 'backup' AND status = 'running';\n" \
+      "$(rb_sql_str "$(rb_json_get "$META" '$.createdAt')")" "$(rb_sql_str '%Y-%m-%dT%H:%i:%sZ')" \
+      "$(rb_json_get "$META" '$.sizeBytes' | grep -E '^[0-9]+$' || printf NULL)" \
+      "$(rb_sql_str "$(rb_json_get "$META" '$.sha256')")" "$(rb_sql_str "$(rb_json_get "$META" '$.format')")" \
+      "$(rb_sql_str "$(rb_json_get "$META" '$.createdAt')")" "$run_id" |
+      rb_mysql "$TARGET" || rb_warn "could not finish backup_runs row $run_id in the restored database"
+  fi
+fi
 rb_info "restore into '$TARGET' complete"
 if [ "$LIVE" = 1 ]; then rb_info "next: docker compose up -d   (then check /api/health and the /system page)"; fi

@@ -220,7 +220,7 @@ tail -n 1 /tmp/radar-restore.sql                 # "-- Dump completed on …"
 docker run -d --name radar-restore-check -e MYSQL_ROOT_PASSWORD=check -e MYSQL_DATABASE=radar mysql:8.4
 sleep 30
 docker exec -i radar-restore-check sh -c 'MYSQL_PWD=check mysql -uroot radar' < /tmp/radar-restore.sql
-docker exec radar-restore-check sh -c 'MYSQL_PWD=check mysql -uroot radar -e "SELECT COUNT(*) FROM jobs; SELECT COUNT(*) FROM applications; SELECT MAX(created_at) FROM audit_log;"'
+docker exec radar-restore-check sh -c 'MYSQL_PWD=check mysql -uroot radar -e "SELECT COUNT(*) FROM jobs; SELECT COUNT(*) FROM applications; SELECT MAX(at) FROM audit_log;"'
 #    compare with "rowCounts" in LATEST.json
 
 # 5. Clean up (the dump holds personal data)

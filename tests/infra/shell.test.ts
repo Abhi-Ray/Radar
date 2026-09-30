@@ -4,10 +4,11 @@
  * MySQL, nginx or network. Everything runs in throwaway temp dirs with a minimal environment.
  */
 import { spawnSync, type SpawnSyncReturns } from 'node:child_process';
-import { mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { findMysqlBin } from './mysql-bin';
 
 const REPO = path.resolve(__dirname, '../..');
 const COMMON = path.join(REPO, 'ops/lib/common.sh');
@@ -114,6 +115,102 @@ describe('backup lib: quoting helpers', () => {
       'i:x;y:n',
       'i::n',
     ]);
+  });
+});
+
+describe('backup lib: usage text and the client option file', () => {
+  const BACKUP_DIR = path.join(REPO, 'ops/backup');
+
+  /** What rb_usage must print: line 2 up to the first non-comment line, '# ' / '#' stripped. */
+  function expectedUsage(file: string): string {
+    const out: string[] = [];
+    for (const line of readFileSync(file, 'utf8').split('\n').slice(1)) {
+      if (!line.startsWith('#')) break;
+      out.push(line.startsWith('# ') ? line.slice(2) : line.slice(1));
+    }
+    return `${out.join('\n')}\n`;
+  }
+
+  it('--help works without any external command (the mysql:8.4 image has no awk)', () => {
+    const cases: [string, string[]][] = [
+      ['backup.sh', ['--help']],
+      ['restore.sh', ['--help']],
+      ['restore-test.sh', ['--help']],
+      ['radar-alert.sh', ['--help']],
+      ['scheduler.sh', ['help']],
+    ];
+    for (const [name, args] of cases) {
+      const file = path.join(BACKUP_DIR, name);
+      // No PATH at all: only bash builtins can run.
+      const r = spawnSync('/bin/bash', [file, ...args], {
+        encoding: 'utf8',
+        env: { PATH: '/nonexistent', RADAR_BACKUP_HOME: BACKUP_DIR, LC_ALL: 'C', NODE_ENV: 'test' },
+      });
+      expect(r.status, `${name}: ${r.stderr}`).toBe(0);
+      expect(r.stderr, name).toBe('');
+      expect(r.stdout, name).toBe(expectedUsage(file));
+      expect(r.stdout.split('\n')[0], name).not.toMatch(/^[#!]/);
+      expect(r.stdout.length, name).toBeGreaterThan(40);
+    }
+  });
+
+  it('rb_write_mycnf: mode 600, escaped values, and only mysqldump-compatible options in [client]', () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'radar-mycnf-'));
+    try {
+      const password = String.raw`p\a#s s;w'o=rd`;
+      const r = bashWith(
+        BACKUP_LIB,
+        'RB_TMP=$1 MYSQL_HOST=db.internal MYSQL_PORT=3306 BACKUP_DB_USER=root BACKUP_DB_PASSWORD=$2; rb_write_mycnf; printf "%s" "$RB_MYCNF"',
+        [dir, password],
+      );
+      expect(r.status, r.stderr).toBe(0);
+      const cnf = r.stdout;
+      expect(cnf).toBe(path.join(dir, 'client.cnf'));
+      expect(statSync(cnf).mode & 0o777).toBe(0o600);
+
+      const groups: Record<string, Record<string, string>> = {};
+      let group = '';
+      for (const line of readFileSync(cnf, 'utf8').split('\n')) {
+        if (!line) continue;
+        const g = /^\[(.+)\]$/.exec(line);
+        if (g) {
+          group = g[1];
+          groups[group] = {};
+          continue;
+        }
+        const i = line.indexOf('=');
+        groups[group][line.slice(0, i)] = line.slice(i + 1);
+      }
+      // [client] is read by EVERY client program (mysqldump included, which rejects unknown options).
+      expect(Object.keys(groups.client).sort()).toEqual(['default-character-set', 'host', 'password', 'port', 'protocol', 'user']);
+      expect(groups.client.password).toBe(`"${password.replace(/\\/g, '\\\\')}"`);
+      expect(groups.client.host).toBe('"db.internal"');
+      expect(groups.mysql).toEqual({ 'connect-timeout': '15' });
+
+      // With real client tools: both programs accept the file, and the password reads back verbatim.
+      const bin = findMysqlBin();
+      if (bin) {
+        for (const prog of ['mysqldump', 'mysql']) {
+          const v = spawnSync(path.join(bin, prog), [`--defaults-extra-file=${cnf}`, '--version'], { encoding: 'utf8', env: cleanEnv() });
+          expect(v.status, `${prog}: ${v.stderr}`).toBe(0);
+        }
+        const printDefaults = path.join(bin, 'my_print_defaults');
+        if (existsSync(printDefaults)) {
+          const printed = spawnSync(printDefaults, [`--defaults-file=${cnf}`, '--show', 'client'], { encoding: 'utf8', env: cleanEnv() });
+          expect(printed.status, printed.stderr).toBe(0);
+          expect(printed.stdout.trim().split('\n')).toEqual([
+            '--host=db.internal',
+            '--port=3306',
+            '--user=root',
+            `--password=${password}`,
+            '--protocol=TCP',
+            '--default-character-set=utf8mb4',
+          ]);
+        }
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
 
