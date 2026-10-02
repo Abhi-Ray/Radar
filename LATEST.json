@@ -1,0 +1,9 @@
+{
+  "format": "radar-db-backup/2",
+  "createdAt": "2026-10-02T21:00:50Z",
+  "file": "radar-db.sql.gz.enc",
+  "sizeBytes": 123521296,
+  "sha256": "239ddbb0ec876e3e6279d6c34b7899a42ad016d02395ec6618a280809a3d0a10",
+  "parts": [{"name": "radar-db.sql.gz.enc.part-aaa", "sizeBytes": 47185920, "sha256": "26eb0a667df0139bbcb45aa592de6da342af7c40c1f3e8620d88a7b307893914"}, {"name": "radar-db.sql.gz.enc.part-aab", "sizeBytes": 47185920, "sha256": "642cbf9b8031090c647bcdbf4afd0b2c55edfdd8d09bc082e278fb14abe4b6e7"}, {"name": "radar-db.sql.gz.enc.part-aac", "sizeBytes": 29149456, "sha256": "86cd1a6d54c303de89126a09929a47e72e8ead92fdc05a559bd721825ad46bfe"}],
+  "encryption": "openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -md sha256 -salt, passphrase = BACKUP_PASSPHRASE"
+}
