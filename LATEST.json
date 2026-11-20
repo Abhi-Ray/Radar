@@ -1,0 +1,9 @@
+{
+  "format": "radar-db-backup/2",
+  "createdAt": "2026-11-20T21:02:18Z",
+  "file": "radar-db.sql.gz.enc",
+  "sizeBytes": 330253200,
+  "sha256": "cce9c41e51e1e4221471737a7e8c7a636f94332ac2027f29255161e1738fd902",
+  "parts": [{"name": "radar-db.sql.gz.enc.part-aaa", "sizeBytes": 47185920, "sha256": "2a02b03fa195fc4c4319ccd1e784a3906f7fbdaf3d2fbc03c319900ebc7c6936"}, {"name": "radar-db.sql.gz.enc.part-aab", "sizeBytes": 47185920, "sha256": "099a0204bdf95c11ecff8226999e05b9eff558fcc77ebc985227fbfb792e6acf"}, {"name": "radar-db.sql.gz.enc.part-aac", "sizeBytes": 47185920, "sha256": "d36f68158c60dcd9b0f5a9bfc656de3aa99f878fc3ef3c704f28f5c1485789a8"}, {"name": "radar-db.sql.gz.enc.part-aad", "sizeBytes": 47185920, "sha256": "e2b5c4afc499b43ebe39865625bb277867f3bfe1810c135e5038cf1e09b3a278"}, {"name": "radar-db.sql.gz.enc.part-aae", "sizeBytes": 47185920, "sha256": "a6d8a6f91f10e76a51aaace3f31b2a2d36e2eda756825fb5416a24bf6832e4ec"}, {"name": "radar-db.sql.gz.enc.part-aaf", "sizeBytes": 47185920, "sha256": "c45c7de642851a39a2fce23933f03b330058f9a667b480463663b1d00b78c930"}, {"name": "radar-db.sql.gz.enc.part-aag", "sizeBytes": 47137680, "sha256": "d56c9635c300c528fbc336a0a8b9fa654116cec0703b65ae3953cd1f12adb57a"}],
+  "encryption": "openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -md sha256 -salt, passphrase = BACKUP_PASSPHRASE"
+}
